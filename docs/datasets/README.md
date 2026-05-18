@@ -11,6 +11,7 @@
 | **1A — Body Pipeline** | S3, S6 | Full-body images + body shape labels | [BODY_PIPELINE.md](BODY_PIPELINE.md) |
 | **1B — Catalog Encoder** | S4, S5 | Item images + text descriptions | [CATALOG_ENCODER.md](CATALOG_ENCODER.md) |
 | **1C — Outfit Composer** | S5, S6, S7 | Outfit sets + compatibility + occasion labels | [OUTFIT_COMPOSER.md](OUTFIT_COMPOSER.md) |
+| **1C+ — Preference** | S9 | Conditional `(instruction, pos, neg)` triplets | [OUTFIT_COMPOSER.md](OUTFIT_COMPOSER.md) §9 |
 | **1D — Evaluation** | S8, S9 | User study responses + LLM-as-judge | [USER_STUDY.md](USER_STUDY.md) |
 
 ---
@@ -23,7 +24,8 @@ data/
 │   ├── body/                   # Ảnh full-body + body_labels.csv
 │   ├── catalog/                # Ảnh item + catalog_metadata.parquet
 │   ├── outfits/                # Outfit sets + outfits.jsonl
-│   └── occasion_cache/         # SQLite cache của Gemini labels
+│   ├── preference/             # triplets.jsonl (Sprint 9 personalization)
+│   └── occasion_cache/         # SQLite + pref_cache (Gemini structuring cache)
 ├── custom/                     # Dữ liệu tự thu thập (cùng schema với raw/)
 │   ├── body/                   # Theo BODY_PIPELINE.md §Custom Collection
 │   ├── catalog/                # Theo CATALOG_ENCODER.md §Custom Collection

@@ -59,20 +59,22 @@ src/outfitmatch/
   encoders/          # BaseEncoder ABC + HfClipEncoder + OpenClipEncoder + factory
   metrics/           # pure functions: recall_at_k, fitb_accuracy, compat_auc
   eval/              # evaluate_retrieval (encoder + dataset → metric dict)
-  train/             # SigLIP contrastive trainer + OutfitTransformer
+  train/             # SigLIP contrastive + OutfitTransformer + conditional pairwise
   body/              # PoseExtractor (YOLO) + rule-based shape classifier
+  preference/        # Gemini prompt-structuring → StructuredPreference (Sprint 9)
   ui/                # Gradio demo
 configs/             # YAML experiment configs (one axis per subdirectory)
 tests/               # pytest, mirrors src structure
 docs/                # ARCHITECTURE.md, EXPERIMENT_GUIDE.md, experiments/
 ```
 
-## Architecture (5 layers) — see `docs/ARCHITECTURE.md` for full detail
+## Architecture (6 layers) — see `docs/ARCHITECTURE.md` for full detail
 
+0. **Preference Structuring** (`src/preference/`): global style prompt → Gemini → `StructuredPreference`. `hard` → Qdrant filter (body-shape fallback if user gives none); `soft` → `[PREF×N]` tokens.
 1. **Body** (`src/body/`): YOLOv8-pose keypoints → 5-class shape rule classifier → `body_vector`.
 2. **Encoder** (`src/encoders/`): `Marqo/marqo-fashionSigLIP` (fine-tuned) via `BaseEncoder` ABC.
-3. **Vector Store**: Qdrant Docker (`:6333`), collection `catalog`.
-4. **Composer** (`src/train/composer.py`): OutfitTransformer — 4-layer, 8-head, d=512, `[BODY]`/`[OCC]` tokens.
+3. **Vector Store**: Qdrant Docker (`:6333`), collection `catalog` (+ hard-constraint payload filter).
+4. **Composer** (`src/train/composer.py`): OutfitTransformer — 4-layer, 8-head, d=512, `[BODY]`/`[OCC]`/`[PREF×N]` tokens; post-trained with conditional Bradley-Terry pairwise.
 5. **Customization**: Qdrant filter + composer re-rank → `POST /customize-item`.
 
 Module boundaries and interfaces (BaseEncoder, dataset schemas, config contract) are defined in `docs/ARCHITECTURE.md` — do not violate them.
