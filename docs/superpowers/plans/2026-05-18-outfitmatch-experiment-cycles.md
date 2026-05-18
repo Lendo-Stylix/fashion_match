@@ -2341,6 +2341,653 @@ git commit -m "docs: aggregate all experiment-cycle results into RESULTS.md"
 
 ---
 
+## SPRINT 9 — Personalized Preference Modeling (Storymap a5-s5, a6)
+
+**Sprint goal:** Make the composer score *personal taste*, not just generic compatibility. A user's free-text global style prompt is parsed by a Gemini **structuring layer** into a `StructuredPreference` (hard constraints + soft groups). Hard constraints become Qdrant payload filters (fallback: derived from body shape when the user specifies none). Soft groups become **N grouped `[PREF]` tokens** appended to `OutfitTransformer`. The composer is post-trained with a **conditional Bradley-Terry pairwise loss** on Gemini-generated `(instruction, preferred, rejected)` triplets that include contrastive instruction flips.
+
+**Design decisions (locked):**
+- **Hard vs soft:** *hard* = constraints the user explicitly states in the instruction prompt → Qdrant filter. If the user gives **no** hard constraints → fall back to a body-shape-derived constraint. *soft* = style/color/fit preferences from the prompt → `[PREF]` tokens.
+- **Token grouping:** **N tokens by group** — one `[PREF]` token per active soft group (`style`, `color`, `fit`).
+- **Train/inference-skew invariant:** training triplets MUST be produced through the *same* version-pinned structuring pipeline used at inference. `EXTRACTOR_VERSION` is part of the structuring cache key; bumping it invalidates cache and requires regenerating triplet data.
+
+### Task 9.1: StructuredPreference schema + body-shape fallback (TDD)
+
+**Files:**
+- Create: `src/outfitmatch/preference/__init__.py` (empty)
+- Create: `src/outfitmatch/preference/schema.py`
+- Test: `tests/test_preference_schema.py`
+
+- [ ] **Step 1: Write the failing test**
+
+```python
+# tests/test_preference_schema.py
+from outfitmatch.preference.schema import (
+    HardConstraint, SoftPreference, StructuredPreference, apply_body_fallback,
+)
+
+
+def test_active_soft_groups_filters_empty():
+    p = StructuredPreference(
+        soft=SoftPreference(style="minimalist korean", color="earth tones", fit=""))
+    assert p.active_soft_groups() == {
+        "style": "minimalist korean", "color": "earth tones"}
+
+
+def test_body_fallback_applied_when_no_user_hard():
+    p = StructuredPreference()
+    p = apply_body_fallback(p, "pear")
+    assert p.hard.source == "body_fallback"
+    assert p.hard.fit_bias == "structured_top"
+
+
+def test_body_fallback_skipped_when_user_hard_present():
+    p = StructuredPreference(hard=HardConstraint(colors_avoid=["bright"]))
+    p = apply_body_fallback(p, "pear")
+    assert p.hard.source == "user"
+    assert p.hard.fit_bias is None
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `uv run pytest tests/test_preference_schema.py -v`
+Expected: FAIL — `ModuleNotFoundError: outfitmatch.preference`.
+
+- [ ] **Step 3: Implement `src/outfitmatch/preference/schema.py`**
+
+```python
+from __future__ import annotations
+
+from typing import Literal
+
+from pydantic import BaseModel, Field
+
+SOFT_GROUPS = ("style", "color", "fit")
+
+# body shape -> fallback hard constraint when the user specifies none
+BODY_FALLBACK: dict[str, str] = {
+    "pear": "structured_top",
+    "apple": "defined_waist",
+    "hourglass": "fitted",
+    "rectangle": "add_curves",
+    "inverted_triangle": "volume_bottom",
+}
+
+
+class HardConstraint(BaseModel):
+    colors_avoid: list[str] = Field(default_factory=list)
+    categories_exclude: list[str] = Field(default_factory=list)
+    materials_require: list[str] = Field(default_factory=list)
+    fit_bias: str | None = None
+    source: Literal["user", "body_fallback"] = "user"
+
+    def is_empty(self) -> bool:
+        return not (self.colors_avoid or self.categories_exclude
+                    or self.materials_require)
+
+
+class SoftPreference(BaseModel):
+    style: str = ""
+    color: str = ""
+    fit: str = ""
+
+
+class StructuredPreference(BaseModel):
+    hard: HardConstraint = Field(default_factory=HardConstraint)
+    soft: SoftPreference = Field(default_factory=SoftPreference)
+
+    def active_soft_groups(self) -> dict[str, str]:
+        return {g: getattr(self.soft, g).strip()
+                for g in SOFT_GROUPS if getattr(self.soft, g).strip()}
+
+
+def apply_body_fallback(pref: StructuredPreference,
+                        body_shape: str) -> StructuredPreference:
+    """If the user gave no hard constraints, derive one from body shape."""
+    if pref.hard.is_empty():
+        pref.hard = HardConstraint(
+            fit_bias=BODY_FALLBACK.get(body_shape),
+            source="body_fallback",
+        )
+    return pref
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `uv run pytest tests/test_preference_schema.py -v`
+Expected: PASS (3 passed).
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/outfitmatch/preference/__init__.py src/outfitmatch/preference/schema.py tests/test_preference_schema.py
+git commit -m "feat: StructuredPreference schema + body-shape hard-constraint fallback"
+```
+
+### Task 9.2: Gemini prompt-structuring layer (TDD)
+
+**Files:**
+- Create: `src/outfitmatch/preference/structuring.py`
+- Test: `tests/test_preference_structuring.py`
+
+- [ ] **Step 1: Write the failing test**
+
+```python
+# tests/test_preference_structuring.py
+from outfitmatch.preference.structuring import PromptStructurer
+
+
+def test_structurer_parses_user_hard_and_caches(tmp_path):
+    calls: list[str] = []
+
+    def fake(prompt: str) -> str:
+        calls.append(prompt)
+        return ('{"hard":{"colors_avoid":["bright"],"categories_exclude":[],'
+                '"materials_require":[]},'
+                '"soft":{"style":"minimalist","color":"","fit":"oversized"}}')
+
+    s = PromptStructurer(fake, cache_dir=str(tmp_path / "c"))
+    p1 = s.structure("minimalist, no bright colors, oversized", "pear")
+    p2 = s.structure("minimalist, no bright colors, oversized", "pear")
+
+    assert p1.hard.colors_avoid == ["bright"]
+    assert p1.hard.source == "user"          # user gave hard -> no fallback
+    assert p1.soft.fit == "oversized"
+    assert p2.soft.style == "minimalist"
+    assert len(calls) == 1                    # second call served from cache
+
+
+def test_structurer_body_fallback_when_no_hard(tmp_path):
+    def fake(prompt: str) -> str:
+        return ('{"hard":{"colors_avoid":[],"categories_exclude":[],'
+                '"materials_require":[]},'
+                '"soft":{"style":"casual","color":"","fit":""}}')
+
+    s = PromptStructurer(fake, cache_dir=str(tmp_path / "c"))
+    p = s.structure("just casual everyday", "apple")
+    assert p.hard.source == "body_fallback"
+    assert p.hard.fit_bias == "defined_waist"
+
+
+def test_structurer_strips_json_fence(tmp_path):
+    def fake(prompt: str) -> str:
+        return ('```json\n{"hard":{"colors_avoid":[],"categories_exclude":[],'
+                '"materials_require":[]},"soft":{"style":"sporty",'
+                '"color":"","fit":""}}\n```')
+
+    s = PromptStructurer(fake, cache_dir=str(tmp_path / "c"))
+    p = s.structure("sporty", "rectangle")
+    assert p.soft.style == "sporty"
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `uv run pytest tests/test_preference_structuring.py -v`
+Expected: FAIL — `ModuleNotFoundError`.
+
+- [ ] **Step 3: Implement `src/outfitmatch/preference/structuring.py`**
+
+```python
+from __future__ import annotations
+
+import hashlib
+import json
+from collections.abc import Callable
+
+import diskcache
+
+from outfitmatch.preference.schema import StructuredPreference, apply_body_fallback
+
+EXTRACTOR_VERSION = "v1"
+
+STRUCT_PROMPT = """You convert a user's fashion style instruction into JSON.
+Schema: {{"hard": {{"colors_avoid": [], "categories_exclude": [],
+"materials_require": []}}, "soft": {{"style": "", "color": "", "fit": ""}}}}
+- hard = constraints the user explicitly demands (avoid / exclude / require).
+  Use empty lists when the user states none.
+- soft = short phrases (<= 6 words) for preferred style / color / fit.
+  Use "" when unspecified.
+User instruction: {instruction}
+Reply with ONLY the JSON, no prose."""
+
+
+def _strip_fence(s: str) -> str:
+    s = s.strip()
+    if s.startswith("```"):
+        s = s.split("\n", 1)[1].rsplit("```", 1)[0]
+    return s.strip()
+
+
+class PromptStructurer:
+    """Free-text global prompt -> StructuredPreference (Gemini-backed, cached).
+
+    `complete_fn` takes a prompt string and returns the model's text reply;
+    inject a Gemini client at the call site and a fake in tests.
+    """
+
+    def __init__(
+        self,
+        complete_fn: Callable[[str], str],
+        cache_dir: str = "data/raw/occasion_cache/pref_cache",
+    ) -> None:
+        self._complete = complete_fn
+        self._cache = diskcache.Cache(cache_dir)
+
+    def structure(self, instruction: str, body_shape: str) -> StructuredPreference:
+        key = hashlib.sha256(
+            f"{EXTRACTOR_VERSION}|{instruction}".encode()).hexdigest()
+        if key in self._cache:
+            raw = self._cache[key]
+        else:
+            raw = self._complete(STRUCT_PROMPT.format(instruction=instruction))
+            self._cache[key] = raw
+        data = json.loads(_strip_fence(raw))
+        pref = StructuredPreference.model_validate(data)
+        return apply_body_fallback(pref, body_shape)
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `uv run pytest tests/test_preference_structuring.py -v`
+Expected: PASS (3 passed).
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/outfitmatch/preference/structuring.py tests/test_preference_structuring.py
+git commit -m "feat: Gemini prompt-structuring layer with version-pinned cache"
+```
+
+### Task 9.3: Grouped `[PREF]` tokens in OutfitTransformer (TDD)
+
+**Files:**
+- Modify: `src/outfitmatch/train/composer.py` (extends the Task 7.1 model)
+- Test: `tests/test_composer.py` (append)
+
+- [ ] **Step 1: Append the failing test**
+
+```python
+# tests/test_composer.py  (append)
+def test_pref_tokens_change_output_and_are_optional():
+    torch.manual_seed(0)
+    m = OutfitTransformer(embed_dim=16, n_heads=2, n_layers=2,
+                          pref_groups=("style", "color"))
+    items = torch.randn(1, 3, 16)
+    mask = torch.ones(1, 3, dtype=torch.bool)
+    base = m(items, mask)                                  # pref=None -> unchanged path
+    cond = m(items, mask, pref={"style": torch.randn(1, 16),
+                                "color": torch.randn(1, 16)})
+    assert base.shape == (1,)
+    assert not torch.allclose(base, cond)
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `uv run pytest tests/test_composer.py::test_pref_tokens_change_output_and_are_optional -v`
+Expected: FAIL — `TypeError: __init__() got an unexpected keyword 'pref_groups'`.
+
+- [ ] **Step 3: Modify `src/outfitmatch/train/composer.py`**
+
+Add `pref_groups` to `__init__` and a `pref` dict arg to `forward` (one projected token per active group, appended exactly like `[OCC]`):
+
+```python
+    def __init__(self, embed_dim: int = 512, n_heads: int = 8,
+                 n_layers: int = 4,
+                 pref_groups: tuple[str, ...] = ()) -> None:
+        super().__init__()
+        self.cls = nn.Parameter(torch.randn(1, 1, embed_dim))
+        self.body_proj = nn.Linear(embed_dim, embed_dim)
+        self.occ_proj = nn.Linear(embed_dim, embed_dim)
+        self.pref_proj = nn.ModuleDict(
+            {g: nn.Linear(embed_dim, embed_dim) for g in pref_groups})
+        layer = nn.TransformerEncoderLayer(
+            d_model=embed_dim, nhead=n_heads, batch_first=True,
+            dim_feedforward=embed_dim * 4,
+        )
+        self.encoder = nn.TransformerEncoder(layer, num_layers=n_layers)
+        self.head = nn.Linear(embed_dim, 1)
+
+    def forward(
+        self,
+        item_embeds: torch.Tensor,
+        mask: torch.Tensor,
+        body: torch.Tensor | None = None,
+        occ: torch.Tensor | None = None,
+        pref: dict[str, torch.Tensor] | None = None,
+    ) -> torch.Tensor:
+        b = item_embeds.size(0)
+        dev = item_embeds.device
+        toks = [self.cls.expand(b, -1, -1), item_embeds]
+        keep = [torch.ones(b, 1, dtype=torch.bool, device=dev), mask]
+        if body is not None:
+            toks.append(self.body_proj(body).unsqueeze(1))
+            keep.append(torch.ones(b, 1, dtype=torch.bool, device=dev))
+        if occ is not None:
+            toks.append(self.occ_proj(occ).unsqueeze(1))
+            keep.append(torch.ones(b, 1, dtype=torch.bool, device=dev))
+        if pref:
+            for group, vec in pref.items():
+                toks.append(self.pref_proj[group](vec).unsqueeze(1))
+                keep.append(torch.ones(b, 1, dtype=torch.bool, device=dev))
+        x = torch.cat(toks, dim=1)
+        pad = ~torch.cat(keep, dim=1)
+        h = self.encoder(x, src_key_padding_mask=pad)
+        return self.head(h[:, 0]).squeeze(-1)
+```
+
+- [ ] **Step 4: Run the full composer test file to verify nothing regressed**
+
+Run: `uv run pytest tests/test_composer.py -v`
+Expected: PASS (3 passed — the two Task 7.1 tests still green, new one green).
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/outfitmatch/train/composer.py tests/test_composer.py
+git commit -m "feat: grouped [PREF] conditioning tokens in OutfitTransformer"
+```
+
+### Task 9.4: Conditional Bradley-Terry loss + triplet dataset (TDD)
+
+**Files:**
+- Create: `src/outfitmatch/train/preference.py`
+- Create: `src/outfitmatch/data/preference.py`
+- Test: `tests/test_preference_loss.py`
+
+- [ ] **Step 1: Write the failing test**
+
+```python
+# tests/test_preference_loss.py
+import math
+
+import torch
+
+from outfitmatch.train.preference import pairwise_bt_loss
+
+
+def test_zero_margin_loss_is_log2():
+    s = torch.zeros(4)
+    assert abs(pairwise_bt_loss(s, s).item() - math.log(2)) < 1e-5
+
+
+def test_loss_decreases_as_preferred_pulls_ahead():
+    neg = torch.zeros(2)
+    small_margin = pairwise_bt_loss(torch.full((2,), 0.5), neg)
+    big_margin = pairwise_bt_loss(torch.full((2,), 3.0), neg)
+    assert big_margin < small_margin
+
+
+def test_loss_is_scalar_and_finite():
+    loss = pairwise_bt_loss(torch.randn(8), torch.randn(8))
+    assert loss.ndim == 0 and torch.isfinite(loss)
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `uv run pytest tests/test_preference_loss.py -v`
+Expected: FAIL — `ModuleNotFoundError`.
+
+- [ ] **Step 3: Implement `src/outfitmatch/train/preference.py`**
+
+```python
+from __future__ import annotations
+
+import torch
+import torch.nn.functional as F
+
+
+def pairwise_bt_loss(score_pos: torch.Tensor,
+                      score_neg: torch.Tensor) -> torch.Tensor:
+    """Conditional Bradley-Terry: -log sigmoid(s+ - s-).
+
+    Both inputs are (B,) composer scores computed with the SAME [PREF]
+    tokens; minimising this ranks the preferred outfit above the rejected
+    one *under that instruction*.
+    """
+    return -F.logsigmoid(score_pos - score_neg).mean()
+```
+
+- [ ] **Step 4: Implement `src/outfitmatch/data/preference.py`**
+
+```python
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from torch.utils.data import Dataset
+
+
+class PreferenceTripletDataset(Dataset):
+    """JSONL of conditional preference triplets.
+
+    Each line:
+      {"instruction": str, "body_shape": str,
+       "pos_items": list[str], "neg_items": list[str]}
+    """
+
+    def __init__(self, jsonl_path: str | Path) -> None:
+        self.rows = [
+            json.loads(ln)
+            for ln in Path(jsonl_path).read_text(encoding="utf-8").splitlines()
+            if ln.strip()
+        ]
+
+    def __len__(self) -> int:
+        return len(self.rows)
+
+    def __getitem__(self, i: int) -> dict:
+        r = self.rows[i]
+        return {
+            "instruction": r["instruction"],
+            "body_shape": r.get("body_shape", "rectangle"),
+            "pos_items": r["pos_items"],
+            "neg_items": r["neg_items"],
+        }
+```
+
+- [ ] **Step 5: Run test to verify it passes**
+
+Run: `uv run pytest tests/test_preference_loss.py -v`
+Expected: PASS (3 passed).
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/outfitmatch/train/preference.py src/outfitmatch/data/preference.py tests/test_preference_loss.py
+git commit -m "feat: conditional Bradley-Terry loss + preference triplet dataset"
+```
+
+### Task 9.5: Config extension + preference trainer wired into runner (TDD)
+
+**Files:**
+- Modify: `src/outfitmatch/config.py` (extend `ComposerConfig`, add `task` literal)
+- Modify: `src/outfitmatch/runner.py` (add `task == "preference"` branch)
+- Create: `src/outfitmatch/train/preference_trainer.py`
+- Test: `tests/test_config.py` (append), `tests/test_runner.py` (append)
+
+- [ ] **Step 1: Append the failing config test**
+
+```python
+# tests/test_config.py  (append)
+def test_preference_config_parses(tmp_path):
+    from outfitmatch.config import load_config
+    p = tmp_path / "pref.yaml"
+    p.write_text(
+        "name: pref-all\nseed: 42\ntask: preference\n"
+        'model: {kind: open_clip, checkpoint: "hf-hub:Marqo/marqo-fashionSigLIP"}\n'
+        "dataset: {hf_id: local, split: train}\n"
+        "composer: {n_heads: 8, n_layers: 4, use_pref: true, "
+        "pref_groups: [style, color, fit]}\n"
+    )
+    cfg = load_config(str(p))
+    assert cfg.task == "preference"
+    assert cfg.composer.use_pref is True
+    assert cfg.composer.pref_groups == ["style", "color", "fit"]
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `uv run pytest tests/test_config.py::test_preference_config_parses -v`
+Expected: FAIL — `ValidationError` (`task` literal rejects `preference`; `ComposerConfig` has no `use_pref`).
+
+- [ ] **Step 3: Extend `src/outfitmatch/config.py`**
+
+In `ComposerConfig` add:
+```python
+    use_pref: bool = False
+    pref_groups: list[str] = Field(default_factory=list)
+```
+In `ExperimentConfig` widen the task literal:
+```python
+    task: Literal["retrieval", "fitb", "compatibility", "preference"]
+```
+
+- [ ] **Step 4: Run config test to verify it passes**
+
+Run: `uv run pytest tests/test_config.py -v`
+Expected: PASS (all config tests green).
+
+- [ ] **Step 5: Implement `src/outfitmatch/train/preference_trainer.py` and wire runner**
+
+> Mirror the exact five-step TDD rhythm and structure of **Task 5.2 ("Wire fine-tune into runner")**. `train_preference(composer, encoder, structurer, dataset, *, epochs, batch_size, lr, device, log_fn)` must, per triplet batch: (1) `pref = structurer.structure(instruction, body_shape)`; (2) for each `group, phrase` in `pref.active_soft_groups()` compute `encoder.encode_text([phrase])` → build the `pref` dict keyed by group; (3) `encoder.encode_image` the `pos_items` and `neg_items` → `(B, N, D)` tensors with masks; (4) `s_pos = composer(pos, pos_mask, pref=pref_dict)`, `s_neg = composer(neg, neg_mask, pref=pref_dict)`; (5) `loss = pairwise_bt_loss(s_pos, s_neg)`; backprop; `log_fn({"bt_loss": ...})`. Add a `task == "preference"` branch in `runner.py` that builds the encoder via `build_encoder`, builds `OutfitTransformer(pref_groups=tuple(cfg.composer.pref_groups))`, builds `PromptStructurer` (Gemini client injected; offline test uses a fake `complete_fn`), runs `train_preference`, then evaluates with `preference_pairwise_accuracy` (Task 9.6 metric) and logs to W&B. Acceptance: a `tests/test_runner.py` case that monkeypatches encoder + structurer with fakes, runs `execute(cfg)` on a 4-line triplet JSONL, and asserts a finite `bt_loss` and a `pairwise_acc` in `[0, 1]` were logged — identical assertion style to the Task 5.2 runner test.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/outfitmatch/config.py src/outfitmatch/runner.py src/outfitmatch/train/preference_trainer.py tests/test_config.py tests/test_runner.py
+git commit -m "feat: preference task config + conditional pairwise trainer in runner"
+```
+
+### Task 9.6: Preference metric + triplet generator script
+
+**Files:**
+- Modify: `src/outfitmatch/metrics/outfit.py` (add `preference_pairwise_accuracy`, `instruction_flip_consistency`)
+- Create: `scripts/generate_preference_triplets.py`
+- Test: `tests/test_metrics_outfit.py` (append)
+
+- [ ] **Step 1: Append the failing metric test**
+
+```python
+# tests/test_metrics_outfit.py  (append)
+import torch
+
+from outfitmatch.metrics.outfit import preference_pairwise_accuracy
+
+
+def test_pairwise_accuracy_counts_correct_orderings():
+    s_pos = torch.tensor([1.0, 0.2, 3.0])
+    s_neg = torch.tensor([0.0, 0.5, 1.0])      # row 1 is wrong (0.2 < 0.5)
+    assert preference_pairwise_accuracy(s_pos, s_neg) == round(2 / 3, 6)
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `uv run pytest tests/test_metrics_outfit.py::test_pairwise_accuracy_counts_correct_orderings -v`
+Expected: FAIL — `ImportError`.
+
+- [ ] **Step 3: Add metrics to `src/outfitmatch/metrics/outfit.py`**
+
+```python
+def preference_pairwise_accuracy(score_pos, score_neg) -> float:
+    """Fraction of triplets where preferred outranks rejected."""
+    correct = (score_pos > score_neg).float().mean().item()
+    return round(correct, 6)
+
+
+def instruction_flip_consistency(scores_a, scores_b) -> float:
+    """For contrastive-flip pairs (same outfits, flipped instruction),
+    fraction where the model's preferred outfit also flips."""
+    flipped = (scores_a.argmax(dim=-1) != scores_b.argmax(dim=-1))
+    return round(flipped.float().mean().item(), 6)
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `uv run pytest tests/test_metrics_outfit.py -v`
+Expected: PASS (all outfit-metric tests green).
+
+- [ ] **Step 5: Implement `scripts/generate_preference_triplets.py`**
+
+> Non-TDD data script — described, mirroring the prose-spec style of Task 8.3. Inputs: `data/raw/outfits/outfits.jsonl`, `data/raw/catalog/catalog_metadata.parquet`, a YAML list of instruction prompts (`configs/preference/instructions.yaml`), and a Gemini client (reuse the `diskcache` pattern of the occasion labeler). For each instruction and each sampled outfit pair `(A, B)` it asks Gemini *"Given the style instruction `<I>`, which outfit better matches the user's taste? Reply A or B."* and writes `{"instruction", "body_shape", "pos_items", "neg_items"}` to `data/raw/preference/triplets.jsonl`. **Mandatory contrastive-flip generation:** for ≥30% of sampled pairs, emit the SAME `(A, B)` under ≥2 *opposing* instructions (e.g. *"minimalist, muted"* vs *"bold, statement"*) so the dataset contains rows where the preferred outfit flips with the instruction — without these, the composer learns to ignore `[PREF]`. Validate every emitted row against `PreferenceTripletDataset`'s schema before writing. CLI: `--n-pairs`, `--flip-ratio` (default 0.3), `--limit`.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/outfitmatch/metrics/outfit.py scripts/generate_preference_triplets.py tests/test_metrics_outfit.py
+git commit -m "feat: preference pairwise/flip metrics + Gemini triplet generator"
+```
+
+### Task 9.7: Preference experiment cycle (ablation: `[PREF]` on/off, token grouping)
+
+**Files:**
+- Create: `configs/preference/pref_off.yaml`, `pref_style_only.yaml`, `pref_all_groups.yaml`
+- Create: `configs/preference/instructions.yaml`
+
+- [ ] **Step 1: Create `configs/preference/pref_off.yaml`** (baseline — composer ignores instruction)
+
+```yaml
+name: pref-off
+seed: 42
+task: preference
+model: {kind: open_clip, checkpoint: "hf-hub:Marqo/marqo-fashionSigLIP"}
+dataset: {hf_id: data/raw/preference/triplets.jsonl, split: train}
+composer: {n_heads: 8, n_layers: 4, use_pref: false, pref_groups: []}
+train: {epochs: 8, batch_size: 32, lr: 1.0e-4}
+```
+
+- [ ] **Step 2: Create `configs/preference/pref_style_only.yaml`**
+
+```yaml
+name: pref-style-only
+seed: 42
+task: preference
+model: {kind: open_clip, checkpoint: "hf-hub:Marqo/marqo-fashionSigLIP"}
+dataset: {hf_id: data/raw/preference/triplets.jsonl, split: train}
+composer: {n_heads: 8, n_layers: 4, use_pref: true, pref_groups: [style]}
+train: {epochs: 8, batch_size: 32, lr: 1.0e-4}
+```
+
+- [ ] **Step 3: Create `configs/preference/pref_all_groups.yaml`**
+
+```yaml
+name: pref-all-groups
+seed: 42
+task: preference
+model: {kind: open_clip, checkpoint: "hf-hub:Marqo/marqo-fashionSigLIP"}
+dataset: {hf_id: data/raw/preference/triplets.jsonl, split: train}
+composer: {n_heads: 8, n_layers: 4, use_pref: true, pref_groups: [style, color, fit]}
+train: {epochs: 8, batch_size: 32, lr: 1.0e-4}
+```
+
+- [ ] **Step 4: Create `configs/preference/instructions.yaml`** (prompt bank for triplet generation)
+
+```yaml
+instructions:
+  - "minimalist Korean street style, muted earth tones, oversized fit"
+  - "bold statement pieces, bright colors, tailored fit"
+  - "formal business, navy and grey, slim fit, no patterns"
+  - "casual everyday, comfortable relaxed fit, neutral palette"
+  - "vintage feminine, pastel colors, fitted silhouette"
+```
+
+- [ ] **Step 5: Generate data + run the cycle**
+
+Run:
+```bash
+uv run python scripts/generate_preference_triplets.py --n-pairs 4000 --flip-ratio 0.3
+uv run om-exp sweep configs/preference --out-csv docs/experiments/ablation_preference.csv
+```
+Expected: 3 W&B runs in group `preference`. Targets: `pref-all-groups` beats `pref-off` on **pairwise accuracy ≥ 0.70** AND **instruction-flip consistency ≥ 0.60** (proof the model actually attends to `[PREF]` rather than predicting generic compatibility).
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add configs/preference docs/experiments/ablation_preference.csv
+git commit -m "feat: preference personalization experiment cycle (PREF on/off, grouping)"
+```
+
+---
+
 ## Self-Review
 
 **1. Spec coverage**
@@ -2349,15 +2996,16 @@ git commit -m "docs: aggregate all experiment-cycle results into RESULTS.md"
 |---|---|
 | Research optimal HF models | Research Findings section (encoder table, pose, composer, datasets, with links) |
 | Analyze & pick best | Decision lines: FashionSigLIP fine-tuned (encoder); YOLO-pose cycle (body); OutfitTransformer (composer) |
-| Complete Scrum/XP plan | 9 sprints, sprint goals, TDD every code task, frequent commits, CI gate |
+| Complete Scrum/XP plan | 10 sprints, sprint goals, TDD every code task, frequent commits, CI gate |
 | Cycles vary dataset *type* | Sprint 4 (DeepFashion vs Fashion200K vs Multimodal), Sprint 7 (Polyvore disjoint vs nondisjoint) |
 | Cycles vary *number of rows* | `max_rows` in config from Task 1.1; Sprint 5 scaling cycle 5K/25K/100K |
 | Cycles vary *models* | Sprint 3 (4 encoders), Sprint 6 (YOLOv8 vs YOLO11), Sprint 7 (conditioning variants) |
-| Grading targets | Sprint 5 (+5% Recall@5), Sprint 7 (FITB ≥55%, AUC ≥0.85, +10% body Precision@5) |
+| Personalized preference modeling | Sprint 9 — Gemini structuring layer, grouped `[PREF]` tokens, conditional Bradley-Terry pairwise; hard→Qdrant filter (body-shape fallback), soft→tokens |
+| Grading targets | Sprint 5 (+5% Recall@5), Sprint 7 (FITB ≥55%, AUC ≥0.85, +10% body Precision@5), Sprint 9 (pairwise acc ≥0.70, flip consistency ≥0.60) |
 
-**2. Placeholder scan:** Sprints 0–6 and 7.1 / 8.1 are fully bite-sized with complete code. Three tasks delegate sub-structure via explicit `>` notes (Task 5.1 train-mode flag, Task 7.2 composer config + fitb/compat runner branches, Task 8.2 index/UI): each names exact files, the pattern to copy from an earlier task, and the TDD acceptance — actionable, not "TBD". The executing agent expands these by replicating the cited task's five-step rhythm.
+**2. Placeholder scan:** Sprints 0–6, 7.1, 8.1, and 9.1–9.4 / 9.7 are fully bite-sized with complete code. Five tasks delegate sub-structure via explicit `>` notes (Task 5.1 train-mode flag, Task 7.2 composer config + fitb/compat runner branches, Task 8.2 index/UI, Task 9.5 preference trainer wiring, Task 9.6 triplet generator script): each names exact files, the pattern to copy from an earlier task, and the TDD/validation acceptance — actionable, not "TBD". The executing agent expands these by replicating the cited task's five-step rhythm.
 
-**3. Type consistency:** `BaseEncoder.encode_image/encode_text` (Task 2.1) used identically in 2.2/2.3/5.1; `ExperimentConfig` fields (`model.kind`, `model.finetune`, `dataset.max_rows`, `train.epochs/batch_size/lr`) consistent across all configs and runner; `execute(cfg, group, job_type)` signature consistent in 2.4/3.2/runner; metric names `recall@1/5/10`, `map`, `fitb_accuracy`, `compatibility_auc` consistent between metrics modules, eval, and CSV export.
+**3. Type consistency:** `BaseEncoder.encode_image/encode_text` (Task 2.1) used identically in 2.2/2.3/5.1/9.5; `ExperimentConfig` fields (`model.kind`, `model.finetune`, `dataset.max_rows`, `train.epochs/batch_size/lr`, `task` literal incl. `preference`, `composer.use_pref/pref_groups`) consistent across all configs and runner; `execute(cfg, group, job_type)` signature consistent in 2.4/3.2/runner; `OutfitTransformer(embed_dim, n_heads, n_layers, pref_groups)` and its `forward(item_embeds, mask, body, occ, pref)` signature consistent between Task 7.1, 9.3, and 9.5; `StructuredPreference` / `HardConstraint` / `SoftPreference` / `apply_body_fallback` / `PromptStructurer.structure` / `pairwise_bt_loss` / `PreferenceTripletDataset` / `preference_pairwise_accuracy` consistent across Sprint 9 tasks; metric names `recall@1/5/10`, `map`, `fitb_accuracy`, `compatibility_auc`, `pairwise_acc`/`flip_consistency` consistent between metrics modules, eval, and CSV export.
 
 ---
 

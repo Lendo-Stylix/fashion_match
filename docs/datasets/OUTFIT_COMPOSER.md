@@ -196,3 +196,75 @@ Script kiểm tra:
 | AUC (compatibility) | ≥ 0.85 | Polyvore nondisjoint |
 | FITB accuracy | ≥ 0.60 | Polyvore nondisjoint |
 | AUC (disjoint) | ≥ 0.80 | Polyvore disjoint |
+
+---
+
+## 9. Preference Triplet Data (Sprint 9 — personalization)
+
+Để post-train composer hiểu *gu cá nhân* (không chỉ "hợp/không hợp"), cần
+dataset triplet có điều kiện theo instruction prompt của user.
+
+### File: `data/raw/preference/triplets.jsonl`
+
+Mỗi dòng:
+```json
+{
+  "instruction": "minimalist Korean street style, muted earth tones, oversized fit",
+  "body_shape": "pear",
+  "pos_items": ["item_00123", "item_00456", "item_00789"],
+  "neg_items": ["item_00999", "item_01001", "item_01002"]
+}
+```
+
+| Field | Type | Required | Ghi chú |
+|---|---|---|---|
+| `instruction` | string | ✅ | Global style prompt (free text) của user |
+| `body_shape` | enum (5) | ✅ | Dùng cho hard-constraint fallback |
+| `pos_items` | list[item_ID] | ✅ | Outfit được *ưa hơn* dưới instruction này |
+| `neg_items` | list[item_ID] | ✅ | Outfit *kém ưa hơn* (cùng instruction) |
+
+### StructuredPreference (output của structuring layer)
+
+Global prompt → Gemini `PromptStructurer` → schema:
+
+```
+hard: { colors_avoid[], categories_exclude[], materials_require[],
+        fit_bias, source }     → Qdrant payload filter (Layer 3)
+soft: { style, color, fit }    → mỗi nhóm = 1 [PREF] token (Layer 4)
+```
+
+- **hard**: chỉ định *tường minh* trong prompt. Nếu user **không** nêu hard →
+  fallback theo `body_shape`: `pear→structured_top`, `apple→defined_waist`,
+  `hourglass→fitted`, `rectangle→add_curves`, `inverted_triangle→volume_bottom`
+  (`source="body_fallback"`).
+- **soft**: phrase ngắn (≤6 từ) cho style/color/fit → SigLIP text tower → token.
+
+### Quy tắc sinh data — BẮT BUỘC contrastive flips
+
+≥ 30% cặp `(A, B)` phải xuất hiện dưới **≥ 2 instruction đối nghịch** với nhãn
+preferred *đảo chiều* (vd: *"minimalist, muted"* vs *"bold, statement"*). Không
+có flips → composer học cách *lờ* `[PREF]`, ablation `use_pref` không cải thiện.
+
+### Sinh data
+
+```bash
+uv run python scripts/generate_preference_triplets.py \
+    --n-pairs 4000 --flip-ratio 0.3 --limit 5000
+```
+
+Script dùng Gemini (cache pattern giống occasion labeler) hỏi *"Given style
+instruction `<I>`, which outfit better matches the user's taste? A or B."*,
+validate mỗi row theo schema `PreferenceTripletDataset` trước khi ghi.
+
+### INVARIANT — không được train/inference skew
+
+Triplet phải sinh qua **đúng pipeline structuring version-pinned** dùng lúc
+inference. `structuring.EXTRACTOR_VERSION` nằm trong cache key — đổi schema
+extractor → bump version → **regenerate `triplets.jsonl`**.
+
+### Target
+
+| Metric | Threshold (pass) |
+|---|---|
+| Pairwise accuracy (`use_pref` > `pref-off`) | ≥ 0.70 |
+| Instruction-flip consistency | ≥ 0.60 |
