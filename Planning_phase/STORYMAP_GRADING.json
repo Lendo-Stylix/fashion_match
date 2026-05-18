@@ -1,0 +1,628 @@
+{
+  "title": "OutfitMatch — Body & Occasion-Aware Fashion Recommender (Grading Phase)",
+  "releases": [
+    {
+      "id": "r0",
+      "name": "S0: Research (Tuần 1)",
+      "color": "#94a3b8"
+    },
+    {
+      "id": "r1",
+      "name": "S1: Architecture (Tuần 2)",
+      "color": "#7dd3fc"
+    },
+    {
+      "id": "r2",
+      "name": "S2: Proposal ⚡ (Tuần 3)",
+      "color": "#f97316"
+    },
+    {
+      "id": "r3",
+      "name": "S3: Data Pipeline (Tuần 4)",
+      "color": "#a78bfa"
+    },
+    {
+      "id": "r4",
+      "name": "S4: Catalog Encoder (Tuần 5)",
+      "color": "#34d399"
+    },
+    {
+      "id": "r5",
+      "name": "S5: Composer (Tuần 6)",
+      "color": "#22d3ee"
+    },
+    {
+      "id": "r6",
+      "name": "S6: Body+Occasion (Tuần 7)",
+      "color": "#fb7185"
+    },
+    {
+      "id": "r7",
+      "name": "S7: Customization (Tuần 8)",
+      "color": "#fbbf24"
+    },
+    {
+      "id": "r8",
+      "name": "S8: Demo Deploy (Tuần 9)",
+      "color": "#86efac"
+    },
+    {
+      "id": "r9",
+      "name": "S9: Final Report ⚡ (Tuần 10)",
+      "color": "#f43f5e"
+    }
+  ],
+  "activities": [
+    {
+      "id": "a1",
+      "name": "🔬 Research & Setup",
+      "color": "#475569",
+      "stories": [
+        {
+          "id": "a1-s1",
+          "name": "Đọc 5 papers core (CLIP, SigLIP, FashionCLIP, ViBE, Outfit-Transformer)",
+          "description": "As a team member, I want to read all foundational papers so I have shared understanding of the approach.\n\nOwner: All\nOutput: 1-page summary mỗi paper trong /docs/papers/",
+          "release": "r0",
+          "status": "Planned",
+          "tags": [
+            "research",
+            "all-devs"
+          ]
+        },
+        {
+          "id": "a1-s2",
+          "name": "Setup repo: monorepo skeleton + CI + pre-commit (Python 3.13 + uv)",
+          "description": "As Dev B, I want to set up the project skeleton so the team can start coding immediately.\n\nStack: Python 3.13, uv package manager, ruff lint, pyproject.toml, GitHub Actions CI\nOutput: Repo green với uv sync chạy được",
+          "release": "r0",
+          "status": "Planned",
+          "tags": [
+            "setup",
+            "dev-b",
+            "python-3.13"
+          ]
+        },
+        {
+          "id": "a1-s3",
+          "name": "Setup W&B project + experiment tracking baseline",
+          "description": "As Dev A, I want W&B configured so every experiment is automatically logged.\n\nTool: wandb.ai/site\nSetup: wandb init, define default metrics (Recall@K, FITB, AUC, loss curves)\nOutput: W&B project 'outfitmatch-grading' với baseline run",
+          "release": "r0",
+          "status": "Planned",
+          "tags": [
+            "wandb",
+            "mlops",
+            "dev-a"
+          ]
+        },
+        {
+          "id": "a1-s4",
+          "name": "Setup Thunder Compute account + benchmark GPU cost",
+          "description": "As Dev A/B, I want Thunder Compute (pay-as-you-go GPU) ready before training starts.\n\nProvider: Thunder Compute — pay-as-you-go, no commitment\nAction: Create account, test H100/A100 instance, estimate cost: ~$1-3/hr\nOutput: Benchmark notebook chạy được, cost sheet",
+          "release": "r0",
+          "status": "Planned",
+          "tags": [
+            "thunder-compute",
+            "gpu",
+            "dev-a",
+            "dev-b"
+          ]
+        },
+        {
+          "id": "a1-s5",
+          "name": "Chạy CLIP zero-shot retrieval baseline trên DeepFashion → log vào W&B",
+          "description": "As Dev A, I want a documented baseline so we can measure improvement.\n\nModel: openai/clip-vit-b-32\nDataset: DeepFashion In-shop (subset 5K)\nLog: wandb.log({'recall@1': ..., 'recall@5': ..., 'recall@10': ...})\nOutput: Baseline run trên W&B dashboard",
+          "release": "r0",
+          "status": "Planned",
+          "tags": [
+            "baseline",
+            "clip",
+            "wandb",
+            "dev-a"
+          ]
+        },
+        {
+          "id": "a1-s6",
+          "name": "Survey + EDA datasets (Polyvore, DeepFashion, Fashion200K)",
+          "description": "As Dev B, I want dataset EDA done so we know what we're working with before building pipelines.\n\nOutput: EDA notebook với distribution plots, sample images, bias audit\nNote: Apply DeepFashion access từ MMLab ngay (3-7 ngày approval)",
+          "release": "r0",
+          "status": "Planned",
+          "tags": [
+            "data",
+            "eda",
+            "dev-b"
+          ]
+        },
+        {
+          "id": "a1-s7",
+          "name": "Architecture design: 5-tầng diagram + interface contracts (Python ABC)",
+          "description": "As Dev A, I want a clear system architecture so all modules have agreed interfaces.\n\nOutput: docs/architecture.md với Mermaid diagram\nInterface: BaseEncoder, BaseRetriever, BaseComposer ABCs",
+          "release": "r1",
+          "status": "Planned",
+          "tags": [
+            "architecture",
+            "dev-a",
+            "design"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a2",
+      "name": "📦 Data Pipeline",
+      "color": "#7c3aed",
+      "stories": [
+        {
+          "id": "a2-s1",
+          "name": "Build data ingestion pipeline: Polyvore + DeepFashion loaders",
+          "description": "As Dev B, I want reusable data loaders so training can start without manual work.\n\nOutput: src/data/polyvore.py, src/data/deepfashion.py\nTests: pytest tests/data/ với coverage ≥70%",
+          "release": "r1",
+          "status": "Planned",
+          "tags": [
+            "data",
+            "dev-b",
+            "tdd"
+          ]
+        },
+        {
+          "id": "a2-s2",
+          "name": "Occasion labeling pipeline với Gemini API (70K outfits Polyvore)",
+          "description": "As Dev B, I want occasion labels for all Polyvore outfits so the composer can learn context-awareness.\n\nClasses: [casual, office, formal, sport, evening]\nTool: google-generativeai, diskcache để cache results\nQuality: Human-verify 200 samples → expect ≥80% agreement\nCost: Free tier Gemini, ~3 ngày để label 70K",
+          "release": "r3",
+          "status": "Planned",
+          "tags": [
+            "weak-supervision",
+            "gemini",
+            "dev-b"
+          ]
+        },
+        {
+          "id": "a2-s3",
+          "name": "Multi-label attribute extractor training (color, fit, style, category)",
+          "description": "As Dev A, I want item attribute embeddings so the customization module can filter by attribute.\n\nDataset: DeepFashion-Multimodal (44K items)\nModel: Fine-tune ViT-B/16 classification head\nLog W&B: attribute accuracy per class\nRun on: Thunder Compute H100 (~30 phút, ~$2)",
+          "release": "r3",
+          "status": "Planned",
+          "tags": [
+            "ml",
+            "attributes",
+            "wandb",
+            "thunder-compute",
+            "dev-a"
+          ]
+        },
+        {
+          "id": "a2-s4",
+          "name": "Build FAISS → Qdrant index pipeline (Docker Compose)",
+          "description": "As Dev B, I want a persistent vector store so retrieval works across restarts.\n\nStack: qdrant-client + qdrant/qdrant Docker\nPhase 1: Index DeepFashion 52K items\nTests: E2E retrieval test (query → top-K) với pytest",
+          "release": "r3",
+          "status": "Planned",
+          "tags": [
+            "retrieval",
+            "qdrant",
+            "dev-b"
+          ]
+        },
+        {
+          "id": "a2-s5",
+          "name": "Bias audit: distribution by body shape + skin tone",
+          "description": "As Dev A+C, I want documented bias analysis so our report addresses fairness honestly.\n\nOutput: notebooks/bias_audit.ipynb\nPlots: body shape distribution, height/weight heatmap\nNote: DeepFashion bias về thin/tall → document và mitigate với re-sampling",
+          "release": "r3",
+          "status": "Planned",
+          "tags": [
+            "fairness",
+            "bias",
+            "all-devs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a3",
+      "name": "🧍 Body Understanding",
+      "color": "#dc2626",
+      "stories": [
+        {
+          "id": "a3-s1",
+          "name": "Body shape rule-based classifier v0 (MediaPipe alternative: YOLO-pose)",
+          "description": "As Dev C, I want a body shape classifier from image so we can personalize recommendations.\n\nTool: ultralytics YOLOv8-pose (thay thế mediapipe — không support Python 3.13)\nKeypoints: shoulder(5,6), hip(11,12) → tính ratio\nClasses: 5 shapes (hourglass, pear, apple, rectangle, inverted-triangle)\nOutput: src/body/shape_classifier.py",
+          "release": "r1",
+          "status": "Planned",
+          "tags": [
+            "body",
+            "yolo-pose",
+            "python-3.13",
+            "dev-c"
+          ]
+        },
+        {
+          "id": "a3-s2",
+          "name": "Body shape CNN classifier v1 (fine-tune ViT-B/16, 5 classes)",
+          "description": "As Dev C, I want an ML-based classifier so accuracy > rule-based.\n\nTraining: Thunder Compute pay-as-you-go (~1 hr, ~$3)\nLog W&B: accuracy, confusion matrix, per-class F1\nTarget: ≥85% accuracy trên held-out test\nOutput: models/body_classifier_v1.pt",
+          "release": "r3",
+          "status": "Planned",
+          "tags": [
+            "body",
+            "cnn",
+            "wandb",
+            "thunder-compute",
+            "dev-c"
+          ]
+        },
+        {
+          "id": "a3-s3",
+          "name": "Anthropometric feature extractor (BMI, height category, proportions)",
+          "description": "As Dev C, I want numeric body features combined with class label so the composer has richer user signals.\n\nInput: (height, weight, image)\nOutput: body_vector = [shape_embedding(512d) || [bmi, height_cat(3), ratio(3)]]\nIntegration: combine với shape CNN embedding",
+          "release": "r3",
+          "status": "Planned",
+          "tags": [
+            "body",
+            "features",
+            "dev-c"
+          ]
+        },
+        {
+          "id": "a3-s4",
+          "name": "Skin tone extractor (HSV centroid → 12-color palette)",
+          "description": "As Dev C, I want skin tone detection so color recommendations are personalized.\n\nMethod: face crop (YOLO detect) → HSV sampling → map to 12 Fitzpatrick-inspired palette\nOutput: src/body/skin_tone.py",
+          "release": "r6",
+          "status": "Planned",
+          "tags": [
+            "body",
+            "color",
+            "dev-c"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a4",
+      "name": "🖼️ Catalog Encoder (Fashion-SigLIP)",
+      "color": "#059669",
+      "stories": [
+        {
+          "id": "a4-s1",
+          "name": "Fine-tune Marqo-FashionSigLIP trên DeepFashion + Fashion200K (contrastive)",
+          "description": "As Dev A, I want a fine-tuned fashion-specific encoder so retrieval beats CLIP zero-shot.\n\nModel: Marqo/marqo-fashionSigLIP (HF Hub)\nLoss: Sigmoid contrastive (SigLIP style)\nDataset: DeepFashion In-shop + Fashion200K (pair: image + title)\nTraining: Thunder Compute H100 (~4 hrs, ~$12)\nLog W&B: train/val loss, Recall@1/5/10 per epoch\nTarget: +5% Recall@5 vs CLIP zero-shot",
+          "release": "r4",
+          "status": "Planned",
+          "tags": [
+            "encoder",
+            "siglip",
+            "wandb",
+            "thunder-compute",
+            "dev-a"
+          ]
+        },
+        {
+          "id": "a4-s2",
+          "name": "Ablation 1: CLIP vs Fashion-SigLIP vs DINOv2 vs Fine-tuned SigLIP",
+          "description": "As Dev A, I want a documented ablation table so the report has rigorous comparison.\n\nMetrics: Recall@1, Recall@5, Recall@10, mAP\nLog W&B: grouped bar chart, comparison table\nOutput: ablation_table_encoder.csv + W&B report",
+          "release": "r4",
+          "status": "Planned",
+          "tags": [
+            "ablation",
+            "evaluation",
+            "wandb",
+            "dev-a"
+          ]
+        },
+        {
+          "id": "a4-s3",
+          "name": "Build catalog index pipeline: encode → Qdrant (52K DeepFashion items)",
+          "description": "As Dev B, I want the full catalog indexed so retrieval is functional E2E.\n\nProcess: batch encode (ultralytics GPU, 128 batch) → Qdrant upsert\nBenchmark: index time + query latency (target <100ms P95)\nLog W&B: indexing stats",
+          "release": "r4",
+          "status": "Planned",
+          "tags": [
+            "retrieval",
+            "qdrant",
+            "dev-b"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a5",
+      "name": "👗 Outfit Composer",
+      "color": "#0284c7",
+      "stories": [
+        {
+          "id": "a5-s1",
+          "name": "Implement Transformer composer với special tokens [body][occ][top][bot][shoes][acc]",
+          "description": "As Dev A, I want a Transformer-based outfit composer so the model learns cross-item compatibility.\n\nArchitecture: 4-layer Transformer, 8 heads, d_model=512\nSpecial tokens: [BODY], [OCC], [OUTFIT] (learned embeddings)\nInput: Fashion-SigLIP embeddings + body_vector + occasion_vector\nOutput: compatibility score + fill-in-the-blank ranking",
+          "release": "r5",
+          "status": "Planned",
+          "tags": [
+            "composer",
+            "transformer",
+            "dev-a"
+          ]
+        },
+        {
+          "id": "a5-s2",
+          "name": "FITB training trên Polyvore Outfits (68K outfits) với W&B tracking",
+          "description": "As Dev A, I want the composer trained on Polyvore so it learns real outfit compatibility.\n\nTraining: Thunder Compute A100 (~6 hrs, ~$15)\nLog W&B: FITB accuracy/epoch, AUC, val loss\nTarget: FITB ≥55%, AUC ≥0.85\nEarlyStop: val FITB không improve 3 epochs",
+          "release": "r5",
+          "status": "Planned",
+          "tags": [
+            "training",
+            "fitb",
+            "wandb",
+            "thunder-compute",
+            "dev-a"
+          ]
+        },
+        {
+          "id": "a5-s3",
+          "name": "Occasion CLIP text encoder integration (5 classes → text embedding)",
+          "description": "As Dev A, I want occasion conditioning integrated into the composer.\n\nMethod: CLIP text encode occasion string → project to d_model=512 → [OCC] token\nExamples: 'office formal meeting', 'casual weekend outdoor'\nTest: Notebook demonstrating different occasions → different outfit rankings",
+          "release": "r5",
+          "status": "Planned",
+          "tags": [
+            "composer",
+            "occasion",
+            "dev-a"
+          ]
+        },
+        {
+          "id": "a5-s4",
+          "name": "Ablation 2: w/ vs w/o body conditioning | Ablation 3: w/ vs w/o occasion",
+          "description": "As Dev A, I want ablation studies proving each component adds value.\n\nExperiments: 4 conditions (body×occasion: 2×2 grid)\nLog W&B: grouped experiment comparison, summary table\nOutput: ablation_table_conditioning.csv",
+          "release": "r6",
+          "status": "Planned",
+          "tags": [
+            "ablation",
+            "evaluation",
+            "wandb",
+            "dev-a"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a6",
+      "name": "🎯 Body-Aware Compatibility (ViBE-style)",
+      "color": "#db2777",
+      "stories": [
+        {
+          "id": "a6-s1",
+          "name": "ViBE-style contrastive loss: (body, flattering_item) vs (body, not_flattering_item)",
+          "description": "As Dev A, I want body-aware item scoring so recommendations are personalized to body shape.\n\nLoss: Contrastive (InfoNCE variant)\nPositive pairs: body_class X → items tagged flattering for X (từ styling rules)\nNegative pairs: hard negatives (items flattering for different shape)\nTraining: Thunder Compute (~2 hrs, ~$6)\nLog W&B: contrastive loss, body-conditional Precision@5",
+          "release": "r6",
+          "status": "Planned",
+          "tags": [
+            "body-aware",
+            "contrastive",
+            "wandb",
+            "thunder-compute",
+            "dev-a"
+          ]
+        },
+        {
+          "id": "a6-s2",
+          "name": "Integrate body embedding vào Transformer composer",
+          "description": "As Dev A, I want body_vector feeding into the composer's [BODY] token so it influences outfit selection.\n\nImplementation: Concat body_vector với [BODY] token embedding → project lên d_model\nTest: Same occasion, different body shapes → different outfit recommendations",
+          "release": "r6",
+          "status": "Planned",
+          "tags": [
+            "body-aware",
+            "composer",
+            "dev-a",
+            "dev-b"
+          ]
+        },
+        {
+          "id": "a6-s3",
+          "name": "Body-conditional Precision@K evaluation (target: +10% vs non-conditional)",
+          "description": "As Dev A, I want metric evidence that body conditioning improves results.\n\nEval protocol: For each body shape class, compare ranked items vs styling rule ground truth\nLog W&B: body_conditional_precision@5 per class + aggregate\nOutput: Table in report",
+          "release": "r6",
+          "status": "Planned",
+          "tags": [
+            "evaluation",
+            "body-aware",
+            "wandb",
+            "dev-a"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a7",
+      "name": "✨ Item Customization",
+      "color": "#d97706",
+      "stories": [
+        {
+          "id": "a7-s1",
+          "name": "Attribute-conditioned retrieval module (filter + compatibility re-rank)",
+          "description": "As Dev A+B, I want attribute-based item swap so users can customize outfit combinations.\n\nFlow: user specifies {category, color, style} → Qdrant filter → re-rank by compatibility\nAPI: POST /customize-item {outfit_id, item_slot, target_attrs} → [items]\nTests: TDD, pytest coverage ≥80% trên filter logic",
+          "release": "r7",
+          "status": "Planned",
+          "tags": [
+            "customization",
+            "retrieval",
+            "dev-a",
+            "dev-b",
+            "tdd"
+          ]
+        },
+        {
+          "id": "a7-s2",
+          "name": "FastAPI inference endpoint (POST /recommend, POST /search)",
+          "description": "As Dev B, I want a FastAPI server so the frontend can call the model.\n\nEndpoints:\n  POST /recommend: {image_b64, height, weight, occasion} → {outfit}\n  POST /search: {query_text} → {items}\nLatency target: <3s E2E trên CPU\nStack: fastapi>=0.115, uvicorn, pydantic v2",
+          "release": "r7",
+          "status": "Planned",
+          "tags": [
+            "api",
+            "fastapi",
+            "dev-b"
+          ]
+        },
+        {
+          "id": "a7-s3",
+          "name": "E2E integration test: request → body classify → encode → retrieve → compose → respond",
+          "description": "As all devs, I want end-to-end tests so we catch regressions early.\n\nTest: 5 different user profiles (body + occasion combo) → assert output format valid\nCI: Run trên GitHub Actions (CPU, mocked model)\nOutput: CI badge green",
+          "release": "r7",
+          "status": "Planned",
+          "tags": [
+            "testing",
+            "e2e",
+            "all-devs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a8",
+      "name": "🚀 Demo & Deploy",
+      "color": "#16a34a",
+      "stories": [
+        {
+          "id": "a8-s1",
+          "name": "Gradio demo UI: upload selfie + nhập (h,w) + chọn occasion → outfit grid",
+          "description": "As Dev C, I want a Gradio interface so users can try the system without coding.\n\nUI flow:\n  1. Upload ảnh (selfie/body)\n  2. Slider height (150-200cm), weight (40-120kg)\n  3. Dropdown occasion (5 options)\n  4. Output: 3-5 outfit suggestions với compatibility score\nStack: gradio>=5.9",
+          "release": "r8",
+          "status": "Planned",
+          "tags": [
+            "demo",
+            "gradio",
+            "dev-c"
+          ]
+        },
+        {
+          "id": "a8-s2",
+          "name": "Deploy lên HuggingFace Spaces (free CPU tier)",
+          "description": "As Dev B, I want a public URL so user study participants can access the demo.\n\nPlatform: HuggingFace Spaces (Gradio SDK, free)\nSetup: requirements.txt (Python 3.13 compatible), app.py\nURL: huggingface.co/spaces/outfitmatch/demo",
+          "release": "r8",
+          "status": "Planned",
+          "tags": [
+            "deploy",
+            "huggingface",
+            "dev-b"
+          ]
+        },
+        {
+          "id": "a8-s3",
+          "name": "User study mini: 10-15 testers, 5 cases mỗi người, Likert 1-5",
+          "description": "As Dev C, I want real user feedback so we have qualitative evaluation for the report.\n\nForm: Google Form (relevance, body-fit, occasion-fit)\nRecruit: Đa dạng body types, ít nhất 3 body shape classes\nTarget: Mean score ≥3.5/5",
+          "release": "r8",
+          "status": "Planned",
+          "tags": [
+            "user-study",
+            "evaluation",
+            "dev-c"
+          ]
+        },
+        {
+          "id": "a8-s4",
+          "name": "LLM-as-judge evaluation: Gemini score 200 outfit outputs",
+          "description": "As Dev A, I want an automated quality score so we have quantitative + qualitative evidence.\n\nPrompt: 'Score this outfit (1-5) for body_shape X attending occasion Y: {outfit_description}'\nLog W&B: llm_judge_score distribution, correlation với user ratings\nOutput: Eval report section",
+          "release": "r8",
+          "status": "Planned",
+          "tags": [
+            "evaluation",
+            "llm-judge",
+            "gemini",
+            "wandb",
+            "dev-a"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a9",
+      "name": "📊 Evaluation & Report",
+      "color": "#be185d",
+      "stories": [
+        {
+          "id": "a9-s1",
+          "name": "Final ablation suite: run all 4 ablations + export W&B report",
+          "description": "As Dev A, I want complete ablation results so the report has strong experimental section.\n\nAblations:\n  1. Encoder: CLIP vs SigLIP vs DINOv2 vs Fine-tuned\n  2. Body conditioning: on/off\n  3. Occasion conditioning: on/off\n  4. Decoding: greedy vs beam\nExport: W&B report PDF + CSV tables",
+          "release": "r9",
+          "status": "Planned",
+          "tags": [
+            "ablation",
+            "wandb",
+            "dev-a"
+          ]
+        },
+        {
+          "id": "a9-s2",
+          "name": "Baseline comparison: model vs GPT-4o-mini zero-shot stylist",
+          "description": "As Dev A, I want to compare against GPT-4o-mini baseline so we identify where our model wins/loses.\n\nBaseline: GPT-4o-mini prompt with same user input → outfit suggestion\nMetric: User preference (paired comparison, 20 testers)\nExpected win: Our model outperforms on 'retrieval of real catalog items' metric\nLog W&B: win_rate, metric breakdown",
+          "release": "r9",
+          "status": "Planned",
+          "tags": [
+            "baseline",
+            "evaluation",
+            "wandb",
+            "dev-a"
+          ]
+        },
+        {
+          "id": "a9-s3",
+          "name": "Dataset Card + Model Card (fairness, bias, limitations)",
+          "description": "As all devs, I want model documentation so the project is academically honest.\n\nContent: Training data, bias audit results, known limitations, intended use\nFormat: HuggingFace Model Card standard\nNote: Đây là điểm bắt buộc trong báo cáo",
+          "release": "r9",
+          "status": "Planned",
+          "tags": [
+            "documentation",
+            "fairness",
+            "all-devs"
+          ]
+        },
+        {
+          "id": "a9-s4",
+          "name": "Final report (18-20 trang) + slide (25-30 slides) + demo video (3 phút)",
+          "description": "As Dev A (lead) + all, I want final deliverables polished so we get full marks.\n\nReport sections:\n  1. Intro → 2. Related Work → 3. Method → 4. Datasets → 5. Experiments → 6. Discussion → 7. Conclusion\nSlide: Figma/Canva, professional design\nDemo video: loom.com, 3 phút walkthrough\nReproducibility: uv sync → make demo chạy từ scratch",
+          "release": "r9",
+          "status": "Planned",
+          "tags": [
+            "report",
+            "slides",
+            "dev-a",
+            "all-devs"
+          ]
+        },
+        {
+          "id": "a9-s5",
+          "name": "Reproducibility check: clone repo mới → uv sync → make demo (CI on main)",
+          "description": "As Dev B, I want the repo to be fully reproducible so reviewers can run the demo easily.\n\nSteps: Fresh clone → uv sync → docker compose up qdrant → make demo\nCI: GitHub Actions final job\nOutput: CI badge + Makefile target",
+          "release": "r9",
+          "status": "Planned",
+          "tags": [
+            "reproducibility",
+            "ci",
+            "dev-b"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a10",
+      "name": "🎤 Proposal",
+      "color": "#ea580c",
+      "stories": [
+        {
+          "id": "a10-s1",
+          "name": "Viết proposal draft v1 (15 trang): problem, approach, datasets, timeline",
+          "description": "As Dev A, I want a strong proposal draft so the presentation goes well.\n\nSections: Problem → Related Work → Approach → Datasets → Eval Plan → Risk → Timeline\nFormat: PDF, 15 trang\nDeadline: End of Sprint 1 (Tuần 2)",
+          "release": "r1",
+          "status": "Planned",
+          "tags": [
+            "proposal",
+            "dev-a"
+          ]
+        },
+        {
+          "id": "a10-s2",
+          "name": "Slide thuyết trình proposal (15 slides) + rehearsal 2 lần",
+          "description": "As all devs, I want a polished presentation so the proposal is approved.\n\nContent: Problem story → Demo mockup → Architecture → Timeline Gantt → Team\nRehearsal: 2 lần, record để check timing\nDeadline: Tuần 3",
+          "release": "r2",
+          "status": "Planned",
+          "tags": [
+            "proposal",
+            "presentation",
+            "all-devs"
+          ]
+        }
+      ]
+    }
+  ]
+}
