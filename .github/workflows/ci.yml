@@ -1,0 +1,32 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Lint (ruff)
+        run: |
+          uv run ruff check src tests
+          uv run ruff format --check src tests
+
+      - name: Type check (mypy)
+        run: uv run mypy src
+
+      - name: Tests
+        run: uv run pytest tests -v --cov=src/outfitmatch --cov-report=term-missing
+        env:
+          WANDB_MODE: offline
+          HF_HUB_DISABLE_TELEMETRY: "1"
