@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# uv
+uv.lock
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Experiments / data
+wandb/
+qdrant_storage/
+*.csv
+!docs/experiments/*.csv
+mlruns/
+
+# Models / data (large files tracked by DVC)
+models/
+data/raw/
+data/processed/
+*.pt
+*.pth
+*.safetensors
+*.bin
+
+# DVC
+.dvc/cache/
+.dvc/tmp/
+
+# Env
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
