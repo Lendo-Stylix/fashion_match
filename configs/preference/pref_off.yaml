@@ -1,0 +1,7 @@
+name: pref-off
+seed: 42
+task: preference
+model: {kind: open_clip, checkpoint: "hf-hub:Marqo/marqo-fashionSigLIP"}
+dataset: {hf_id: data/raw/preference/triplets.jsonl, split: train}
+composer: {n_heads: 8, n_layers: 4, use_pref: false, pref_groups: []}
+train: {epochs: 8, batch_size: 32, lr: 1.0e-4}

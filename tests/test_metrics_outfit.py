@@ -1,4 +1,6 @@
-from outfitmatch.metrics.outfit import compatibility_auc, fitb_accuracy
+import torch
+
+from outfitmatch.metrics.outfit import compatibility_auc, fitb_accuracy, preference_pairwise_accuracy
 
 
 def test_fitb_accuracy_all_correct():
@@ -23,3 +25,9 @@ def test_compatibility_auc_random():
     scores = [0.5, 0.5, 0.5, 0.5]
     labels = [1, 0, 1, 0]
     assert 0.0 <= compatibility_auc(scores, labels) <= 1.0
+
+
+def test_pairwise_accuracy_counts_correct_orderings():
+    s_pos = torch.tensor([1.0, 0.2, 3.0])
+    s_neg = torch.tensor([0.0, 0.5, 1.0])      # row 1 is wrong (0.2 < 0.5)
+    assert preference_pairwise_accuracy(s_pos, s_neg) == round(2 / 3, 6)
