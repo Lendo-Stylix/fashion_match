@@ -20,3 +20,16 @@ def test_body_occ_tokens_change_output():
     base = m(items, mask)
     cond = m(items, mask, body=torch.randn(1, 16), occ=torch.randn(1, 16))
     assert not torch.allclose(base, cond)
+
+
+def test_pref_tokens_change_output_and_are_optional():
+    torch.manual_seed(0)
+    m = OutfitTransformer(embed_dim=16, n_heads=2, n_layers=2,
+                          pref_groups=("style", "color"))
+    items = torch.randn(1, 3, 16)
+    mask = torch.ones(1, 3, dtype=torch.bool)
+    base = m(items, mask)                                  # pref=None -> unchanged path
+    cond = m(items, mask, pref={"style": torch.randn(1, 16),
+                                "color": torch.randn(1, 16)})
+    assert base.shape == (1,)
+    assert not torch.allclose(base, cond)
