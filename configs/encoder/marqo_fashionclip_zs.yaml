@@ -1,0 +1,6 @@
+name: encoder-marqofashionclip-zs
+seed: 42
+task: retrieval
+model: {kind: open_clip, checkpoint: "hf-hub:Marqo/marqo-fashionCLIP"}
+dataset: {hf_id: Marqo/deepfashion-inshop, config: default, split: data, max_rows: 5000}
+train: {epochs: 0, batch_size: 64}

@@ -1,0 +1,6 @@
+name: dataset-fashion200k
+seed: 42
+task: retrieval
+model: {kind: open_clip, checkpoint: "hf-hub:Marqo/marqo-fashionSigLIP"}
+dataset: {hf_id: Marqo/fashion200k, config: default, split: data, max_rows: 10000}
+train: {epochs: 0, batch_size: 64}

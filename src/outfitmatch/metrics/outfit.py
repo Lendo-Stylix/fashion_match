@@ -33,3 +33,10 @@ def preference_pairwise_accuracy(
         return 0.0
     correct = (score_pos > score_neg).float().sum().item()
     return round(correct / score_pos.numel(), 6)
+
+
+def instruction_flip_consistency(scores_a: torch.Tensor, scores_b: torch.Tensor) -> float:
+    """For contrastive-flip pairs (same outfits, flipped instruction),
+    fraction where the model's preferred outfit also flips."""
+    flipped = scores_a.argmax(dim=-1) != scores_b.argmax(dim=-1)
+    return round(flipped.float().mean().item(), 6)
