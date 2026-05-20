@@ -35,12 +35,14 @@ class ComposerConfig(BaseModel):
     embed_dim: int = 512
     use_body: bool = False
     use_occ: bool = False
+    use_pref: bool = False
+    pref_groups: list[str] = Field(default_factory=list)
 
 
 class ExperimentConfig(BaseModel):
     name: str
     seed: int = 42
-    task: Literal["retrieval", "fitb", "compatibility"]
+    task: Literal["retrieval", "fitb", "compatibility", "preference"]
     model: ModelConfig
     dataset: DatasetConfig
     train: TrainConfig = Field(default_factory=TrainConfig)

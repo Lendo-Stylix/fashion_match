@@ -137,3 +137,66 @@ def test_execute_finetune_path_called(monkeypatch):
 
     execute(cfg, group="t", job_type="ft")
     assert called.get("ft") is True
+
+
+def test_execute_preference_task(monkeypatch, tmp_path):
+    import json
+    import torch
+    from outfitmatch.config import ExperimentConfig
+    from outfitmatch.runner import execute
+
+    # Create a minimal triplets.jsonl
+    triplets_file = tmp_path / "triplets.jsonl"
+    triplets_file.write_text(
+        json.dumps({"instruction": "minimalist", "body_shape": "pear",
+                    "pos_items": ["i1", "i2"], "neg_items": ["i3", "i4"]}) + "\n"
+        + json.dumps({"instruction": "bold", "body_shape": "apple",
+                      "pos_items": ["i5"], "neg_items": ["i6"]}) + "\n"
+    )
+
+    cfg = ExperimentConfig.model_validate({
+        "name": "pref-test", "seed": 1, "task": "preference",
+        "model": {"kind": "hf_clip", "checkpoint": "stub"},
+        "dataset": {"hf_id": str(triplets_file), "split": "train"},
+        "train": {"epochs": 1, "batch_size": 2, "lr": 1e-4},
+        "composer": {"n_heads": 2, "n_layers": 1, "use_pref": True,
+                     "pref_groups": ["style"]},
+    })
+
+    class _Enc:
+        embed_dim = 16
+        def encode_image(self, x): return torch.zeros(len(x), 16)
+        def encode_text(self, x): return torch.zeros(len(x), 16)
+
+    fake_pref_json = (
+        '{"hard":{"colors_avoid":[],"categories_exclude":[],"materials_require":[]},'
+        '"soft":{"style":"minimalist","color":"","fit":""}}'
+    )
+
+    import outfitmatch.encoders.factory as fac_mod
+    import outfitmatch.preference.structuring as structuring_mod
+
+    monkeypatch.setattr(fac_mod, "build_encoder", lambda *a, **k: _Enc())
+    monkeypatch.setitem(sys.modules, "outfitmatch.encoders.factory", fac_mod)
+
+    # Patch PromptStructurer to avoid diskcache and real Gemini calls
+    from outfitmatch.preference.schema import StructuredPreference, apply_body_fallback
+    import json as _json
+
+    class _FakeStructurer:
+        def __init__(self, *a, **k):
+            pass
+
+        def structure(self, instruction, body_shape):
+            data = _json.loads(fake_pref_json)
+            pref = StructuredPreference.model_validate(data)
+            return apply_body_fallback(pref, body_shape)
+
+    monkeypatch.setattr(structuring_mod, "PromptStructurer", _FakeStructurer)
+    monkeypatch.setitem(sys.modules, "outfitmatch.preference.structuring", structuring_mod)
+
+    metrics = execute(cfg, group="t", job_type="preference")
+    assert "pairwise_acc" in metrics
+    assert 0.0 <= metrics["pairwise_acc"] <= 1.0
+    assert "bt_loss" in metrics
+    assert torch.isfinite(torch.tensor(metrics["bt_loss"]))

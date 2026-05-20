@@ -61,3 +61,19 @@ def test_composer_config_parsed(tmp_path: Path):
     assert cfg.composer is not None
     assert cfg.composer.use_body is True
     assert cfg.composer.use_occ is False
+
+
+def test_preference_config_parses(tmp_path):
+    from outfitmatch.config import load_config
+    p = tmp_path / "pref.yaml"
+    p.write_text(
+        "name: pref-all\nseed: 42\ntask: preference\n"
+        'model: {kind: open_clip, checkpoint: "hf-hub:Marqo/marqo-fashionSigLIP"}\n'
+        "dataset: {hf_id: local, split: train}\n"
+        "composer: {n_heads: 8, n_layers: 4, use_pref: true, "
+        "pref_groups: [style, color, fit]}\n"
+    )
+    cfg = load_config(str(p))
+    assert cfg.task == "preference"
+    assert cfg.composer.use_pref is True
+    assert cfg.composer.pref_groups == ["style", "color", "fit"]
