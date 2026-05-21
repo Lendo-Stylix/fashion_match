@@ -13,6 +13,7 @@
 | **1C — Outfit Composer** | S5, S6, S7 | Outfit sets + compatibility + occasion labels | [OUTFIT_COMPOSER.md](OUTFIT_COMPOSER.md) |
 | **1C+ — Preference** | S9 | Conditional `(instruction, pos, neg)` triplets | [OUTFIT_COMPOSER.md](OUTFIT_COMPOSER.md) §9 |
 | **1D — Evaluation** | S8, S9 | User study responses + LLM-as-judge | [USER_STUDY.md](USER_STUDY.md) |
+| **Store VN** | manual | Store registry + item-price-store links từ VN stores | [STORE_CATALOG_VN.md](STORE_CATALOG_VN.md) |
 
 ---
 
@@ -25,6 +26,7 @@ data/
 │   ├── catalog/                # Ảnh item + catalog_metadata.parquet
 │   ├── outfits/                # Outfit sets + outfits.jsonl
 │   ├── preference/             # triplets.jsonl (Sprint 9 personalization)
+│   ├── stores/                 # store_registry.db (SQLite) + item_store_links.csv
 │   └── occasion_cache/         # SQLite + pref_cache (Gemini structuring cache)
 ├── custom/                     # Dữ liệu tự thu thập (cùng schema với raw/)
 │   ├── body/                   # Theo BODY_PIPELINE.md §Custom Collection

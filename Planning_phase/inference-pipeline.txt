@@ -1,0 +1,47 @@
+ghi chú:
+	- chỉ mục: VD (quần, váy, áo, vớ, giày, phụ kiện, trang sức,...)
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+step 1: người dùng nhập thông tin text/image (imgage là optional vì tính an toàn thông tin nhạy cảm)
+	|									|
+	|									|
+	|									|thông báo thông tin còn thiếu
+										|
+step 2: tiếp nhận/trích xuất thông tin						|
+	SLM agent 1 phân tích prompt trả về keyword/cụm keyword			|
+	SLM agent 2 điền form thông tin cần thiết bằng kết quả từ agent 1	|
+		TH1: chưa đủ thông tin ------------------------------------------
+		TH2: đầy đủ ---------------------------------------------
+	YOLO-pose trích xuất keypoints của image			|
+		|							|
+		|--------------------------------------------------------
+		|
+
+step 3: truy xuất tất cả các các sản phẩm dựa trên các tag hợp lệ có thể matching với thông tin trong form dù cho sản phẩm có dị cỡ nào
+		|	(loại tag có thể dùng phương pháp tìm kiếm thông thường để lọc bỏ bớt, VD: màu sắc, occassion,...)
+		|
+		|
+		|
+		|
+
+step 4: ranking rổ sản phẩm theo chỉ mục bằng các thông tin: giá cả/ chất lượng/ brand/...
+		|
+		|
+		|
+		|
+
+step 5:
+	gom nhóm các sản phẩm cùng khoảng cấp bậc dựa trên chỉ mục
+	tổ hợp các sản phẩm theo chỉ mục dựa trên top outfit (vn/châu á/âu/thế giới)
+		-> danh sách top set đồ
+		|
+		|
+
+step 6: OutfitTransformer đánh giá danh sách top set dựa trên form thông tin đã được token hóa
+		|
+		|
+		|
+		|
+
+step 7: lấy top 3 hoặc 5 
