@@ -11,11 +11,13 @@
 
 0. Bối cảnh Scrum/XP — vì sao kiến trúc được thiết kế như vậy
 1. Tổng quan hệ thống — bài toán & kiến trúc 6 tầng
+1b. Related Work — 4 cụm paper nền + research gap
 2. Data Collection & Pre-processing (tầng sâu nhất)
 3. Training Pipeline (tầng sâu nhất)
 4. Model Architecture — phân tích tới tầng layer/tensor
 5. Inference Pipeline (tầng sâu nhất)
 6. Evaluation, Ablation & Definition of Done
+6b. Đo lường Performance từng tầng
 7. Bản đồ Sprint ↔ Kiến trúc
 8. Trạng thái hiện tại của code vs thiết kế (trung thực)
 9. Kịch bản trình bày 30 phút
@@ -103,6 +105,169 @@ OUTPUT: Top 3–5 outfit sets (item list + score + body_shape + occasion)
 | **Tái sử dụng SOTA** | Tầng 2 dùng encoder pretrained (fashionSigLIP 203M) — không train CV backbone từ đầu |
 | **Tách dữ liệu huấn luyện** | Encoder cần cặp (ảnh, caption); composer cần outfit set — 2 dạng dữ liệu khác nhau, train riêng |
 | **Khả năng debug** | Lỗi định vị được theo tầng — body sai vs encoder sai vs composer sai |
+
+---
+
+## 1b. RELATED WORK
+
+> Phần này trả lời câu hỏi của hội đồng: *"Đã có ai làm vấn đề này chưa? Bạn khác họ ở chỗ nào?"*
+> Nhóm chia related work thành **4 cụm** theo tầng kiến trúc — mỗi cụm gồm 2–3 paper nền, từ đó làm rõ **research gap** mà OutfitMatch lấp đầy.
+
+---
+
+### Cụm 1 — Vision-Language Encoders (nền tảng của Layer 2)
+
+#### CLIP — Radford et al., OpenAI (2021)
+> *"Learning Transferable Visual Models From Natural Language Supervision"*
+
+Đây là **kiến trúc nền** của mọi encoder trong dự án. CLIP huấn luyện **dual-tower** (image ViT + text Transformer) trên 400M cặp (ảnh, caption) từ internet bằng **InfoNCE contrastive loss** (softmax chuẩn hóa toàn cục). Kết quả: embedding ảnh và văn bản chia sẻ cùng không gian vector — có thể tìm ảnh bằng query text và ngược lại.
+
+**Giới hạn với bài toán fashion:** domain mismatch — CLIP không thấy đủ ảnh thời trang trong pre-training → Recall@5 thấp trên catalog chuyên biệt. Đây là lý do cần domain-specific encoder.
+
+**Vai trò trong OutfitMatch:** baseline sàn (`openai/clip-vit-base-patch32`) — mọi encoder khác phải vượt qua CLIP-ZS.
+
+---
+
+#### SigLIP — Zhai et al., Google Research (2023)
+> *"Sigmoid Loss for Language Image Pre-Training"* · arXiv:2303.15343
+
+SigLIP thay InfoNCE softmax bằng **sigmoid loss thuần cặp** — thay vì chuẩn hóa toàn hàng/cột của ma trận similarity (CLIP), SigLIP coi mỗi cặp (i,j) là **bài toán binary classification độc lập**:
+
+```
+L = -mean( logsigmoid(z_ij · s_ij · t + b) )
+z_ij = +1 nếu i=j (cặp đúng), −1 nếu i≠j
+```
+
+**Đóng góp kỹ thuật quan trọng:** không phụ thuộc vào batch size lớn như CLIP → huấn luyện được trên GPU hạn chế (Colab, Kaggle). Đây là lý do nhóm chọn SigLIP loss cho Component 1.
+
+**Vai trò trong OutfitMatch:** hàm loss fine-tuning encoder (`src/train/contrastive.py`).
+
+---
+
+#### FashionCLIP — Chia et al. (2022)
+> `patrickjohncyh/fashion-clip` · 109.5M downloads · MIT license
+
+Fine-tune CLIP trên domain thời trang — tập dữ liệu kết hợp từ nhiều nguồn retail. Cải thiện đáng kể Recall@K trên fashion retrieval so với CLIP vanilla.
+
+**Vai trò trong OutfitMatch:** ablation baseline 2 (FashionCLIP-ZS) trong thí nghiệm encoder axis.
+
+---
+
+#### Marqo fashionSigLIP — Marqo (2023–2024)
+> `Marqo/marqo-fashionSigLIP` · 203M params · 8.4M downloads · Apache-2.0
+
+Huấn luyện với **Generalised Contrastive Learning** trên **7 fashion dataset** chuyên biệt (DeepFashion, Polyvore, fashion200k, ...) bằng SigLIP loss. Hiện là SOTA trên fashion retrieval benchmark.
+
+**Đây là encoder PRIMARY** của OutfitMatch — được chọn vì: (1) SigLIP loss khớp với kế hoạch fine-tune, (2) Apache-2.0 cho phép dùng thương mại, (3) performance tốt nhất trong họ fashion encoder.
+
+---
+
+### Cụm 2 — Outfit Compatibility & Composition (nền tảng của Layer 4)
+
+#### Bi-LSTM Compatibility — Han et al. (ACM MM 2017)
+> *"Learning Fashion Compatibility with Bidirectional LSTMs"*
+
+Model đầu tiên học **compatibility** giữa các item thời trang. Encode mỗi item thành vector, dùng **Bi-LSTM** xử lý outfit như một chuỗi → output compatibility score. Giới thiệu **Polyvore dataset** (68K outfits, 365K items) và task FITB.
+
+**Giới hạn:** LSTM coi outfit là chuỗi có thứ tự → nhạy cảm với thứ tự item, trong khi outfit thực tế là một **tập hợp** (set). Không có conditioning theo body shape hay occasion.
+
+**Vai trò trong OutfitMatch:** baseline B2 (FashionSigLIP-ZS + Bi-LSTM) để đo hiệu quả của OutfitTransformer.
+
+---
+
+#### Type-Aware Embedding — Vasileva et al. (ECCV 2018)
+> *"Learning Type-Aware Embeddings for Fashion Compatibility"*
+
+Mở rộng Polyvore dataset thành **disjoint** (item không trùng train/test → khó) và **nondisjoint** (dễ hơn). Đề xuất type-aware embedding — mỗi cặp item type (áo + quần, giày + túi) học một projection riêng.
+
+**Đóng góp quan trọng nhất với OutfitMatch:** định nghĩa chính xác task FITB và Compatibility, splits, và metric — OutfitMatch thừa kế trực tiếp.
+
+**Vai trò trong OutfitMatch:** nguồn dataset `owj0421/polyvore-outfits` dùng cho Component 3 & 4.
+
+---
+
+#### OutfitTransformer — Sarkar et al. (2022)
+> *"OutfitTransformer: Outfit Representations for Fashion Recommendation"* · arXiv:2204.04812
+
+**Kiến trúc tham chiếu trực tiếp** của Layer 4. Đề xuất dùng **Transformer Encoder (Set Transformer)** thay Bi-LSTM cho outfit compatibility:
+- Token `[CLS]` tổng hợp toàn outfit.
+- Item tokens được xử lý **song song** (không tuần tự) → permutation-invariant.
+- SOTA trên Polyvore FITB và compatibility.
+
+**Điểm OutfitTransformer gốc chưa làm:** không có token điều kiện theo body shape (`[BODY]`), occasion (`[OCC]`), hay sở thích cá nhân (`[PREF]`).
+
+**Vai trò trong OutfitMatch:** tái hiện toàn bộ kiến trúc + **mở rộng** bằng 3 loại conditioning token mới — đây là **đóng góp chính của dự án về kiến trúc**.
+
+---
+
+### Cụm 3 — Body-Aware Fashion (nền tảng của Layer 1)
+
+#### ViBE — Hsiao & Grauman (CVPR 2020)
+> *"ViBE: Dressing for Diverse Body Shapes"*
+
+Bộ dữ liệu và phương pháp đầu tiên giải quyết **body shape diversity** trong fashion recommendation. Gán nhãn outfit theo 5 body shape (hourglass, pear, apple, rectangle, inverted triangle) + flattering score. Học embedding biết được body-aware compatibility.
+
+**Giới hạn:** dataset gated (cần email tác giả), cần ảnh người thật có annotation → khó tái lập.
+
+**Vai trò trong OutfitMatch:** truyền cảm hứng cho Sprint 6 "ViBE-style body-aware conditioning". Thay vì dùng dataset ViBE, nhóm **dẫn xuất body shape từ pose keypoint** (rule-based) — không cần dataset labeled.
+
+---
+
+#### YOLOv8-pose — Ultralytics (2023)
+> `ultralytics` pip package · YOLOv8n-pose.pt · COCO-17 keypoint format
+
+Real-time pose estimation, output 17 keypoints theo chuẩn COCO. Nhẹ (nano variant), chạy tốt trên CPU.
+
+**Lý do chọn thay mediapipe:** `mediapipe` **không có wheel cho Python 3.13** — đây là ràng buộc cứng của môi trường. `ultralytics` là lựa chọn duy nhất khả thi.
+
+**Vai trò trong OutfitMatch:** PoseExtractor trong Layer 1, dẫn xuất body shape.
+
+---
+
+### Cụm 4 — Preference Learning & Ranking (nền tảng của Layer 0 + Component 4)
+
+#### Bradley-Terry Model — Bradley & Terry (1952)
+> *"Rank Analysis of Incomplete Block Designs"* · Biometrika
+
+Model thống kê cổ điển cho **pairwise comparison**: xác suất item A "thắng" B khi so sánh đôi:
+```
+P(A ≻ B) = σ(s_A − s_B)  [sigmoid]
+```
+Tối ưu bằng negative log-likelihood: `L = −log σ(s_A − s_B)`.
+
+**Vì sao Bradley-Terry phù hợp hơn cross-entropy bình thường:** không cần nhãn tuyệt đối ("outfit này đẹp điểm 4/5") mà chỉ cần **so sánh tương đối** ("outfit A phù hợp hơn B với instruction X") — dữ liệu dễ thu thập, annotation ít tốn kém.
+
+**Vai trò trong OutfitMatch:** `pairwise_bt_loss` trong Component 4, "conditional" vì cả hai forward pass dùng chung token `[PREF]`.
+
+---
+
+#### RLHF / InstructGPT — Ouyang et al., OpenAI (2022)
+> *"Training language models to follow instructions with human feedback"* · NeurIPS 2022
+
+Dùng **Bradley-Terry pairwise preference** + RL để align LLM với sở thích người dùng. Điểm chung với OutfitMatch: (1) thu thập preference triplets, (2) dùng pairwise loss để rank, (3) "conditional" — rank thay đổi theo context (instruction).
+
+**Điểm khác:** OutfitMatch không dùng RL — chỉ dùng **supervised preference post-training** (đơn giản hơn, phù hợp với quy mô dự án). Nhưng ý tưởng "instruction-conditional ranking" là tương đồng trực tiếp.
+
+**Vai trò trong OutfitMatch:** cung cấp framework tư duy cho Layer 0 (PromptStructurer → soft preference → conditioning token) và Component 4.
+
+---
+
+### 1b.x Research Gap — OutfitMatch lấp đầy gì?
+
+Bảng sau tóm tắt capability của từng hướng tiếp cận — để slide "motivation" rõ ràng khi thuyết trình:
+
+| Capability | CLIP-ZS | FashionSigLIP | Bi-LSTM (2017) | OutfitTransformer (2022) | **OutfitMatch** |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Fashion-domain retrieval | ✗ | ✓ | — | — | ✓ (fine-tuned) |
+| Outfit compatibility scoring | ✗ | ✗ | ✓ | ✓ | ✓ |
+| Set-invariant (permutation) | — | — | ✗ | ✓ | ✓ |
+| Body shape conditioning | ✗ | ✗ | ✗ | ✗ | **✓** |
+| Occasion conditioning | ✗ | ✗ | ✗ | ✗ | **✓** |
+| Free-text preference (soft) | ✗ | ✗ | ✗ | ✗ | **✓** |
+| Hard constraint filter | ✗ | ✗ | ✗ | ✗ | **✓** |
+| E2E latency < 3s CPU | — | — | — | — | **✓ (target)** |
+
+**Thông điệp khi trình bày:** "Không có một hệ thống nào trước đây tích hợp đồng thời body conditioning + occasion conditioning + free-text preference vào cùng một kiến trúc Transformer. Đây là đóng góp chính."
 
 ---
 
@@ -616,6 +781,211 @@ POST /customize-item  {outfit_id, item_slot, target_attrs}                    �
 2. `pytest` coverage **≥70%** cho module đã chạm, **CI xanh**.
 3. Có **docstring** + 1 entry trong `docs/feature.md`.
 4. **Tái lập được:** `uv sync && make demo` chạy từ đầu.
+
+---
+
+## 6b. ĐO LƯỜNG PERFORMANCE TỪNG TẦNG
+
+Kiến trúc nhiều tầng đòi hỏi **đo lường theo từng tầng riêng biệt** — không thể chỉ dùng một metric end-to-end. Lý do: nếu outfit cuối không tốt, không biết lỗi ở encoder (embed sai), composer (scoring sai), hay preference layer (parse prompt sai). Mỗi tầng có bộ metric riêng, tương ứng với bộ **test/eval độc lập** — đây chính là nguyên tắc TDD của XP áp vào đo lường.
+
+### 6b.1 Bảng đo lường tổng hợp — theo từng tầng
+
+| Tầng | Metric chính | Công cụ đo | Baseline so sánh | Target |
+|---|---|---|---|---|
+| **L0** Preference | JSON parse rate · slot coverage rate · cache hit rate · latency (ms) | instrumentation code · human spot-check | — | ≥95% parse · cache hit ≥80% sau ngày 2 |
+| **L1** Body | Keypoint detection rate · 5-class accuracy · confusion matrix 5×5 | unit test + manual annotation ~50 ảnh | Rule-based floor | detection ≥90% · human spot-check ≥85% agree |
+| **L2** Encoder | Recall@1/5/10 · mAP · SigLIP loss curve | `evaluate_retrieval()` · W&B | CLIP-ZS baseline | **Recall@5 ≥ CLIP-ZS + 5pp** |
+| **L3** Qdrant | Filter precision · ANN search latency · coverage rate sau filter | Qdrant metrics API | Không có filter | Filter không loại quá 40% candidate |
+| **L4** Composer | FITB accuracy · Compatibility AUC · Body-cond P@5 · Pref pairwise acc · Flip consistency | `fitb_accuracy()` · `compatibility_auc()` · `preference_pairwise_accuracy()` | Random baseline · Bi-LSTM Han 2017 | FITB ≥55% · AUC ≥0.85 · Body +10pp |
+| **E2E System** | Latency (ms) mỗi bước · tổng E2E · LLM-as-judge · User study Likert | `time.perf_counter()` · Gemini API · Google Form | GPT-4V zero-shot stylist | **<3s CPU** · Gemini ≥3.5/5 · User ≥3.5/5 |
+
+---
+
+### 6b.2 Đo chi tiết từng tầng
+
+#### Layer 0 — Preference Structuring
+
+Không có "ground truth" cứng (prompt tự do), nên dùng 3 phương pháp bổ sung:
+
+| Phương pháp | Mô tả | Khi nào chạy |
+|---|---|---|
+| **Parse success rate** | % instructions → JSON hợp lệ, `StructuredPreference` validate được | Mỗi lần gọi Gemini |
+| **Slot coverage** | % trường `hard`/`soft` được điền ≥1 giá trị (không phải tất cả rỗng) | Trên 100 instruction mẫu |
+| **Human spot-check** | Lấy ngẫu nhiên 50 instruction, con người đánh giá hard/soft có đúng ý không (scale 1-5) | Một lần trước Sprint 9 |
+| **Body fallback rate** | % request phải dùng body fallback → indicator "user không nêu yêu cầu cụ thể" | Log mỗi inference |
+| **Cache efficiency** | `cache_hits / total_calls` — tăng nhanh sau vài ngày → gần API cost $0 | W&B log |
+
+**Khi trình bày:** nhấn mạnh đây là điểm khác biệt — thay vì tag-based cứng, dùng **LLM parse prompt tự do**. Chi phí ~$0 sau khi cache warm. Measure luôn cả latency trung bình của Gemini call vs cache hit.
+
+---
+
+#### Layer 1 — Body Shape Classifier
+
+Thách thức: **không có dataset labeled body shape**. Chiến lược đo:
+
+**Định lượng (có thể làm ngay):**
+- `keypoint_detection_rate = số ảnh YOLO detect được / tổng ảnh` trên tập test ~100 selfie.
+- YOLO trả về `confidence score` cho từng keypoint → plot distribution histogram (confidence < 0.5 = keypoint không đáng tin → loại bỏ).
+
+**Định tính (semi-manual):**
+- Thu thập ~50 ảnh người thật, nhóm gán nhãn body shape thủ công → so sánh với rule classifier → **accuracy 5-class**.
+- **Confusion matrix 5×5**: xem classifier nhầm nhiều nhất ở cặp nào (thường: hourglass ↔ rectangle, pear ↔ apple).
+
+**Boundary test (XP — unit test):**
+- Các test case biên với `shoulder/hip` ratio ngay cạnh ngưỡng (1.05, 0.95, waist_ratio 0.80) → kiểm tra classifier không dao động.
+
+---
+
+#### Layer 2 — Catalog Encoder
+
+Ba loại đo lường bổ sung nhau:
+
+**1. Retrieval metrics (định lượng chính)**
+
+Trên tập val, mỗi query text → tìm matching image trong catalog. Ground truth = ảnh của cùng `item_ID`.
+
+```
+sims[i][j] = <encode_text(text_i), encode_image(image_j)>
+Recall@K  = % query tìm đúng item trong top-K kết quả
+mAP       = trung bình 1/(rank+1) của đúng item
+```
+
+So sánh 4 encoder trên cùng tập val → bảng ablation encoder.
+
+**2. Loss curve (định lượng training)**
+- SigLIP training loss vs epoch → xác nhận model đang học (loss giảm).
+- Nếu loss tăng hoặc phẳng ngay từ đầu → gradient issue hoặc lr quá cao.
+- Log lên W&B → so sánh các lần chạy.
+
+**3. Embedding space visualization (định tính)**
+- t-SNE/UMAP 2D plot của 5000 item embeddings, tô màu theo `category1` → tốt = cụm tách biệt theo category (áo/quần/giày rõ ràng).
+- Intra-class cosine similarity vs inter-class cosine similarity → tốt = intra >> inter.
+
+---
+
+#### Layer 3 — Qdrant Vector Store
+
+**Filter precision:** sau khi áp `categories_exclude` / `colors_avoid`, lấy mẫu ngẫu nhiên 50 kết quả → kiểm tra bằng tay % item vi phạm constraint. Mục tiêu: 0 vi phạm (filter là hard constraint, không phải ranking).
+
+**Coverage rate sau filter:** nếu filter quá chặt → candidate pool trống → composer không có gì xử lý. Đo `len(candidates) / K_requested` trên 100 query. Nếu < 50% → cần nới lỏng filter hoặc mở rộng catalog.
+
+**ANN search latency:** `Qdrant search` với batch query → log `latency_ms` trung bình và p95. Mục tiêu < 100ms (để tổng E2E < 3s).
+
+---
+
+#### Layer 4 — OutfitTransformer
+
+Đây là tầng có **nhiều metric nhất** và quan trọng nhất với hội đồng DL:
+
+**FITB Accuracy (Fill-in-the-Blank):**
+> Che 1 item trong outfit, đưa ra 4 lựa chọn (1 đúng + 3 ngẫu nhiên) → model chọn item phù hợp nhất dựa trên compatibility score. `acc = % model chọn đúng`.
+- Baseline ngẫu nhiên = 25% (4 lựa chọn). Target ≥55% — tức model có ý nghĩa thống kê.
+
+**Compatibility AUC:**
+> Phân biệt outfit positive (stylist) vs outfit negative (random substitution). `AUC = area under ROC curve`. AUC = 0.5 là random, AUC = 1.0 là hoàn hảo. Target ≥0.85.
+- Cần vẽ ROC curve cho mỗi conditioning variant (cond_none / cond_body / cond_body_occ) → hội đồng thấy rõ contribution của từng token.
+
+**Body-conditional Precision@5:**
+> Với query có `body_shape`, trong top-5 items → % items có `body_shapes` payload khớp. So sánh `cond_body=True` vs `cond_body=False`. Target +10pp.
+
+**Preference Pairwise Accuracy & Flip Consistency:**
+> `pairwise_acc`: % cặp (pos, neg) mà `s_pos > s_neg`.
+> `flip_consistency`: % cặp flip instruction mà model cũng flip ranking.
+- Hai metric này **chứng minh model học sở thích thực sự**, không phải memorize. Flip consistency < 30% = model bỏ qua `[PREF]` token.
+
+---
+
+#### System E2E — Latency Profiling
+
+Đo **từng bước riêng biệt** để xác định bottleneck:
+
+| Bước | Đo bằng | Mục tiêu |
+|---|---|---|
+| Preference Structuring (L0) | `time.perf_counter()` wrapping `structure()` | ≈0ms cache hit · ≤800ms miss |
+| Body Extraction (L1) | YOLO inference time | ≤400ms |
+| Encode query + ANN search (L2+L3) | `encode_text()` + Qdrant search | ≤600ms |
+| OutfitTransformer forward (L4) | `composer()` forward time | ≤500ms |
+| **Tổng E2E** | `time.perf_counter()` toàn bộ `recommend_outfit()` | **< 3s** |
+
+Trình bày dưới dạng **stacked bar chart** — thấy ngay bước nào chiếm latency nhiều nhất.
+
+---
+
+### 6b.3 Đánh giá định tính (Qualitative Evaluation)
+
+Hai phương pháp bổ sung cho metric định lượng — đặc biệt quan trọng vì "outfit đẹp" không thể đo hoàn toàn bằng số:
+
+#### LLM-as-Judge (Gemini)
+
+Prompt Gemini đánh giá 200 outfit ngẫu nhiên từ hệ thống:
+```
+"Đây là bộ outfit gợi ý cho người có body shape [X], dịp [Y], sở thích [Z].
+Items: [list]. Hãy chấm điểm 1-5 trên 3 tiêu chí:
+- Relevance: có phù hợp sở thích không?
+- Body-fit: có phù hợp vóc dáng không?
+- Occasion-fit: có phù hợp dịp không?"
+```
+
+Output: mean score cho mỗi tiêu chí → target ≥3.5/5.
+
+**Lưu ý quan trọng:** LLM-as-judge là **strong baseline cạnh tranh** (GPT-4V / Gemini zero-shot stylist) — nhóm **buộc phải so sánh** với nó. Frame thành: "trong catalog kín, hệ thống specialized của chúng tôi vs. generalist LLM không biết catalog."
+
+#### User Study (Sprint 8)
+
+| Tham số | Giá trị |
+|---|---|
+| Số người | 10–15, ưu tiên đa dạng body type |
+| Số case / người | 5 |
+| Thang đo | Likert 1–5 cho 3 tiêu chí: relevance · body-fit · occasion-fit |
+| Công cụ | Google Form |
+| Phân tích | Mean + std mỗi tiêu chí · paired t-test vs baseline nếu có |
+| Bias control | Không cho thấy body shape label để tránh confirmation bias |
+
+Kết quả user study là **highlight quan trọng** trong presentation — con số "người thật đánh giá" thuyết phục hội đồng hơn metric trên tập test.
+
+---
+
+### 6b.4 Bốn Ablation — Thiết kế đo lường
+
+Mỗi ablation kiểm tra đóng góp của **đúng một component**, giữ cố định phần còn lại:
+
+| Ablation | Biến | Metric đo | Kết quả kỳ vọng |
+|---|---|---|---|
+| **1 — Encoder variants** | CLIP-ZS → FashionCLIP-ZS → FashionSigLIP-ZS → FashionSigLIP-FT | Recall@1/5/10 · mAP | Thang leo lên từng bậc; FT cao nhất |
+| **2 — Body conditioning** | `cond_none` vs `cond_body` | Body-cond P@5 · FITB acc | `cond_body` tăng ≥10pp P@5 |
+| **3 — Occasion conditioning** | `cond_body` vs `cond_body_occ` | FITB acc trên outfit có occasion label | `cond_body_occ` tốt hơn cho formal/sport |
+| **4 — Decoding** | Greedy vs Beam (width B=3) | FITB acc · outfit diversity (intra-list distance) | Beam: FITB cao hơn · diversity cao hơn |
+
+**Cách đọc kết quả ablation khi thuyết trình:**
+> "Từ ablation 1, FashionSigLIP-FT > FashionSigLIP-ZS +5pp → fine-tune có hiệu quả. Từ ablation 2, thêm `[BODY]` token tăng P@5 +12pp → conditioning token thực sự học được body preference. Từ ablation 3, `[OCC]` có tác dụng rõ nhất với formal/sport outfit."
+
+---
+
+### 6b.5 Baseline bắt buộc so sánh
+
+Có 3 baseline nhóm **phải có trong slide comparison table** (không né được khi thuyết trình DL):
+
+| Baseline | Mô tả | Điểm mạnh | Điểm yếu so với OutfitMatch |
+|---|---|---|---|
+| **B1 — CLIP-ZS + Random** | CLIP zero-shot retrieval + ghép outfit ngẫu nhiên | Không cần train | Không học compatibility; không biết body/occasion |
+| **B2 — FashionSigLIP-ZS + Bi-LSTM** | SigLIP retrieval + Bi-LSTM compatibility (Han 2017) | SOTA trước transformer | Không có body/occasion conditioning; không có preference |
+| **B3 — GPT-4V zero-shot stylist** | Dùng GPT-4V / Gemini mô tả trực tiếp outfit cho user | Generalist mạnh | Không biết catalog cụ thể; không có ANN retrieval; latency cao |
+
+**Framing an toàn khi trình bày:** "B3 là strong baseline, chúng tôi không kỳ vọng thắng mọi tiêu chí. Điểm mạnh của OutfitMatch: (1) tìm được item thực sự có trong catalog, (2) đảm bảo body-fit theo vóc dáng cụ thể, (3) latency < 3s vs. LLM API."
+
+---
+
+### 6b.6 Gợi ý Visualization cho Slide
+
+| Slide | Dạng biểu đồ | Thông điệp |
+|---|---|---|
+| Encoder ablation | Bar chart: Recall@5 × 4 encoder | "FT vượt ZS" |
+| Encoder learning | Line chart: SigLIP loss vs epoch | "Model hội tụ ổn định" |
+| Compatibility | ROC curves 3 đường (cond_none/body/body_occ) | "Conditioning cải thiện AUC" |
+| Body shape | Confusion matrix 5×5 (heatmap) | "Nhầm nhiều nhất: hourglass ↔ rectangle" |
+| Latency breakdown | Stacked horizontal bar: 4 bước | "Bottleneck ở encoder + ANN" |
+| User study | Radar chart 3 chiều × 3 hệ thống (B1, B2, OutfitMatch) | "OutfitMatch tốt hơn ở body-fit + occasion-fit" |
+| Embedding space | t-SNE 2D, tô màu category | "Cluster rõ → encoder học được fashion domain" |
 
 ---
 
