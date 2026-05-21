@@ -1,4 +1,4 @@
-# Dataset Guide — OutfitMatch
+# Dataset Guide — FashionMatch
 
 > Đây là tài liệu tổng quan về tất cả dataset theo từng phase. Đọc file chi tiết của từng phase trước khi thu thập hoặc bổ sung dữ liệu.
 
