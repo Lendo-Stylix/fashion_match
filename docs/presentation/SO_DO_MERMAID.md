@@ -15,6 +15,10 @@
 > 9. Conditional Bradley-Terry — luồng preference post-training
 > 10. Sprint Map — Gantt 10 tuần ↔ tầng kiến trúc
 > 11. Experiment Cycle — lưới ablation một trục
+> 12. Related Work Lineage — paper nào truyền cảm hứng tầng nào
+> 13. Gap Analysis — Prior Work vs OutfitMatch (quadrant chart)
+> 14. Per-Layer Performance Measurement Framework
+> 15. Ablation Design — 4 thí nghiệm kiểm soát
 
 ---
 
@@ -505,6 +509,195 @@ flowchart LR
 
     classDef hot fill:#fff3e0,stroke:#e67e22
     class CLI,WBCHART hot
+```
+
+---
+
+## 12. Related Work Lineage — Paper nào truyền cảm hứng tầng nào
+
+> Sơ đồ cho thấy OutfitMatch không "phát minh lại từ đầu" mà xây trên nền các SOTA đã có — và mở rộng ở đâu.
+
+```mermaid
+flowchart LR
+    subgraph ENC["Nhom 1 — Encoder / CLIP Family"]
+        CLIP["CLIP\nRadford et al. 2021\nOpenAI\ndual-tower + InfoNCE loss"]
+        SIGLIP["SigLIP\nZhai et al. 2023 arxiv:2303.15343\nGoogle Research\nsigmoid loss thay softmax"]
+        FCLIP["FashionCLIP\nChia et al. 2022\ndomain CLIP fashion"]
+        MSIGLIP["marqo-fashionSigLIP\nMarqo 2023-2024\nSOTA fashion retrieval\n7 fashion datasets SigLIP"]
+        CLIP --> FCLIP
+        CLIP --> MSIGLIP
+        SIGLIP --> MSIGLIP
+    end
+
+    subgraph COMPAT["Nhom 2 — Outfit Compatibility"]
+        BILSTM["Bi-LSTM Compat\nHan et al. ACM MM 2017\nordered sequence outfit\nPolyvore dataset"]
+        VASILEVA["Type-Aware Embedding\nVasileva et al. ECCV 2018\nPolyvore disjoint/nondisjoint\nFITB + AUC metric definition"]
+        OT["OutfitTransformer\nSarkar et al. 2022\narXiv:2204.04812\nSet Transformer - CLS token"]
+        BILSTM --> OT
+        VASILEVA --> OT
+    end
+
+    subgraph BODY_GRP["Nhom 3 — Body-Aware Fashion"]
+        VIBE["ViBE\nHsiao and Grauman CVPR 2020\nbody shape diversity\nflattering labels"]
+        YOLO["YOLOv8-pose\nUltralytics 2023\nCOCO-17 keypoints\nPython 3.13 compatible"]
+    end
+
+    subgraph PREF_GRP["Nhom 4 — Preference Learning"]
+        BT["Bradley-Terry 1952\npairwise comparison\nP(A>B) = sigmoid(s_A - s_B)"]
+        RLHF["InstructGPT - RLHF\nOuyang et al. NeurIPS 2022\ninstruction-conditional ranking"]
+        BT --> RLHF
+    end
+
+    subgraph OM["OutfitMatch — dong gop cua du an"]
+        L2["Layer 2\nCatalog Encoder\nfine-tune fashionSigLIP"]
+        L1["Layer 1\nBody Pipeline\nYOLO + rule classifier"]
+        L4["Layer 4\nOutfitTransformer\n+ BODY / OCC / PREF tokens"]
+        L0["Layer 0\nPreference Structuring\nGemini + conditional BT"]
+    end
+
+    MSIGLIP -->|"PRIMARY encoder\nfine-tune"| L2
+    FCLIP -->|"ablation baseline"| L2
+    SIGLIP -->|"training loss"| L2
+
+    VIBE -->|"body shape concept"| L1
+    YOLO -->|"pose extractor"| L1
+
+    OT -->|"tham chieu kien truc\nmo rong conditioning tokens"| L4
+    BILSTM -->|"baseline B2"| L4
+    VASILEVA -->|"dataset + metric"| L4
+
+    BT -->|"pairwise_bt_loss"| L0
+    RLHF -->|"preference post-training concept"| L0
+
+    classDef prior fill:#e3f2fd,stroke:#1565c0
+    classDef om fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    class CLIP,SIGLIP,FCLIP,MSIGLIP,BILSTM,VASILEVA,OT,VIBE,YOLO,BT,RLHF prior
+    class L0,L1,L2,L4 om
+```
+
+---
+
+## 13. Gap Analysis — Prior Work vs OutfitMatch
+
+```mermaid
+quadrantChart
+    title Fashion Recommendation Capability Coverage
+    x-axis "Chi retrieval" --> "Retrieval + Composition"
+    y-axis "Khong co personalization" --> "Co body + occasion + preference"
+    quadrant-1 "Ideal - OutfitMatch zone"
+    quadrant-2 "Personalized nhung khong compose"
+    quadrant-3 "Neither"
+    quadrant-4 "Compose nhung generic"
+    CLIP-ZS: [0.1, 0.05]
+    FashionSigLIP-ZS: [0.25, 0.05]
+    Bi-LSTM-2017: [0.5, 0.1]
+    OutfitTransformer-2022: [0.75, 0.15]
+    GPT-4V-stylist: [0.35, 0.6]
+    OutfitMatch: [0.85, 0.85]
+```
+
+---
+
+## 14. Per-Layer Performance Measurement Framework
+
+> Mỗi tầng có bộ metric riêng. Sơ đồ này minh họa "ai đo gì" — dùng cho slide mở đầu phần Performance Evaluation.
+
+```mermaid
+flowchart TD
+    subgraph L0["Layer 0 — Preference Structuring"]
+        M0["JSON parse rate<br/>slot coverage rate<br/>cache hit rate<br/>latency ms<br/>body fallback rate"]
+    end
+
+    subgraph L1["Layer 1 — Body Shape Classifier"]
+        M1["keypoint detection rate<br/>5-class accuracy — manual 50 anh<br/>confusion matrix 5x5<br/>keypoint confidence distribution"]
+    end
+
+    subgraph L2["Layer 2 — Catalog Encoder"]
+        M2["Recall@1/5/10 · mAP<br/>SigLIP loss curve vs epoch<br/>t-SNE embedding space<br/>intra vs inter class similarity"]
+    end
+
+    subgraph L3["Layer 3 — Qdrant Retrieval"]
+        M3["filter precision — zero violation<br/>coverage rate after filter<br/>ANN search latency ms"]
+    end
+
+    subgraph L4["Layer 4 — OutfitTransformer"]
+        M4["FITB accuracy — target >= 55%<br/>Compatibility AUC — target >= 0.85<br/>Body-cond Precision@5 — +10pp<br/>Pref pairwise accuracy >= 0.70<br/>Flip consistency >= 0.60"]
+    end
+
+    subgraph E2E["System E2E"]
+        ME["Latency per step — stacked bar<br/>Total E2E — target < 3s<br/>LLM-as-judge Gemini — mean >= 3.5/5<br/>User study Likert 1-5 — 3 dimensions"]
+    end
+
+    L0 --> L1 --> L2 --> L3 --> L4 --> E2E
+
+    BL["Baselines bat buoc so sanh<br/>B1: CLIP-ZS + random composition<br/>B2: FashionSigLIP-ZS + Bi-LSTM<br/>B3: GPT-4V zero-shot stylist"]
+    E2E -.->|"so sanh"| BL
+
+    classDef metric fill:#e3f2fd,stroke:#1565c0
+    classDef sys fill:#fce4ec,stroke:#880e4f
+    class L0,L1,L2,L3,L4 metric
+    class E2E,BL sys
+```
+
+---
+
+## 13. Ablation Design — 4 Thí nghiệm Kiểm soát
+
+> Mỗi ablation quét DUNG 1 biến, giữ cố định tất cả biến còn lại. Sơ đồ minh họa cách mỗi ablation chứng minh đóng góp của 1 component.
+
+```mermaid
+flowchart TD
+    START(["Encoder fine-tuned — Base config<br/>FashionSigLIP-ZS · Polyvore-nondisjoint · cond_body_occ"])
+
+    subgraph A1["Ablation 1 — Encoder Variants"]
+        direction LR
+        E1["CLIP-ZS<br/>floor"]
+        E2["FashionCLIP-ZS<br/>domain CLIP"]
+        E3["FashionSigLIP-ZS<br/>SigLIP pretrained"]
+        E4["FashionSigLIP-FT<br/>fine-tuned — our contribution"]
+        E1 --> E2 --> E3 --> E4
+    end
+
+    subgraph A2["Ablation 2 — Body Conditioning"]
+        direction LR
+        B1["cond_none<br/>khong co BODY token"]
+        B2["cond_body<br/>co BODY token"]
+        B1 --> B2
+    end
+
+    subgraph A3["Ablation 3 — Occasion Conditioning"]
+        direction LR
+        O1["cond_body<br/>khong co OCC token"]
+        O2["cond_body_occ<br/>co OCC token"]
+        O1 --> O2
+    end
+
+    subgraph A4["Ablation 4 — Decoding Strategy"]
+        direction LR
+        D1["Greedy decoding<br/>chon item cao nhat tung slot"]
+        D2["Beam search B=3<br/>giu top-3 partial outfit"]
+        D1 --> D2
+    end
+
+    START --> A1
+    START --> A2
+    START --> A3
+    START --> A4
+
+    R1["Metric: Recall@1/5/10 · mAP<br/>Ket qua ky vong: FT > ZS > CLIP"]
+    R2["Metric: Body-cond Precision@5<br/>Ket qua ky vong: +10pp vs cond_none"]
+    R3["Metric: FITB acc phan theo occasion<br/>Ket qua ky vong: gain ro nhat tren formal/sport"]
+    R4["Metric: FITB acc + outfit diversity<br/>Ket qua ky vong: Beam cao hon ca 2 metric"]
+
+    A1 --> R1
+    A2 --> R2
+    A3 --> R3
+    A4 --> R4
+
+    classDef abl fill:#fff9c4,stroke:#f9a825
+    classDef res fill:#e8f5e9,stroke:#2e7d32
+    class A1,A2,A3,A4 abl
+    class R1,R2,R3,R4 res
 ```
 
 ---
