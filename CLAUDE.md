@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **`docs/ARCHITECTURE.md`** — module boundaries, data flow, BaseEncoder interface, dataset schemas, experiment cycle design. Read before touching any `src/` file.
 - **`docs/EXPERIMENT_GUIDE.md`** — how to run cycles, add configs, interpret results, use W&B.
 - **`docs/superpowers/plans/2026-05-18-outfitmatch-experiment-cycles.md`** — full sprint/task plan with bite-sized TDD steps.
+- **`Kien_truc_v3.1.md`** — v3.1-lite 4-tier MVP architecture (active development target), controlled vocabulary, data sourcing, roadmap. Supersedes the 6-layer design for new feature work.
 
 ---
 
@@ -14,7 +15,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **OutfitMatch** — Body & Occasion-Aware Fashion Recommender (DPL302m grading project, Sprints 0–9, 10 weeks).
 
-Multimodal DL system: given a user selfie + height/weight + occasion, recommend compatible outfits from a fashion catalog. Core pipeline: body shape classification → catalog retrieval (Fashion-SigLIP) → Transformer outfit composition.
+Multimodal DL system: given a user selfie + height/weight + occasion, recommend compatible outfits from a fashion catalog.
+
+> **Architecture pivot (v3.1-lite):** active development follows the 4-tier MVP pipeline in `Kien_truc_v3.1.md` — KB Builder (OT-labse) → Conversational Stylist (Qwen3-VL-8B + LoRA) → Retrieval (Qdrant filter-first) → Quiz Re-rank. Grading experiments (FITB, Compat AUC, encoder ablations) still use the 6-layer design in `docs/ARCHITECTURE.md`.
 
 ## Python & Package Manager
 
@@ -49,6 +52,10 @@ uv run pytest tests/path/to/test_file.py::test_function_name -v
 
 ```
 src/outfitmatch/
+  vocab.py           # v3.1: Controlled vocabulary — single source of truth for all enums
+  kb/                # v3.1: Outfit Knowledge Base builder (OT-labse, FITB, Gemini tagging)
+  stylist/           # v3.1: Qwen3-VL-8B conversational stylist + tool-calling
+  quiz/              # v3.1: Onboarding quiz + preference-based re-rank
   config.py          # ExperimentConfig pydantic + yaml loader
   seeding.py         # set_seed
   tracking.py        # W&B init wrapper
@@ -124,7 +131,7 @@ A feature is **done** when:
 | FITB accuracy | ≥55% |
 | Compatibility AUC | ≥0.85 |
 | Body-conditional Precision@5 | +10% vs non-conditional baseline |
-| E2E latency | <3s on CPU |
+| E2E latency | <5–8s on GPU / cloud API (CPU target retired with v3.1-lite — Qwen3-VL-8B requires GPU) |
 | LLM-as-judge (Gemini) | Mean ≥3.5/5 |
 
 Required ablations: (1) encoder variants, (2) body conditioning on/off, (3) occasion conditioning on/off, (4) greedy vs beam decoding.
