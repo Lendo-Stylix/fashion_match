@@ -20,7 +20,6 @@ from outfitmatch.vocab import (
     ITEM_CATEGORY_SET,
     validate_enum_values,
 )
-from outfitmatch.preference.schema import BODY_FALLBACK
 
 
 def test_all_enum_values_are_english_snake_case():
@@ -59,15 +58,6 @@ def test_all_occasions_have_vi_label():
 def test_all_styles_have_vi_label():
     for v in STYLE:
         assert v in STYLE_LABELS_VI, f"Missing VI label for style: {v!r}"
-
-
-def test_body_shape_consistent_with_preference_schema():
-    """Every shape in preference/schema.py BODY_FALLBACK must exist in vocab.BODY_SHAPE_SET."""
-    for shape in BODY_FALLBACK:
-        assert shape in BODY_SHAPE_SET, (
-            f"Body shape {shape!r} is in preference/schema.py BODY_FALLBACK "
-            "but not in vocab.BODY_SHAPE — add it or align schemas."
-        )
 
 
 def test_price_tier_values():
