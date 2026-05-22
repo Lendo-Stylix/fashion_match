@@ -46,3 +46,6 @@ data/processed/
 # OS
 .DS_Store
 Thumbs.db
+
+# Copilot worktrees (local tooling only)
+copilot-worktrees/
