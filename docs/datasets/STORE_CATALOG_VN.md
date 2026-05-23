@@ -6,26 +6,25 @@
 
 ---
 
-## 1. Vai trò trong kiến trúc
+## 1. Vai trò trong kiến trúc (v3.1-lite)
 
-Store data ảnh hưởng tới **3 tầng** trong pipeline, mỗi tầng cần schema riêng:
+Store data phục vụ **Tầng 1** (KB Builder) và **Tầng 3** (Retrieval) trong pipeline v3.1-lite:
 
 ```
-Layer 2 (Catalog Encoder)
-  catalog_metadata.parquet
-  → thêm: store_id, price_vnd, product_url (nullable cho HF-sourced data)
+Tầng 1 (KB Builder — src/outfitmatch/kb/)
+  Item catalog từ VN stores → ItemRecord với store{} block
+  → item_embedding, compatibility_score precomputed offline
 
-Layer 3 (Vector Store — Qdrant payload)
-  → thêm: price_vnd, store_id, store_name, product_url, available_sizes
-  → phục vụ: ANN query trả về store info ngay, không cần extra DB lookup
+Tầng 3 (Retrieval — Qdrant collection "outfits")
+  Payload: has_vn_store=true, price_tier, store thông tin
+  → filter nhanh để chỉ trả kết quả mua được tại VN
 
-Layer 5 (API Response)
-  POST /recommend → outfit suggestion
-  → thêm: per-item store_info block trong response JSON
+API Response (pipeline.py → RecommendResult)
+  → mỗi OutfitRecord.items[i].store có đủ link mua + giá VND
 ```
 
-Store data **KHÔNG** được dùng làm training signal cho SigLIP hay OutfitTransformer.  
-Ngoại lệ duy nhất: nếu Sprint 9 mở rộng `StructuredPreference` với `budget_tier`, thì `price_vnd` có thể làm Qdrant filter (tương tự `fit_bias`).
+Store data **KHÔNG** được dùng làm training signal cho OutfitTransformer hoặc Qwen3-VL LoRA.  
+Ngoại lệ duy nhất: `price_tier` có thể làm Qdrant filter bổ sung nếu quiz capture ngân sách user (Tầng 4).
 
 ---
 
@@ -130,9 +129,9 @@ item_custom_00002,zara_vn,https://www.zara.com/vn/vi/dam-midi,899000,699000,["XS
 
 ---
 
-## 5. Schema: Qdrant Payload Extension (Layer 3)
+## 5. Schema: Qdrant Payload (Tầng 3 — v3.1-lite collection "outfits")
 
-Mỗi point trong collection `catalog` cần thêm các fields sau vào payload:
+Mỗi point trong collection `outfits` (v3.1-lite) dùng `OutfitRecord.to_qdrant_payload()`. Các fields store-related trong payload:
 
 ```python
 # Payload fields hiện tại (giữ nguyên):
@@ -181,9 +180,9 @@ budget_filter = Filter(must=[
 
 ---
 
-## 6. API Response Extension (Layer 5)
+## 6. API Response (RecommendResult — v3.1-lite)
 
-`POST /recommend` response — thêm `store_info` vào mỗi item:
+`recommend_outfit()` → `RecommendResult.outfits` — mỗi `OutfitRecord.items[i].store` chứa:
 
 ```json
 {
@@ -419,24 +418,18 @@ data/raw/stores/
 
 ---
 
-## 10. Liên kết với Sprint 9 (Preference)
+## 10. Liên kết với Tầng 4 (Quiz Re-rank — v3.1-lite)
 
-Nếu user nhập style prompt có từ liên quan đến ngân sách (VD: "outfit giá rẻ", "đồ dưới 500k"), `PromptStructurer` nên parse thêm `budget_tier`:
+User chọn `price_tier` trong quiz onboarding (câu 4). `PreferenceProfile.price_tier` được dùng để:
+1. Tăng/giảm điểm trong `score_outfit_for_preference()` (penalty nếu sai tier — xem `quiz/rerank.py`)
+2. Có thể bổ sung Qdrant pre-filter theo `price_tier` nếu muốn hard constraint (Sprint 8):
 
 ```python
-# StructuredPreference mở rộng (Sprint 9 optional):
-class HardConstraint(BaseModel):
-    colors_avoid: list[str] = []
-    categories_exclude: list[str] = []
-    materials_require: list[str] = []
-    fit_bias: str | None = None
-    source: str = "user"
-    budget_tier: str | None = None   # "budget" | "mid" | "premium" — NEW
-```
+from qdrant_client.models import Filter, FieldCondition, MatchValue
 
-Khi `budget_tier` được set, thêm Qdrant filter:
-```python
-FieldCondition(key="price_tier", match=MatchValue(value=budget_tier))
+budget_filter = Filter(must=[
+    FieldCondition(key="price_tier", match=MatchValue(value=profile.price_tier))
+])
 ```
 
 ---
