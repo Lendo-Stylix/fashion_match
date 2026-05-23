@@ -1,10 +1,66 @@
-# Experiment Guide — How to Run and Interpret Cycles
+# Experiment Guide — OutfitMatch (v3.1-lite + Grading)
 
-> Read `docs/ARCHITECTURE.md` first. This file explains the experiment workflow.
+> Read `docs/ARCHITECTURE.md` first. This file explains both the v3.1-lite product eval and the grading experiment workflow.
 
 ---
 
-## Quick Start: Running an Experiment
+## Two Evaluation Tracks
+
+| Track | Purpose | When |
+|---|---|---|
+| **v3.1-lite product eval** | LLM-as-judge, E2E latency, body-conditional precision | Sprint 9 |
+| **Grading experiment cycles** | Encoder ablations, FITB accuracy, Compatibility AUC | Continuous via `om-exp sweep` |
+
+---
+
+## v3.1-lite Evaluation (Sprint 9)
+
+### LLM-as-Judge (Gemini)
+
+Rate each `RecommendResult` on a 1–5 scale using Gemini as judge. Target: mean ≥ 3.5/5.
+
+```bash
+uv run python scripts/llm_judge.py \
+    --results data/eval/recommend_results.jsonl \
+    --out docs/experiments/llm_judge_results.csv
+```
+
+### Body-Conditional Precision@5 Ablation (v3.1-lite Tầng 3)
+
+Compare Qdrant retrieval with and without `body_shapes_fit` filter. Target: +10pp with filter ON.
+
+```bash
+uv run python scripts/ablation_body_filter.py \
+    --out docs/experiments/ablation_body_filter_v31.csv
+```
+
+### E2E Latency Measurement
+
+```bash
+# Target: < 5-8s on GPU with streaming UX
+uv run python scripts/measure_latency.py \
+    --n-requests 50 \
+    --out docs/experiments/latency_v31.csv
+```
+
+### Ablation 4 — Greedy vs Beam Decoding (KB Build)
+
+Baked into Tầng 1 KB build pipeline (`Kien_truc_v3.1.md` §3.4 Bước 3). Measure FITB accuracy of resulting KB under each method:
+
+```bash
+uv run python scripts/ablation_decoding.py \
+    --kb-greedy data/kb/kb_greedy.parquet \
+    --kb-beam   data/kb/kb_beam.parquet \
+    --out docs/experiments/ablation_decoding.csv
+```
+
+---
+
+## Grading Experiment Cycles (encoder / composer)
+
+---
+
+## Quick Start: Running a Grading Experiment
 
 ```bash
 # 1. Start vector store
