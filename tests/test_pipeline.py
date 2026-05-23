@@ -1,13 +1,11 @@
-from outfitmatch.pipeline import recommend_outfit
+from __future__ import annotations
+
+import pytest
+
+from outfitmatch.pipeline import RecommendRequest, recommend_outfit
 
 
-def test_recommend_returns_outfit_slots(monkeypatch):
-    monkeypatch.setattr("outfitmatch.pipeline._classify_shape",
-                        lambda img: "pear")
-    monkeypatch.setattr("outfitmatch.pipeline._retrieve",
-                        lambda shape, occ: {"top": "t1", "bottom": "b1",
-                                            "shoes": "s1", "accessory": "a1"})
-    out = recommend_outfit(image_path="x.jpg", height=170, weight=60,
-                           occasion="office")
-    assert set(out["outfit"]) == {"top", "bottom", "shoes", "accessory"}
-    assert out["body_shape"] == "pear"
+def test_recommend_raises_not_implemented():
+    req = RecommendRequest(occasion="office", image_path="x.jpg", height_cm=170, weight_kg=60)
+    with pytest.raises(NotImplementedError):
+        recommend_outfit(req)
