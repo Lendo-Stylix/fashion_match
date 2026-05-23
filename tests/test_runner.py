@@ -1,5 +1,4 @@
 import sys
-import types
 
 import torch
 from PIL import Image
@@ -64,8 +63,8 @@ def test_execute_zero_shot_retrieval(monkeypatch):
     _DS = _make_stub_ds_class()
 
     # Patch at the module level so lazy imports inside runner.py pick up stubs
-    import outfitmatch.encoders.factory as fac_mod
     import outfitmatch.data.retrieval as data_mod
+    import outfitmatch.encoders.factory as fac_mod
 
     monkeypatch.setattr(fac_mod, "build_encoder", lambda mc, device="cpu": stub_enc)
     monkeypatch.setattr(data_mod, "RetrievalDataset", _DS)
@@ -117,8 +116,8 @@ def test_execute_finetune_path_called(monkeypatch):
     stub_enc = _EncWithModel()
     _DS = _make_stub_ds_class()
 
-    import outfitmatch.encoders.factory as fac_mod
     import outfitmatch.data.retrieval as data_mod
+    import outfitmatch.encoders.factory as fac_mod
     import outfitmatch.train.contrastive as contrastive_mod
 
     monkeypatch.setattr(fac_mod, "build_encoder", lambda mc, device="cpu": stub_enc)

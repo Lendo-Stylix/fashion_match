@@ -7,7 +7,7 @@ as a hallucination and must NOT be shown to the user.
 from __future__ import annotations
 
 import re
-from typing import Collection
+from collections.abc import Collection
 
 # Matches OF_XXXXX where X is a digit — adjust if outfit_id format changes.
 _OUTFIT_ID_RE = re.compile(r"\bOF_\d{5,}\b")

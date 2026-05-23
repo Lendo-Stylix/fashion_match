@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from outfitmatch.stylist.tools import SEARCH_OUTFITS_TOOL
 from outfitmatch.stylist.validation import extract_outfit_ids, validate_response
-from outfitmatch.vocab import OCCASION, STYLE, BODY_SHAPE, SKIN_TONE
+from outfitmatch.vocab import OCCASION, STYLE
 
 
 def test_search_outfits_tool_has_required_fields():

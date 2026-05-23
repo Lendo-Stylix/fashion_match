@@ -10,16 +10,17 @@
 ## MỤC LỤC
 
 0. Bối cảnh Scrum/XP — vì sao kiến trúc được thiết kế như vậy
-1. Tổng quan hệ thống — bài toán & kiến trúc 6 tầng
+**0b. Kiến trúc v3.1-lite — Hệ thống sản phẩm MVP (PHẦN MỚI — trình bày trước)**
+1. Tổng quan hệ thống — bài toán, v3.1-lite 4 tầng & 6-layer grading sub-system
 1b. Related Work — 4 cụm paper nền + research gap
 2. Data Collection & Pre-processing (tầng sâu nhất)
 3. Training Pipeline (tầng sâu nhất)
 4. Model Architecture — phân tích tới tầng layer/tensor
-5. Inference Pipeline (tầng sâu nhất)
+5. Inference Pipeline v3.1-lite (tầng sâu nhất — CẬP NHẬT)
 6. Evaluation, Ablation & Definition of Done
 6b. Đo lường Performance từng tầng
-7. Bản đồ Sprint ↔ Kiến trúc
-8. Trạng thái hiện tại của code vs thiết kế (trung thực)
+7. Bản đồ Sprint ↔ Kiến trúc (v3.1-lite — CẬP NHẬT)
+8. Trạng thái hiện tại của code vs thiết kế (trung thực — CẬP NHẬT)
 9. Kịch bản trình bày 30 phút
 
 ---
@@ -34,9 +35,9 @@ Nhóm có 3 developer, 10 tuần, mỗi tuần là 1 sprint. Mỗi sprint giao �
 
 | Nguyên tắc Scrum/XP | Hệ quả lên kiến trúc |
 |---|---|
-| **Incremental delivery** — mỗi sprint phải có thứ chạy được | Hệ thống chia 6 tầng độc lập (Layer 0–5), mỗi tầng demo riêng được |
-| **Simple design / YAGNI** | Body classifier dùng **rule-based** thay vì train CNN; không làm virtual try-on, không SMPL |
-| **TDD** | `metrics/`, `config.py`, `data/` là **pure function / contract thuần** → test trước, code sau |
+| **Incremental delivery** — mỗi sprint phải có thứ chạy được | **Hệ sản phẩm (v3.1-lite)**: 4 tầng MVP (KB Builder → Stylist → Retrieval → Quiz Re-rank). **Hệ grading**: 6 tầng experiment (Layer 0–5), mỗi tầng demo riêng được |
+| **Simple design / YAGNI** | Body classifier dùng **rule-based** thay vì train CNN; Qdrant **filter-first** (không ANN vector search) — giữ đơn giản cho MVP |
+| **TDD** | `metrics/`, `config.py`, `data/`, `vocab.py` là **pure function / contract thuần** → test trước, code sau |
 | **Collective ownership + pair programming** | Mọi tầng giao tiếp qua **interface ABC** (`BaseEncoder`, `BaseFashionDataset`) → 2 người hiểu 1 module |
 | **Continuous Integration** | 1 CLI `om-exp run <config.yaml>` → reproducible, chạy được trên CI GitHub Actions |
 | **Small releases / experiment cycles** | Mỗi sprint = **1 experiment cycle** quét lưới (grid) trên đúng 1 trục biến thiên |
@@ -55,6 +56,63 @@ Mỗi thí nghiệm = **một file YAML** được nạp bởi `ExperimentConfig
 
 ---
 
+## 0b. KIẾN TRÚC v3.1-lite — HỆ THỐNG SẢN PHẨM MVP (PHẦN MỚI — trình bày trước)
+
+> **Đây là kiến trúc SẢN PHẨM** — cái hội đồng sẽ thấy khi demo. Kiến trúc 6 tầng (§1.2) là **grading sub-system** phục vụ ablation & metric chấm điểm, chạy song song độc lập.
+
+### Kiến trúc 4 tầng v3.1-lite
+
+```
+INPUT: occasion + (quiz answers + image tùy chọn)
+   │
+   ▼
+TẦNG 1  KB Builder (offline)                    src/outfitmatch/kb/
+         OT-labse FITB/Beam → OutfitRecord       Gemini tagging → Qdrant upsert
+         Vocab cố định: OCCASION / STYLE / BODY_SHAPE / PRICE_TIER
+   │
+   ▼
+TẦNG 2  Conversational Stylist (online)         src/outfitmatch/stylist/
+         Qwen3-VL-8B + LoRA → tool-call SEARCH_OUTFITS → occasion/style/price_tier filter
+         Hallucination check: validate OF_\d{5,} trước khi show user
+   │
+   ▼
+TẦNG 3  Retrieval Engine (online)               Qdrant :6333, collection "outfits"
+         Filter-first (không ANN): occasion + style + price_tier payload filter
+         → sort by compatibility_score → Top 30-50 OutfitRecord
+   │
+   ▼
+TẦNG 4  Quiz Re-rank (online)                   src/outfitmatch/quiz/
+         QuizAnswers → PreferenceProfile → score_outfit_for_preference()
+         +0.10/style hit · +0.10/occasion hit · +0.05/color hit · −0.10 wrong price_tier
+         → Top 3-5 outfit trả về người dùng
+   │
+   ▼
+OUTPUT: RecommendResult {outfits, body_shape, occasion, explanation_vi, latency_ms}
+```
+
+### Ba luồng dữ liệu độc lập
+
+| Luồng | Mục đích | Dataset |
+|---|---|---|
+| **VN store catalog** | KB Builder → Qdrant production index | Thu thập thủ công + Gemini tagging |
+| **Polyvore** | Grading eval: FITB accuracy, Compat AUC, encoder ablation | `owj0421/polyvore-outfits` |
+| **Gemini synthetic convs** | Fine-tune Qwen3-VL stylist (LoRA) | Tự sinh bằng Gemini + outfit KB |
+
+### Bất biến Controlled Vocabulary (vocab invariant)
+
+**`src/outfitmatch/vocab.py`** là nguồn chân lý duy nhất cho tất cả enum:
+
+```python
+OCCASION  = ("office", "casual", "party", "sport", "formal", "date", "travel", "beach")
+STYLE     = ("minimalist", "korean", "streetwear", "bohemian", "classic", "sporty", ...)
+PRICE_TIER = ("budget", "mid", "premium")
+# + BODY_SHAPE, SEASON, ITEM_CATEGORY, SKIN_TONE
+```
+
+→ Gemini tagging dùng → Qdrant payload index dùng → Qwen3-VL tool-call dùng → Quiz filter dùng. **Không enum nào được hard-code ngoài vocab.py**.
+
+---
+
 ## 1. TỔNG QUAN HỆ THỐNG
 
 ### 1.1 Bài toán
@@ -64,8 +122,17 @@ Mỗi thí nghiệm = **một file YAML** được nạp bởi `ExperimentConfig
 
 Đây là bài toán **Multimodal Deep Learning** giao của 3 lĩnh vực: Computer Vision (ảnh body + ảnh item), NLP (text prompt + caption), và Recommendation/Ranking (tổ hợp & xếp hạng outfit).
 
-### 1.2 Kiến trúc 6 tầng (Layer 0 → Layer 5)
+### 1.2 Hai hệ thống song song
 
+OutfitMatch có **hai kiến trúc song song** phục vụ hai mục đích:
+
+**A. Hệ sản phẩm v3.1-lite (4 tầng MVP)** — xem §0b để biết chi tiết:
+```
+KB Builder → Conversational Stylist (Qwen3-VL-8B) → Qdrant filter-first → Quiz Re-rank
+```
+Đây là thứ được demo cho người dùng cuối. Cần GPU để chạy Qwen3-VL-8B.
+
+**B. Grading sub-system (6 tầng experiment)** — phục vụ chấm điểm DPL302m:
 ```
 INPUT: ảnh selfie + (height, weight) + occasion + style prompt
    │
@@ -94,17 +161,18 @@ LAYER 5  Item Customization              POST /customize-item
    ▼
 OUTPUT: Top 3–5 outfit sets (item list + score + body_shape + occasion)
 ```
+Grading sub-system đo FITB accuracy, Compatibility AUC, encoder ablations — metric chấm điểm chính thức.
 
 **Nguyên tắc bất biến (XP "Simple design"):** mỗi module có **đúng một trách nhiệm**, giao tiếp qua interface cố định. `data/` chỉ nạp dữ liệu, không gọi model. `encoders/` chỉ nhúng, không đọc dataset. `metrics/` là **pure function**, không I/O. Vi phạm ranh giới này phá vỡ tính tái lập (reproducibility) của thí nghiệm.
 
-### 1.3 Vì sao 6 tầng mà không phải 1 model end-to-end?
+### 1.3 Vì sao hai hệ thống thay vì một?
 
 | Lý do | Giải thích |
 |---|---|
-| **Scrum incremental** | Mỗi tầng giao trong 1 sprint, demo độc lập được |
-| **Tái sử dụng SOTA** | Tầng 2 dùng encoder pretrained (fashionSigLIP 203M) — không train CV backbone từ đầu |
-| **Tách dữ liệu huấn luyện** | Encoder cần cặp (ảnh, caption); composer cần outfit set — 2 dạng dữ liệu khác nhau, train riêng |
-| **Khả năng debug** | Lỗi định vị được theo tầng — body sai vs encoder sai vs composer sai |
+| **Scrum incremental (grading)** | 6-layer: mỗi tầng giao trong 1 sprint, demo độc lập — cách chia công việc 10 sprint |
+| **MVP tốc độ (v3.1-lite)** | 4-tier: Qdrant filter-first + Qwen3-VL stylist → latency E2E tốt hơn; không cần train OT từ đầu |
+| **Tái sử dụng SOTA** | Grading dùng fashionSigLIP (203M, fine-tuned); v3.1-lite dùng OT-labse (pre-built) + Qwen3-VL (LoRA) |
+| **Khả năng debug** | Cả hai đều có tầng tách biệt → lỗi định vị được theo tầng |
 
 ---
 
@@ -265,7 +333,7 @@ Bảng sau tóm tắt capability của từng hướng tiếp cận — để sl
 | Occasion conditioning | ✗ | ✗ | ✗ | ✗ | **✓** |
 | Free-text preference (soft) | ✗ | ✗ | ✗ | ✗ | **✓** |
 | Hard constraint filter | ✗ | ✗ | ✗ | ✗ | **✓** |
-| E2E latency < 3s CPU | — | — | — | — | **✓ (target)** |
+| E2E latency < 5–8s GPU | — | — | — | — | **✓ (v3.1-lite target)** |
 
 **Thông điệp khi trình bày:** "Không có một hệ thống nào trước đây tích hợp đồng thời body conditioning + occasion conditioning + free-text preference vào cùng một kiến trúc Transformer. Đây là đóng góp chính."
 
@@ -701,48 +769,72 @@ source = "body_fallback"
 
 ---
 
-## 5. INFERENCE PIPELINE (TẦNG SÂU NHẤT)
+## 5. INFERENCE PIPELINE v3.1-lite (TẦNG SÂU NHẤT — CẬP NHẬT)
 
-Mục tiêu vận hành: **E2E latency < 3 giây trên CPU**. Luồng 6 bước:
+Mục tiêu vận hành: **E2E latency < 5–8 giây trên GPU / cloud API**. Qwen3-VL-8B yêu cầu GPU — CPU target đã được retire cùng với v3.1-lite. Luồng 7 bước:
 
-### Step 1 — Preference Structuring (Layer 0)
-`instruction` → Gemini (qua cache) → `StructuredPreference {hard, soft}`. Xử lý thiếu thông tin: thiếu occasion → `soft.style="casual"`; không có ảnh → `body_shape=""`; `hard` rỗng → body fallback.
+### Step 1 — Onboarding Quiz (Tầng 4 — offline)
+`QuizAnswers` (5 câu: style, occasions, colors, price_tier, height/weight) → `quiz_to_profile()` → `PreferenceProfile`. Chạy **một lần**, kết quả cache trong session.
 
-### Step 2 — Body Shape Extraction (Layer 1) — *chỉ khi có ảnh*
-YOLO-pose → 17 keypoint → ratio → rule classifier → 1 trong 5 lớp body shape. Không detect được pose → `body_shape=""` (không áp body filter).
+### Step 2 — Body Shape Extraction (Grading sub-system) — *chỉ khi có ảnh*
+YOLO-pose → 17 keypoint → ratio → rule classifier → 1 trong 5 lớp body shape. Không detect được → `body_shape=""` (bỏ qua body filter).
 > **Quyết định privacy:** ảnh selfie chứa thông tin nhạy cảm → bước này **tùy chọn**, người dùng có quyền không cung cấp.
 
-### Step 3 — Catalog Retrieval (Layer 2 + 3)
-- **3a. Hard filter:** Qdrant payload filter (`categories_exclude`, `colors_avoid`, `body_shapes`).
-- **3b. Semantic ANN search:** query text → fashionSigLIP encoder → vector 768-dim → Qdrant **cosine search** → candidate pool theo từng category slot (tops, bottoms, dresses, ...), top-K=50 mỗi slot.
+### Step 3 — Conversational Stylist parses intent (Tầng 2)
+`RecommendRequest.occasion` + context → Qwen3-VL-8B (LoRA) sinh **tool-call** `SEARCH_OUTFITS`:
+```json
+{"occasion": "office", "style": ["minimalist"], "price_tier": "mid", "top_k": 30}
+```
+Tool-call được validate bằng `vocab.py` enum sets — giá trị ngoài enum bị loại ngay.
 
-### Step 4 — Outfit Composition + Scoring (Layer 4)
-- 4a. Nhóm candidate theo category slot.
-- 4b. Tổ hợp candidate set dựa trên **outfit templates** (VN / Châu Á / Âu / Global).
-- 4c. **OutfitTransformer forward:** `[CLS][item×N][BODY][OCC][PREF×K]` → compatibility score mỗi outfit set.
-- 4d. Rank & loại trùng (deduplicate) theo score.
+### Step 4 — Qdrant filter-first retrieval (Tầng 3)
+**Không có ANN vector search.** Dùng **payload filter thuần**:
+```python
+Filter(must=[
+    FieldCondition(key="occasion", match=MatchAny(any=["office"])),
+    FieldCondition(key="style",    match=MatchAny(any=["minimalist"])),
+    FieldCondition(key="price_tier", match=MatchValue(value="mid")),
+])
+```
+Kết quả sắp xếp theo `compatibility_score` (pre-computed lúc KB build) → Top 30–50 `OutfitRecord`.
 
-### Step 5 — Customization (Layer 5) — *tùy chọn*
-`POST /customize-item` khi người dùng muốn thay 1 item: Qdrant filter theo `target_attrs` + composer re-rank → danh sách item thay thế.
+### Step 5 — Hallucination check
+Trước khi trả về người dùng, `validate_response()` extract tất cả `OF_\d{5,}` từ response Qwen3-VL → kiểm tra từng ID có trong KB không. ID không tồn tại → block response, yêu cầu Qwen3-VL retry (tối đa 2 lần).
 
-### Step 6 — Output
-Top 3–5 outfit set, mỗi set: item list (ảnh + metadata) + compatibility score + body_shape đã dùng + occasion tag.
+### Step 6 — Quiz Re-rank (Tầng 4)
+`rerank_by_preference(outfits, profile, top_k=5)` — scoring additive:
+- `+0.10` mỗi style match · `+0.10` mỗi occasion match · `+0.05` mỗi color match
+- `−0.10` nếu price_tier sai
 
-**Phân bổ ngân sách latency (ước lượng, mục tiêu < 3s CPU):**
+→ Top 3–5 `OutfitRecord` sau re-rank.
+
+### Step 7 — Output
+`RecommendResult {outfits, body_shape, occasion, explanation_vi, latency_ms}`. `explanation_vi` là câu giải thích tiếng Việt từ Qwen3-VL stylist.
+
+**Phân bổ ngân sách latency (ước lượng, mục tiêu < 5–8s GPU/cloud):**
 
 | Bước | Thành phần nặng | Ước lượng |
 |---|---|---|
-| Step 1 | Gemini (cache hit ~0ms; miss ~300–800ms) | gần như 0 nếu cache |
-| Step 2 | YOLO-pose inference | ~200–400 ms |
-| Step 3 | encode query + ANN search | ~300–600 ms |
-| Step 4 | OutfitTransformer forward (model nhẹ ~14M) | ~200–500 ms |
-| **Tổng** | | **< 3 s** ✓ |
+| Step 1 | Quiz parse (one-time) | ~0ms (đã cache) |
+| Step 2 | YOLO-pose inference (tùy chọn) | ~200–400ms |
+| Step 3 | Qwen3-VL-8B + LoRA inference | ~2–4s (GPU) |
+| Step 4 | Qdrant filter-first search | ~50–100ms |
+| Step 5 | Hallucination check (regex) | ~1ms |
+| Step 6 | Quiz re-rank (CPU) | ~5ms |
+| **Tổng** | | **< 5–8s GPU** ✓ |
 
 ### API Endpoints
 ```
-POST /recommend       {image_b64?, height?, weight?, occasion?, instruction?} → outfits + latency_ms
-POST /search          {query_text}                                           → top-K items
-POST /customize-item  {outfit_id, item_slot, target_attrs}                    → replacements
+POST /recommend       {occasion, height_cm?, weight_kg?, quiz_answers?, image_path?} → RecommendResult
+POST /search          {query_text}  → top-K items
+POST /customize-item  {outfit_id, item_slot, target_attrs} → replacements
+```
+
+> **Inference pipeline 6-tầng (grading sub-system)** — xem §5 phiên bản cũ trong `docs/ARCHITECTURE.md §5`. Grading pipeline dùng fashionSigLIP encoder + OutfitTransformer + Bradley-Terry loss, chạy trên Polyvore để đo FITB/AUC/Recall.
+
+### API Endpoints (Grading sub-system — unchanged)
+```
+POST /recommend-grading  {image_b64?, height?, weight?, occasion?} → outfits + latency_ms (6-layer path)
 ```
 
 ---
@@ -759,7 +851,7 @@ POST /customize-item  {outfit_id, item_slot, target_attrs}                    �
 | Body-conditional Precision@5 | **+ 10pp** vs non-conditional | ablation composer |
 | Preference pairwise accuracy | ≥ 0.70 (`use_pref` > `pref-off`) | Sprint 9 |
 | Instruction-flip consistency | ≥ 0.60 | Sprint 9 |
-| E2E latency | < 3s CPU | `pipeline.recommend_outfit()` |
+| E2E latency | < 5–8s GPU / cloud API | `pipeline.recommend_outfit()` |
 | LLM-as-judge (Gemini) | trung bình ≥ 3.5/5 | Sprint 8 |
 
 **Các hàm metric (pure function — TDD):**
@@ -797,7 +889,7 @@ Kiến trúc nhiều tầng đòi hỏi **đo lường theo từng tầng riêng
 | **L2** Encoder | Recall@1/5/10 · mAP · SigLIP loss curve | `evaluate_retrieval()` · W&B | CLIP-ZS baseline | **Recall@5 ≥ CLIP-ZS + 5pp** |
 | **L3** Qdrant | Filter precision · ANN search latency · coverage rate sau filter | Qdrant metrics API | Không có filter | Filter không loại quá 40% candidate |
 | **L4** Composer | FITB accuracy · Compatibility AUC · Body-cond P@5 · Pref pairwise acc · Flip consistency | `fitb_accuracy()` · `compatibility_auc()` · `preference_pairwise_accuracy()` | Random baseline · Bi-LSTM Han 2017 | FITB ≥55% · AUC ≥0.85 · Body +10pp |
-| **E2E System** | Latency (ms) mỗi bước · tổng E2E · LLM-as-judge · User study Likert | `time.perf_counter()` · Gemini API · Google Form | GPT-4V zero-shot stylist | **<3s CPU** · Gemini ≥3.5/5 · User ≥3.5/5 |
+| **E2E System** | Latency (ms) mỗi bước · tổng E2E · LLM-as-judge · User study Likert | `time.perf_counter()` · Gemini API · Google Form | GPT-4V zero-shot stylist | **<5–8s GPU** · Gemini ≥3.5/5 · User ≥3.5/5 |
 
 ---
 
@@ -901,11 +993,14 @@ So sánh 4 encoder trên cùng tập val → bảng ablation encoder.
 
 | Bước | Đo bằng | Mục tiêu |
 |---|---|---|
-| Preference Structuring (L0) | `time.perf_counter()` wrapping `structure()` | ≈0ms cache hit · ≤800ms miss |
-| Body Extraction (L1) | YOLO inference time | ≤400ms |
-| Encode query + ANN search (L2+L3) | `encode_text()` + Qdrant search | ≤600ms |
-| OutfitTransformer forward (L4) | `composer()` forward time | ≤500ms |
-| **Tổng E2E** | `time.perf_counter()` toàn bộ `recommend_outfit()` | **< 3s** |
+| Quiz parse / Preference (Tầng 4) | cached, không đo real-time | ≈0ms (one-time) |
+| Body Extraction (YOLO) | YOLO inference time | ≤400ms |
+| Qwen3-VL-8B + LoRA inference (Tầng 2) | `time.perf_counter()` wrapping stylist | ≤4s GPU |
+| Qdrant filter-first search (Tầng 3) | `qdrant_client.search()` latency | ≤100ms |
+| Quiz re-rank (Tầng 4) | `rerank_by_preference()` | ≤10ms |
+| **Tổng E2E v3.1-lite** | `time.perf_counter()` toàn bộ `recommend_outfit()` | **< 5–8s GPU** |
+| Grading: Encode query + ANN search (L2+L3) | `encode_text()` + Qdrant ANN search | ≤600ms |
+| Grading: OutfitTransformer forward (L4) | `composer()` forward time | ≤500ms |
 
 Trình bày dưới dạng **stacked bar chart** — thấy ngay bước nào chiếm latency nhiều nhất.
 
@@ -989,64 +1084,93 @@ Có 3 baseline nhóm **phải có trong slide comparison table** (không né đ�
 
 ---
 
-## 7. BẢN ĐỒ SPRINT ↔ KIẾN TRÚC
+## 7. BẢN ĐỒ SPRINT ↔ KIẾN TRÚC (v3.1-lite — CẬP NHẬT)
 
-Đây là slide "kết nối tất cả" — cho hội đồng thấy kiến trúc là sản phẩm của quy trình Scrum:
+Đây là slide "kết nối tất cả" — cho hội đồng thấy kiến trúc là sản phẩm của quy trình Scrum. Hai track chạy song song:
 
-| Sprint | Tuần | Mục tiêu | Tầng / Component xây |
+### Track A — v3.1-lite Product System (Hệ sản phẩm)
+
+| Sprint | Tuần | Mục tiêu | Tầng / Module xây |
 |---|---|---|---|
-| S0 | 1 | Research & baseline | Chọn model & dataset (fashionSigLIP, Polyvore) |
-| S1 | 2 | Architecture & pipeline draft | Interface ABC, thiết kế 6 tầng, `config.py` |
+| **S0** ✅ | 1 | Scaffolding + Controlled Vocabulary | `vocab.py` · `kb/schema.py` · `stylist/tools.py` · `quiz/` · `pipeline.py` |
+| S1 | 2 | KB Builder — OT-labse + Gemini tagging | `kb/builder.py` · Qdrant upsert pipeline · `OutfitRecord` → Qdrant payload |
 | S2 | 3 | Proposal ⚡ | (milestone — trình bày proposal) |
-| S3 | 4 | Data + Body pipeline | **Layer 1** + Component 5, Data Stage 1 |
-| S4 | 5 | Catalog encoder | **Layer 2** + Component 1, Data Stage 2–3 |
-| S5 | 6 | Outfit composer | **Layer 4** + Component 3, Data Stage 4 |
-| S6 | 7 | Body-aware + occasion conditioning | Token `[BODY]`/`[OCC]`, Ablation 2 & 3 |
-| S7 | 8 | Customization + E2E integration | **Layer 5**, `pipeline.py`, FastAPI |
-| S8 | 9 | Demo deploy + user study | Gradio, LLM-as-judge |
-| S9 | 10 | Polish + ablation + report ⚡ | **Layer 0** preference, ablation suite, report |
+| S3 | 4 | Stylist LoRA data + Qwen3-VL setup | `stylist/model.py` · Gemini synthetic conv generation · `SEARCH_OUTFITS_TOOL` |
+| S4 | 5 | KB + Qdrant retrieval | `kb/` hoàn chỉnh · Qdrant filter-first `search_outfits()` · hallucination check |
+| S5 | 6 | Qwen3-VL LoRA fine-tune | `stylist/` LoRA training · tool-call validation · hallucination retry |
+| S6 | 7 | Quiz Re-rank + Body pipeline | **Tầng 4** hoàn chỉnh · `rerank_by_preference()` · YOLO body extractor |
+| S7 | 8 | E2E wire-up + FastAPI | `pipeline.recommend_outfit()` · `POST /recommend` · Gradio demo |
+| S8 | 9 | Deploy + LLM-as-judge + user study | Cloud GPU deploy · Gemini eval · Google Form user study |
+| S9 | 10 | Polish + ablation + report ⚡ | Ablation suite · report · final demo |
 
-**Thông điệp khi trình bày:** "Chúng tôi không thiết kế xong hết rồi mới code. Mỗi tuần một tầng chạy được, demo ở sprint review, lấy feedback, sang tầng kế. Kiến trúc 6 tầng chính là *cách chia công việc* cho 10 sprint."
+### Track B — Grading Experiment Sub-system (6-layer)
+
+| Sprint | Tuần | Mục tiêu | Component |
+|---|---|---|---|
+| S0 ✅ | 1 | `config.py`, `vocab.py`, scaffolding | `ExperimentConfig` pydantic · `BaseEncoder` ABC |
+| S3–S4 | 4–5 | Data + Body pipeline | **Layer 1** · Data Stage 1–3 |
+| S4–S5 | 5–6 | Catalog encoder fine-tune | **Layer 2** · SigLIP contrastive · Recall@5 gate |
+| S5–S6 | 6–7 | OutfitTransformer base + conditioning | **Layer 4** · FITB / Compat AUC · Ablation 2&3 |
+| S7 | 8 | Preference post-training | **Layer 0** · Bradley-Terry pairwise · pref_groups |
+| S9 | 10 | Ablation suite + report | Encoder / body / occasion / decoding ablation |
+
+**Thông điệp khi trình bày:** "Chúng tôi không thiết kế xong hết rồi mới code. Mỗi tuần một tầng chạy được, demo ở sprint review, lấy feedback, sang tầng kế. v3.1-lite 4-tier là *hệ sản phẩm*, 6-layer experiment là *cách đo lường chất lượng* — hai track chạy song song trong cùng 10 sprint."
 
 ---
 
-## 8. TRẠNG THÁI HIỆN TẠI CỦA CODE vs THIẾT KẾ (trung thực)
+## 8. TRẠNG THÁI HIỆN TẠI CỦA CODE vs THIẾT KẾ (trung thực — CẬP NHẬT)
 
-> Phần này để nhóm **không overclaim** trước hội đồng — XP đề cao "report kết quả trung thực" (ghi rõ trong Risk Register).
+> Phần này để nhóm **không overclaim** trước hội đồng — XP đề cao "report kết quả trung thực" (ghi rõ trong Risk Register). Sprint 0 hoàn thành, tất cả scaffolding đã có test xanh.
 
-| Hạng mục | Trạng thái | Ghi chú |
+### Track A — v3.1-lite Product System
+
+| Module | Trạng thái | Ghi chú |
+|---|---|---|
+| `vocab.py` (controlled vocabulary) | ✅ Hoàn chỉnh + test | 7 enum, frozen sets, Vietnamese labels, `validate_enum_values()` |
+| `kb/schema.py` (`ItemRecord`, `OutfitRecord`) | ✅ Hoàn chỉnh + test | `to_qdrant_payload()`, `schema_version="3.1"` |
+| `stylist/tools.py` (`SEARCH_OUTFITS_TOOL`) | ✅ Hoàn chỉnh | Tool dict với enum-typed params |
+| `stylist/validation.py` (hallucination check) | ✅ Hoàn chỉnh | `extract_outfit_ids()`, `validate_response()` |
+| `quiz/schema.py` (`QuizAnswers`, `PreferenceProfile`) | ✅ Hoàn chỉnh + test | `quiz_to_profile()` |
+| `quiz/rerank.py` (`score_outfit_for_preference`) | ✅ Hoàn chỉnh + test | Additive scoring, `rerank_by_preference()` |
+| `pipeline.py` (`RecommendRequest`, `RecommendResult`) | ✅ Contract hoàn chỉnh | `recommend_outfit()` → `NotImplementedError` (Sprint 5–8) |
+| `kb/builder.py` (OT-labse + Gemini tagging) | ⚠️ Stub | Kế hoạch Sprint 1 |
+| `stylist/model.py` (Qwen3-VL-8B + LoRA) | ⚠️ Stub | Kế hoạch Sprint 3 |
+| Qdrant filter-first `search_outfits()` | ⚠️ Chưa có | Kế hoạch Sprint 4 |
+
+### Track B — Grading Experiment Sub-system
+
+| Module | Trạng thái | Ghi chú |
 |---|---|---|
 | `config / data / metrics / eval / encoders` | ✅ Hoàn chỉnh + test | Harness chạy được, TDD đầy đủ |
 | `OutfitTransformer` (model) | ✅ Hoàn chỉnh | `composer.py` — forward chạy được |
 | SigLIP loss + `finetune_encoder` | ✅ Hoàn chỉnh | `contrastive.py` |
 | Body pipeline (pose + rule) | ✅ Hoàn chỉnh | `body/` |
 | Preference Layer 0 (schema + structuring + post-train) | ✅ Hoàn chỉnh | `preference/`, `preference_trainer.py` |
-| Task `fitb` / `compatibility` trong `runner.py` | ⚠️ Chưa hiện thực | `raise NotImplementedError` — kế hoạch Sprint 7 |
-| `pipeline.recommend_outfit` → `_retrieve` | ⚠️ Stub | Cần Qdrant index (Sprint 8) |
-| Item embeddings trong preference training | ⚠️ Dùng `torch.zeros` placeholder | Chờ Component 2 (catalog index) nối embedding thật |
-| `scripts/build_catalog_index.py` | ⚠️ Chưa có | "planned" trong tài liệu |
+| Task `fitb` / `compatibility` trong `runner.py` | ⚠️ Chưa hiện thực | `raise NotImplementedError` — kế hoạch Sprint 5–6 |
+| `pipeline.recommend_outfit` → `_retrieve` (6-layer path) | ⚠️ Stub | Cần Qdrant index (Sprint 7) |
 
-**Cách phát biểu an toàn khi thuyết trình:** "Kiến trúc và các tầng học cốt lõi (encoder fine-tune, OutfitTransformer, preference post-train) đã hiện thực và test. Phần tích hợp E2E qua Qdrant và task FITB/compatibility là backlog Sprint 7–8 — đúng theo lộ trình sprint."
+**Cách phát biểu an toàn khi thuyết trình:** "Sprint 0 hoàn thành — toàn bộ vocabulary, schema, quiz re-rank, và pipeline contract đã có test xanh. v3.1-lite product system đang build KB Builder (Sprint 1) và Qwen3-VL stylist (Sprint 3). Grading sub-system (encoder fine-tune, OutfitTransformer, FITB/Compat AUC) theo lộ trình Sprint 3–6."
 
 ---
 
-## 9. KỊCH BẢN TRÌNH BÀY 30 PHÚT
+## 9. KỊCH BẢN TRÌNH BÀY 30 PHÚT (CẬP NHẬT — v3.1-lite lead)
 
 | Phút | Nội dung | Slide / Sơ đồ dùng |
 |---|---|---|
-| 0–3 | Bài toán & motivation: recommend outfit theo body + dịp + sở thích | Sơ đồ 1 (System Overview) |
-| 3–6 | Phương pháp luận Scrum/XP — "Sprint = Experiment Cycle" | §0, Sơ đồ 9 (Sprint map) |
-| 6–11 | **Data Collection & Pre-processing** — 7 stage, weak supervision, flip invariant | Sơ đồ 2 (Data pipeline) |
-| 11–18 | **Model Architecture deep-dive** — Encoder SigLIP + OutfitTransformer tới tầng tensor | Sơ đồ 4, 5 (SigLIP loss, Transformer) |
-| 18–23 | **Training Pipeline** — 5 component, 3 invariant, Bradley-Terry | Sơ đồ 3 (Training DAG) |
-| 23–26 | **Inference** — luồng 6 bước, ngân sách latency < 3s | Sơ đồ 6 (Inference sequence) |
-| 26–29 | Evaluation, ablation, kết quả/metric gate | §6 bảng metric |
-| 29–30 | Kết luận + hướng phát triển (try-on, body-aware embedding) | — |
+| 0–3 | Bài toán & motivation: recommend outfit theo body + dịp + sở thích | §0b Sơ đồ V1 (v3.1-lite 4-tier overview) |
+| 3–6 | **v3.1-lite architecture** — 4 tầng, controlled vocabulary, hallucination check | §0b, Sơ đồ V4 (vocab flow), V2 (inference sequence) |
+| 6–9 | Phương pháp luận Scrum/XP — "Sprint = Experiment Cycle" · hai track song song | §0, §7 Sprint map |
+| 9–14 | **Data Collection & Pre-processing** — 7 stage, 3 luồng độc lập, weak supervision, flip invariant | Sơ đồ V3 (KB build), Sơ đồ 2 (Data pipeline) |
+| 14–21 | **Model Architecture deep-dive** — Qwen3-VL-8B + LoRA (stylist) · Encoder SigLIP + OutfitTransformer (grading) tới tầng tensor | §4, Sơ đồ 4, 5 (SigLIP loss, Transformer) |
+| 21–24 | **Training Pipeline** — LoRA fine-tune stylist + 5 component grading, 3 invariant, Bradley-Terry | Sơ đồ 3 (Training DAG) |
+| 24–27 | **Inference v3.1-lite** — luồng 7 bước, hallucination retry, quiz re-rank, latency < 5–8s GPU | Sơ đồ V2 (7-step sequence) |
+| 27–29 | Evaluation, ablation, kết quả/metric gate (FITB ≥55%, AUC ≥0.85, Gemini ≥3.5/5) | §6 bảng metric, §6b ablation |
+| 29–30 | Kết luận + hướng phát triển (try-on, body-aware embedding, LoRA quality) | — |
 
 **3 thông điệp đinh phải để lại cho hội đồng:**
-1. Kiến trúc 6 tầng = cách chia 10 sprint — *quy trình Scrum sinh ra kiến trúc*.
-2. OutfitTransformer là **Set Transformer** với **conditioning token** `[BODY]/[OCC]/[PREF]` — điều kiện hóa nằm ngay trong attention.
-3. Chất lượng được bảo đảm bằng **kiểm thử kép**: TDD cho harness, **metric-gate** cho model.
+1. **v3.1-lite = hệ sản phẩm** (Qwen3-VL + Qdrant filter-first + Quiz re-rank) chạy song song với **grading sub-system** (SigLIP + OutfitTransformer + FITB/AUC) — hai mục đích, một codebase.
+2. **Controlled vocabulary** là sợi chỉ đỏ xuyên suốt: `vocab.py` → Gemini tagging → Qdrant payload → Qwen3-VL tool-call → Quiz filter — không bao giờ enum mismatch.
+3. Chất lượng được bảo đảm bằng **kiểm thử kép**: TDD cho harness + vocab invariant, **metric-gate** cho model, **hallucination check** cho LLM output.
 
 ---
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from outfitmatch.kb.schema import ItemRecord, OutfitRecord
-from outfitmatch.vocab import OCCASION_SET, STYLE_SET, BODY_SHAPE_SET
+from outfitmatch.vocab import BODY_SHAPE_SET, OCCASION_SET, STYLE_SET
 
 
 def _make_item(item_id: str = "item_custom_00001", category: str = "top") -> ItemRecord:
