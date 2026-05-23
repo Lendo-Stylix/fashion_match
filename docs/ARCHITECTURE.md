@@ -1,265 +1,308 @@
 # OutfitMatch — System Architecture
 
-> **Agents: read this file before writing any code.** It defines module boundaries, data flow, and the invariants every module must respect. Violating these boundaries breaks experiment reproducibility.
+> **Agents: read this file before writing any code.** It defines module boundaries, data flow, and the invariants every module must respect.
 
 ---
 
-## 1. System Overview
+## Part I — v3.1-lite: Active Development Target
 
-OutfitMatch is a 5-layer fashion recommendation pipeline:
+This is the system described in `Kien_truc_v3.1.md`. All new feature work follows this architecture.
+
+---
+
+## 1. System Overview (v3.1-lite)
 
 ```
-User input (image + height + weight + occasion + global style prompt)
-        │                                              │
-        │                                              ▼
-        │                            ┌──────────────────────────────────┐
-        │                            │  Layer 0: Preference Structuring  │
-        │                            │  src/preference/                  │
-        │                            │  Gemini → StructuredPreference     │
-        │                            │   hard → Qdrant filter (Layer 3)   │
-        │                            │   soft → [PREF×N] tokens (Layer 4) │
-        │                            │  no hard? → body-shape fallback    │
-        │                            └──────────────┬───────────────────┘
-        ▼                                           │
-┌────────────────────┐                              │
-│  Layer 1: Body     │  PoseExtractor (YOLO-pose) → keypoints
-│  Understanding     │  → rule-based shape classifier → 5-class label
-│  src/body/         │  → body_vector: [shape_embed(512) ‖ bmi ‖ ratios]
-└─────────┬──────────┘  (5-class label also feeds the hard-constraint fallback)
-          │ body_vector                              │
-          ▼                                           │
-┌────────────────────┐
-│  Layer 2: Catalog  │  Marqo/marqo-fashionSigLIP (fine-tuned)
-│  Encoder           │  image + text → L2-normalised embedding
-│  src/encoders/     │  BaseEncoder ABC: encode_image / encode_text
-└─────────┬──────────┘
-          │ item embeddings
-          ▼
-┌────────────────────┐
-│  Layer 3: Vector   │  Qdrant (Docker :6333) — collection "catalog"
-│  Store / Retrieval │  ANN query + hard-constraint payload filter
-└─────────┬──────────┘  (colors_avoid / categories_exclude / fit_bias)
-          │ candidate items
-          ▼
-┌────────────────────┐
-│  Layer 4: Outfit   │  OutfitTransformer (Sarkar 2022, arXiv:2204.04812)
-│  Composer          │  Tokens: [CLS] [BODY] [OCC] [PREF×N] [item×N]
-│  src/train/        │  FITB/compat (Polyvore) + conditional pairwise
-└─────────┬──────────┘  (Bradley-Terry) — 4-layer, 8-head, d=512
-          │ ranked outfit
-          ▼
-┌────────────────────┐
-│  Layer 5: Item     │  Qdrant filter (color, fit, style) + re-rank
-│  Customization     │  API: POST /customize-item
-└────────────────────┘
-          │
-          ▼
-   Gradio demo / FastAPI
+┌──────────────────────────────────────────────────────────────┐
+│  TẦNG 1: OUTFIT KNOWLEDGE BASE (Offline — build once)        │
+│  OutfitTransformer-labse (frozen) + FITB/Beam → 5–20K outfit │
+│  Gemini Flash metadata tagging → occasion/style/body enums   │
+└──────────────────────────────┬───────────────────────────────┘
+                               ↓
+┌──────────────────────────────────────────────────────────────┐
+│  TẦNG 2: CONVERSATIONAL AI STYLIST (Qwen3-VL-8B + LoRA)      │
+│  Parse intent · ask follow-up · call search_outfits tool      │
+│  Validate outfit_id · generate Vietnamese explanation         │
+└──────────────────────────────┬───────────────────────────────┘
+                               ↓
+┌──────────────────────────────────────────────────────────────┐
+│  TẦNG 3: RETRIEVAL ENGINE (Qdrant — filter first)            │
+│  Filter by occasion/style/body/price/has_vn_store            │
+│  Sort by compatibility_score → Top 30–50 outfits             │
+└──────────────────────────────┬───────────────────────────────┘
+                               ↓
+┌──────────────────────────────────────────────────────────────┐
+│  TẦNG 4: PERSONALIZATION (Quiz Re-rank — MVP)                │
+│  5-question quiz → PreferenceProfile → additive re-rank      │
+│  → Top 3–5 outfits with Vietnamese explanation               │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 2. Module Responsibilities
-
-Each module has ONE responsibility. Do not mix concerns.
+## 2. Module Responsibilities (v3.1-lite)
 
 | Module | Responsibility | Must NOT do |
 |---|---|---|
-| `src/outfitmatch/config.py` | Load + validate YAML experiment configs | Execute training or I/O |
-| `src/outfitmatch/data/` | Load HF datasets, cap rows, return dicts | Encode images; call models |
-| `src/outfitmatch/encoders/` | Embed images/text via `BaseEncoder` ABC | Load datasets; write to disk |
-| `src/outfitmatch/metrics/` | Pure metric functions (no I/O, no model calls) | Log to W&B; call encoders |
-| `src/outfitmatch/eval/` | Compose encoder + dataset + metrics → dict | Save models; call W&B |
-| `src/outfitmatch/train/` | Training loops (contrastive, composer) | Load configs directly |
-| `src/outfitmatch/body/` | Pose extraction; rule-based body shape | Encode fashion items |
-| `src/outfitmatch/preference/` | Global prompt → `StructuredPreference` (Gemini, cached); body-shape hard fallback | Train models; call composer |
-| `src/outfitmatch/runner.py` | Wire config → data → train → eval → W&B | Business logic |
-| `src/outfitmatch/cli.py` | CLI entrypoint via Typer | Training logic |
-| `src/outfitmatch/ui/` | Gradio UI | Model training |
+| `src/outfitmatch/vocab.py` | Single source of truth for all enum values | Define UI labels (use `*_LABELS_VI` for that) |
+| `src/outfitmatch/kb/schema.py` | `ItemRecord` + `OutfitRecord` data types | Business logic, I/O |
+| `src/outfitmatch/kb/embedding.py` | Extract item embeddings via OT-labse | Filter or tag outfits |
+| `src/outfitmatch/kb/generation.py` | FITB+Beam (70%) + random+score (30%) outfit generation | Score or tag outfits |
+| `src/outfitmatch/kb/scoring.py` | Re-score all outfits with OT compatibility score | Generate or tag outfits |
+| `src/outfitmatch/kb/tagging.py` | Gemini Flash LLM metadata tagging (occasion/style/…) | Score outfits, call encoders |
+| `src/outfitmatch/stylist/tools.py` | `search_outfits` tool definition (enum-typed params from vocab) | Model loading, inference |
+| `src/outfitmatch/stylist/validation.py` | Extract + validate outfit_id refs in LLM responses | Business logic |
+| `src/outfitmatch/stylist/model.py` | Qwen3-VL-8B + LoRA loading + inference | Dataset loading |
+| `src/outfitmatch/stylist/data.py` | Conversation dataset for LoRA fine-tuning | Inference |
+| `src/outfitmatch/quiz/schema.py` | `QuizAnswers` + `PreferenceProfile` + `quiz_to_profile` | Re-ranking logic |
+| `src/outfitmatch/quiz/rerank.py` | Preference-based outfit re-rank | Quiz UI, dataset loading |
+| `src/outfitmatch/pipeline.py` | Wire Tầng 2–4 into E2E `recommend_outfit` orchestrator | Training logic |
 
 ---
 
-## 3. Experiment Config Contract
+## 3. Controlled Vocabulary Invariant
 
-Every experiment is a YAML file consumed by `ExperimentConfig` (pydantic). Fields:
+**File:** `src/outfitmatch/vocab.py` — the single source of truth for all enum values.
+
+All three of these MUST use the same values from `vocab.py`:
+1. Gemini Flash LLM-tagging prompt (building the KB)
+2. `search_outfits` tool parameters for Qwen3-VL
+3. Qdrant payload index field values
+
+**Rule:** Internal values are always English `snake_case`. Vietnamese labels appear ONLY in `*_LABELS_VI` dicts and UI `*_vi` schema fields.
+
+**Never rename** an existing enum value — it would invalidate the entire KB. Add new values; never change old ones.
+
+---
+
+## 4. Knowledge Base Schema
+
+One outfit (`OutfitRecord`) in the KB:
+
+```jsonc
+{
+  "outfit_id": "OF_00001",
+  "schema_version": "3.1",
+  "items": [
+    {
+      "item_id": "item_custom_00001",
+      "category": "top",                       // ITEM_CATEGORY enum
+      "image_path": "data/custom/catalog/images/item_custom_00001.jpg",
+      "item_embedding": [/* OT-labse dim — verify from checkpoint */],
+      "store": {
+        "store_id": "canifa_vn",
+        "store_name": "Canifa",
+        "product_url": "https://canifa.com/...",
+        "price_vnd": 299000,
+        "in_stock": true
+      }
+    }
+  ],
+  "outfit_embedding": [/* same dim as item_embedding */],
+  "compatibility_score": 0.0,              // ALWAYS re-scored after generation
+  "occasion": ["office", "cafe_hangout"],  // OCCASION enum (primary conditioning)
+  "style": ["minimalist", "korean"],       // STYLE enum (primary conditioning)
+  "body_shapes_fit": ["pear", "hourglass"],
+  "season": ["transitional"],
+  "color_palette": ["beige", "navy"],
+  "price_total_vnd": 850000,
+  "price_tier": "mid",
+  "has_vn_store": true,
+  "stylist_explanation_vi": "...",
+  "gen_method": "fitb_beam"
+}
+```
+
+---
+
+## 5. Retrieval Design (Tầng 3)
+
+v3.1-lite does NOT use a query vector for Qdrant search. Instead:
+
+1. Qwen3-VL calls `search_outfits(occasion, style, body_shape, price_max, exclude_colors)`.
+2. Qdrant **filters** by metadata (occasion, style, body_shapes_fit, price_tier, `has_vn_store=True`, exclude_colors).
+3. Results are **sorted by `compatibility_score`** (precomputed, descending) + diversity penalty.
+4. Top 30–50 are returned to Tầng 4.
+
+This avoids the undefined "user query → outfit embedding space" mapping that was a gap in v3.0.
+
+**Qdrant collection:** `outfits`. Payload indexes on: `occasion`, `style`, `body_shapes_fit`, `price_tier`, `season`, `has_vn_store`.
+
+```python
+# Collection config (verify OUTFIT_EMBED_DIM from checkpoint before creating)
+qdrant.create_collection(
+    collection_name="outfits",
+    vectors_config=models.VectorParams(
+        size=OUTFIT_EMBED_DIM,  # verify from OT-labse checkpoint — do NOT hardcode
+        distance=models.Distance.COSINE,
+    ),
+)
+for field in ["occasion", "style", "body_shapes_fit", "price_tier", "season", "has_vn_store"]:
+    qdrant.create_payload_index("outfits", field, models.PayloadSchemaType.KEYWORD)
+```
+
+---
+
+## 6. Hallucination Prevention (Tầng 2)
+
+After Qwen3-VL generates a response, extract all `OF_NNNNN` references and verify each exists in the KB:
+
+```python
+from outfitmatch.stylist.validation import validate_response
+
+ok, invalid_ids = validate_response(response_text, valid_outfit_id_set)
+if not ok:
+    # do NOT show response to user — ask Qwen to retry
+    pass
+```
+
+This is enforced in `pipeline.py`'s E2E flow. Never skip this step.
+
+---
+
+## 7. E2E Inference Pipeline (v3.1-lite)
+
+```
+Step 1  User provides text + optional selfie + completed onboarding quiz
+Step 2  Qwen3-VL parses → {height, weight, skin_tone, occasion, style, missing_info[]}
+Step 3  [Enough info?] ──No──▶ Qwen asks follow-up (loop to Step 1)
+         │ Yes
+Step 4  Qwen calls search_outfits(filters) → Qdrant filter+sort → 30–50 outfits
+Step 5  Tầng 4 re-ranks by PreferenceProfile from quiz → Top 3–5
+Step 6  Validation layer verifies all outfit_id refs
+Step 7  Qwen generates personalised Vietnamese explanation
+Step 8  Display: outfit images + store + price + purchase link; record feedback
+```
+
+---
+
+## Part II — Grading Experiments: 6-Layer Sub-system
+
+This sub-system is used **exclusively for academic deliverables**: encoder ablations, FITB accuracy, Compatibility AUC, and body-conditioning experiments. It does NOT replace v3.1-lite as the product architecture.
+
+---
+
+## 8. 6-Layer Grading Architecture (encoder/composer experiments)
+
+```
+Layer 0 — Preference Structuring (src/preference/)
+Layer 1 — Body Understanding (src/body/)
+Layer 2 — Catalog Encoder (src/encoders/)  ← encoder ablation axis
+Layer 3 — Vector Store / Retrieval (Qdrant "catalog" collection)
+Layer 4 — Outfit Composer (src/train/composer.py)  ← FITB / AUC axis
+Layer 5 — Item Customization (POST /customize-item)
+```
+
+Used by: `src/outfitmatch/runner.py`, `om-exp` CLI, `configs/` YAML files, `docs/EXPERIMENT_GUIDE.md`.
+
+---
+
+## 9. Experiment Config Contract (grading experiments)
+
+Every experiment is a YAML file consumed by `ExperimentConfig` (pydantic):
 
 ```yaml
-name: string           # W&B run name, also the CSV row key
-seed: int              # set_seed() called before any model init
+name: string
+seed: int
 task: retrieval|fitb|compatibility|preference
 model:
   kind: hf_clip|open_clip
-  checkpoint: string   # HF repo ID or open_clip "hf-hub:X" string
-  pretrained: string?  # open_clip pretrained tag (optional)
-  finetune: bool       # if true, runner calls finetune_encoder
+  checkpoint: string
+  pretrained: string?
+  finetune: bool
 dataset:
-  hf_id: string        # HuggingFace dataset ID
-  config: string?      # HF dataset config name
-  split: string        # default "data"
-  max_rows: int?       # null = use all rows (data-scaling axis)
+  hf_id: string
+  config: string?
+  split: string
+  max_rows: int?
 train:
   epochs: int
   batch_size: int
   lr: float
   weight_decay: float
   num_workers: int
-composer:              # needed for task=fitb/compatibility/preference
+composer:
   n_heads: int
   n_layers: int
   use_body: bool
   use_occ: bool
-  use_pref: bool       # task=preference: enable [PREF] tokens
-  pref_groups: [str]   # active soft groups, e.g. [style, color, fit]
-wandb_project: string  # default "outfitmatch-grading"
+  use_pref: bool
+  pref_groups: [str]
+wandb_project: string
 ```
 
 **Invariant:** `max_rows` is the ONLY way to vary dataset size. Never hard-code slice logic in model or trainer code.
 
 ---
 
-## 4. BaseEncoder Interface
+## 10. BaseEncoder Interface (grading experiments)
 
 ```python
 class BaseEncoder(ABC):
-    embed_dim: int                          # must be set in __init__
+    embed_dim: int
     def encode_image(self, images: list[PIL.Image]) -> torch.Tensor: ...
     def encode_text(self, texts: list[str]) -> torch.Tensor: ...
 ```
 
-- Return shape: `(N, embed_dim)`, L2-normalised.
-- Both methods are `@torch.no_grad()` during eval. During fine-tuning, `finetune_encoder()` wraps the model in train mode — do not add gradient-blocking logic inside the encoder class.
-- Use `build_encoder(ModelConfig) -> BaseEncoder` from `src/outfitmatch/encoders/factory.py` — never instantiate encoder classes directly outside tests.
+Return shape: `(N, embed_dim)`, L2-normalised. Use `build_encoder(ModelConfig)` from `src/outfitmatch/encoders/factory.py` — never instantiate encoder classes directly outside tests.
 
 ---
 
-## 5. Dataset Schema Contracts
+## 11. Dataset Schema Contracts (grading experiments)
 
-### RetrievalDataset (DeepFashion / Fashion200K)
-
-`__getitem__` returns:
+### RetrievalDataset
 ```python
 {"image": PIL.Image, "text": str, "category": str, "item_ID": str}
 ```
 
 ### PolyvoreCompatDataset
-
-`__getitem__` returns:
 ```python
 {"example_id": str, "items": list[str], "label": int}  # label ∈ {0, 1}
 ```
 
 ### PolyvoreFITBDataset
-
-`__getitem__` returns:
 ```python
-{"question": list[str], "answers": list[str], "label": int}  # label = correct answer index
+{"question": list[str], "answers": list[str], "label": int}
 ```
 
 ### PreferenceTripletDataset
-
-`__getitem__` returns:
 ```python
 {"instruction": str, "body_shape": str,
- "pos_items": list[str], "neg_items": list[str]}  # pos preferred over neg under instruction
+ "pos_items": list[str], "neg_items": list[str]}
 ```
 
 ---
 
-## 5b. Preference Personalization Layer (Sprint 9)
-
-A user's free-text **global style prompt** is parsed once per profile by the
-Gemini-backed `PromptStructurer` into a `StructuredPreference`:
-
-```
-StructuredPreference
-├── hard: HardConstraint   # colors_avoid / categories_exclude /
-│                          # materials_require / fit_bias / source
-└── soft: SoftPreference   # style / color / fit  (short phrases)
-```
-
-**Routing (locked design):**
-- **hard** = constraints the user *explicitly states* → applied as a Qdrant
-  payload filter at Layer 3. If the user states **no** hard constraint,
-  `apply_body_fallback()` derives `fit_bias` from the 5-class body shape
-  (`pear→structured_top`, `apple→defined_waist`, `hourglass→fitted`,
-  `rectangle→add_curves`, `inverted_triangle→volume_bottom`),
-  `source="body_fallback"`.
-- **soft** = preferences → each active group is encoded by the *same* encoder
-  text tower (`BaseEncoder.encode_text`) and appended to `OutfitTransformer`
-  as its own `[PREF_<group>]` token (N tokens by group, not one merged token).
-
-Post-training objective: **conditional Bradley-Terry**
-`-log σ(score(pos | pref) - score(neg | pref))` on
-`(instruction, preferred, rejected)` triplets.
-
-**INVARIANT — no train/inference skew:** training triplets MUST be produced
-through the *same* version-pinned structuring pipeline used at inference.
-`structuring.EXTRACTOR_VERSION` is part of the cache key; bumping it
-invalidates the cache **and requires regenerating `triplets.jsonl`**. The
-triplet generator must inject contrastive instruction flips (same outfit pair,
-opposing instructions, flipped label) for ≥30% of pairs, otherwise the
-composer learns to ignore `[PREF]` and the `use_pref` ablation shows no gain.
-
----
-
-## 6. Experiment Cycle Design
-
-Each Scrum sprint runs a **grid over exactly one axis**; other axes are fixed:
-
-| Axis | What varies | Fixed values |
-|---|---|---|
-| Model | encoder kind/checkpoint | dataset=deepfashion-inshop, max_rows=5000 |
-| Dataset type | hf_id + config | model=fashionSigLIP-ZS, max_rows=10000 |
-| Rows (scaling) | max_rows ∈ {5K, 25K, 100K, null} | model=fashionSigLIP-FT, dataset=fashion200k |
-| Conditioning | composer.use_body / use_occ | model=fashionSigLIP-ZS, dataset=polyvore-nondisjoint |
-
-Run a cycle: `om-exp sweep configs/<axis-dir>/ --out-csv docs/experiments/ablation_<axis>.csv`
-
-All cycle results accumulate in `docs/experiments/`. The `name` field in each config is the row key in the CSV and the W&B run name. Use descriptive names like `encoder-fashionsiglip-zs` so W&B charts are self-documenting.
-
----
-
-## 7. Key Model Choices (research-backed)
-
-| Component | Selected model | Rationale |
-|---|---|---|
-| Catalog encoder | `Marqo/marqo-fashionSigLIP` (203M, Apache-2.0) | SOTA fashion retrieval on 7 datasets, sigmoid loss matches fine-tune plan |
-| Encoder baseline | `openai/clip-vit-base-patch32` | The floor all experiments beat |
-| Encoder ablation | `patrickjohncyh/fashion-clip`, `Marqo/marqo-fashionCLIP` | Domain-CLIP variants |
-| Body pose | `ultralytics` YOLOv8n-pose / YOLO11n-pose | Only Python-3.13-safe pose option (mediapipe broken) |
-| Outfit composer | OutfitTransformer (Sarkar 2022, arXiv:2204.04812) | Reference architecture for Polyvore FITB |
-| Outfit dataset | `owj0421/polyvore-outfits` | Ships disjoint/nondisjoint × compat/FITB configs — the dataset experiment axis |
-
----
-
-## 8. Python 3.13 Constraints (hard rules)
-
-| NEVER use | Use instead |
-|---|---|
-| `mediapipe` | `ultralytics` (YOLOv8-pose) |
-| `faiss-cpu` via pip | `qdrant-client` + Docker, or `usearch` |
-| `black`, `flake8`, `isort` | `ruff` (covers all three) |
-| `flask` | `fastapi` + `uvicorn` |
-| `streamlit` | `gradio` |
-
----
-
-## 9. Grading Targets (DoD for ML results)
+## 12. Grading Targets (DoD for ML results)
 
 | Metric | Target | Measured by |
 |---|---|---|
 | Recall@5 (retrieval) | CLIP-ZS baseline + 5pp | `evaluate_retrieval()` |
-| FITB accuracy | ≥ 55% | `fitb_accuracy()` |
-| Compatibility AUC | ≥ 0.85 | `compatibility_auc()` |
+| FITB accuracy | ≥ 55% | `fitb_accuracy()` on Polyvore |
+| Compatibility AUC | ≥ 0.85 | `compatibility_auc()` on Polyvore |
 | Body-cond. Precision@5 | + 10pp vs non-conditional | composer ablation cycle |
-| Pref pairwise accuracy | ≥ 0.70 (`use_pref` > `pref-off`) | Sprint 9 preference cycle |
-| Instruction-flip consistency | ≥ 0.60 | Sprint 9 preference cycle |
-| E2E latency | < 3s on CPU | `pipeline.recommend_outfit()` timed |
-| LLM-as-judge (Gemini) | Mean ≥ 3.5 / 5 | Sprint 8 |
+| E2E latency | < 5–8s on GPU / cloud API | timed on GPU (CPU target retired with v3.1-lite) |
+| LLM-as-judge (Gemini) | Mean ≥ 3.5 / 5 | Sprint 9 Gemini judge eval |
+
+Required ablations: (1) encoder variants, (2) body conditioning on/off, (3) occasion conditioning on/off, (4) greedy vs beam decoding.
 
 ---
 
-## 10. Definition of Done (XP rule)
+## 13. Python 3.13 Constraints (hard rules)
+
+| NEVER use | Use instead |
+|---|---|
+| `mediapipe` | `ultralytics` (YOLOv8-pose) |
+| `faiss-cpu` via pip | `qdrant-client` + Docker |
+| `black`, `flake8`, `isort` | `ruff` |
+| `flask` | `fastapi` + `uvicorn` |
+| `streamlit` | `gradio` |
+| `AutoModelForCausalLM` for Qwen3-VL | `Qwen3VLForConditionalGeneration` |
+| `evaluation_strategy` in TrainingArguments | `eval_strategy` (new name) |
+
+---
+
+## 14. Definition of Done (XP rule)
 
 A feature is DONE when:
 1. PR merged to `dev` with ≥ 1 peer review.
