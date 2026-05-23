@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from outfitmatch.vocab import (
     BODY_SHAPE,
-    BODY_SHAPE_LABELS_VI,
     BODY_SHAPE_SET,
+    ITEM_CATEGORY,
+    ITEM_CATEGORY_SET,
     OCCASION,
     OCCASION_LABELS_VI,
     OCCASION_SET,
@@ -16,26 +17,27 @@ from outfitmatch.vocab import (
     STYLE,
     STYLE_LABELS_VI,
     STYLE_SET,
-    ITEM_CATEGORY,
-    ITEM_CATEGORY_SET,
     validate_enum_values,
 )
 
 
 def test_all_enum_values_are_english_snake_case():
-    all_enums = list(OCCASION) + list(STYLE) + list(BODY_SHAPE) + list(SEASON) + list(PRICE_TIER) + list(ITEM_CATEGORY) + list(SKIN_TONE)
+    all_enums = (
+        list(OCCASION) + list(STYLE) + list(BODY_SHAPE)
+        + list(SEASON) + list(PRICE_TIER) + list(ITEM_CATEGORY) + list(SKIN_TONE)
+    )
     for v in all_enums:
         assert v == v.lower() and " " not in v, f"Bad enum value: {v!r}"
 
 
 def test_sets_match_tuples():
-    assert OCCASION_SET == frozenset(OCCASION)
-    assert STYLE_SET == frozenset(STYLE)
-    assert BODY_SHAPE_SET == frozenset(BODY_SHAPE)
-    assert SEASON_SET == frozenset(SEASON)
-    assert PRICE_TIER_SET == frozenset(PRICE_TIER)
-    assert ITEM_CATEGORY_SET == frozenset(ITEM_CATEGORY)
-    assert SKIN_TONE_SET == frozenset(SKIN_TONE)
+    assert frozenset(OCCASION) == OCCASION_SET
+    assert frozenset(STYLE) == STYLE_SET
+    assert frozenset(BODY_SHAPE) == BODY_SHAPE_SET
+    assert frozenset(SEASON) == SEASON_SET
+    assert frozenset(PRICE_TIER) == PRICE_TIER_SET
+    assert frozenset(ITEM_CATEGORY) == ITEM_CATEGORY_SET
+    assert frozenset(SKIN_TONE) == SKIN_TONE_SET
 
 
 def test_validate_enum_splits_valid_and_invalid():
