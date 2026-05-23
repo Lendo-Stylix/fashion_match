@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from outfitmatch.kb.schema import ItemRecord, OutfitRecord
-from outfitmatch.quiz.schema import PreferenceProfile, QuizAnswers, quiz_to_profile
+from outfitmatch.kb.schema import OutfitRecord
 from outfitmatch.quiz.rerank import rerank_by_preference, score_outfit_for_preference
+from outfitmatch.quiz.schema import PreferenceProfile, QuizAnswers, quiz_to_profile
 
 
 def _make_outfit(
@@ -67,7 +67,9 @@ def test_price_tier_mismatch_penalises_score():
     )
     outfit_wrong_tier = _make_outfit("OF_00003", [], [], "premium", 0.8)
     outfit_right_tier = _make_outfit("OF_00004", [], [], "budget", 0.8)
-    assert score_outfit_for_preference(outfit_right_tier, profile) > score_outfit_for_preference(outfit_wrong_tier, profile)
+    score_right = score_outfit_for_preference(outfit_right_tier, profile)
+    score_wrong = score_outfit_for_preference(outfit_wrong_tier, profile)
+    assert score_right > score_wrong
 
 
 def test_rerank_returns_top_k():
@@ -77,7 +79,10 @@ def test_rerank_returns_top_k():
         color_priority=[],
         price_tier="mid",
     )
-    outfits = [_make_outfit(f"OF_{i:05d}", ["office"], ["minimalist"], "mid", 0.5 + i * 0.01) for i in range(10)]
+    outfits = [
+        _make_outfit(f"OF_{i:05d}", ["office"], ["minimalist"], "mid", 0.5 + i * 0.01)
+        for i in range(10)
+    ]
     result = rerank_by_preference(outfits, profile, top_k=3)
     assert len(result) == 3
 

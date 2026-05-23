@@ -41,7 +41,7 @@ def test_invalid_task_rejected(tmp_path: Path):
         "model:\n  kind: hf_clip\n  checkpoint: a\n"
         "dataset:\n  hf_id: a\ntrain: {}\n"
     )
-    with pytest.raises(Exception):
+    with pytest.raises((ValueError, Exception)):
         load_config(p)
 
 
