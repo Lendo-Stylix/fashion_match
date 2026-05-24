@@ -5,12 +5,30 @@ Hướng dẫn cho Claude Code (claude.ai/code) khi làm việc trong repo này.
 ## Critical: Đọc trước khi viết code
 
 - **[`Kien_truc_v3.1.md`](Kien_truc_v3.1.md)** — kế hoạch canonical v3.1-lite (4 tầng MVP).
-  Đây là nguồn sự thật duy nhất về scope, schema, controlled vocabulary, roadmap 10 tuần.
+  Đây là nguồn sự thật duy nhất về scope, schema, controlled vocabulary, roadmap 7 tuần.
 - **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)** — module boundaries, data flow, dataclass schema.
   Đọc trước khi sửa bất kỳ file nào trong `src/`.
-- **[`docs/EXPERIMENT_GUIDE.md`](docs/EXPERIMENT_GUIDE.md)** — workflow eval Sprint 9
+- **[`docs/EXPERIMENT_GUIDE.md`](docs/EXPERIMENT_GUIDE.md)** — workflow eval Sprint 7
   (LLM-judge, body-filter ablation, decoding ablation, latency).
 - **[`docs/superpowers/plans/`](docs/superpowers/plans/)** — task plans hiện hành cho v3.1.
+
+## Codebase Search — Ưu tiên dùng Codegraph
+
+**Trước khi dùng Grep / Glob / Read để khám phá code, hãy dùng Codegraph trước:**
+
+| Mục tiêu | Tool ưu tiên |
+|---|---|
+| Khám phá cấu trúc file/folder | `codegraph_files` (thay thế Glob/ls) |
+| Tìm symbol, function, class | `codegraph_search` (thay thế Grep) |
+| Hiểu flow / "làm thế nào X hoạt động?" | `codegraph_context` (call đầu tiên) |
+| Trace call path từ A đến B | `codegraph_trace` |
+| Xem caller / callee của function | `codegraph_callers` / `codegraph_callees` |
+| Đánh giá tác động khi sửa code | `codegraph_impact` |
+| Xem source của 1 symbol | `codegraph_node` |
+| Survey nhiều symbol liên quan | `codegraph_explore` |
+
+**Quy tắc:** Dùng `codegraph_context` làm bước đầu tiên cho mọi câu hỏi về kiến trúc
+hoặc bug. Chỉ fallback sang Grep/Read khi codegraph không đủ chi tiết cho một đoạn code cụ thể.
 
 > **Không còn kiến trúc 6 layer.** Repo trước đây có Layer 0–5 (Preference / Body / Encoder /
 > Vector / Composer / Customization). Toàn bộ scaffolding đó đã bị xóa. Chỉ tồn tại
@@ -20,7 +38,7 @@ Hướng dẫn cho Claude Code (claude.ai/code) khi làm việc trong repo này.
 
 ## Project Overview
 
-**OutfitMatch** — Body & Occasion-Aware Fashion Recommender (DPL302m, 10 tuần, 3 dev).
+**OutfitMatch** — Body & Occasion-Aware Fashion Recommender (DPL302m, 7 tuần, 3 dev).
 
 Hệ thống multimodal: user gửi text + (tùy chọn) ảnh + thông tin quiz onboarding →
 Qwen3-VL parse intent → Qdrant filter outfits → quiz re-rank → hiển thị Top 3-5 outfit
