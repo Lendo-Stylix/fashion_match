@@ -12,6 +12,7 @@ tools.py and validation.py are fully operational now.
 
 See Kien_truc_v3.1.md §4 for full specification.
 """
+
 from outfitmatch.stylist.tools import SEARCH_OUTFITS_TOOL
 from outfitmatch.stylist.validation import extract_outfit_ids, validate_response
 

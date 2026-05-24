@@ -1,23 +1,16 @@
-# Experiment Guide — OutfitMatch (v3.1-lite + Grading)
+# Experiment Guide — v3.1-lite
 
-> Read `docs/ARCHITECTURE.md` first. This file explains both the v3.1-lite product eval and the grading experiment workflow.
+> Đọc [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) và [`Kien_truc_v3.1.md`](../Kien_truc_v3.1.md) trước.
 
----
-
-## Two Evaluation Tracks
-
-| Track | Purpose | When |
-|---|---|---|
-| **v3.1-lite product eval** | LLM-as-judge, E2E latency, body-conditional precision | Sprint 9 |
-| **Grading experiment cycles** | Encoder ablations, FITB accuracy, Compatibility AUC | Continuous via `om-exp sweep` |
+Sprint 9 chạy 2 nhóm eval cho academic deliverable. Toàn bộ output đi vào
+`docs/experiments/` (mỗi metric một CSV) — file `RESULTS.md` tổng hợp cuối Sprint 9.
 
 ---
 
-## v3.1-lite Evaluation (Sprint 9)
+## A. Product Quality — LLM-as-Judge
 
-### LLM-as-Judge (Gemini)
-
-Rate each `RecommendResult` on a 1–5 scale using Gemini as judge. Target: mean ≥ 3.5/5.
+Gemini chấm `RecommendResult` E2E trên thang 1–5 (style, fit, occasion, overall).
+Target: **mean ≥ 3.5 / 5**.
 
 ```bash
 uv run python scripts/llm_judge.py \
@@ -25,29 +18,31 @@ uv run python scripts/llm_judge.py \
     --out docs/experiments/llm_judge_results.csv
 ```
 
-### Body-Conditional Precision@5 Ablation (v3.1-lite Tầng 3)
+`recommend_results.jsonl` được sinh bằng cách chạy `pipeline.recommend_outfit()`
+trên một bộ test prompt (cover đủ 9 OCCASION × 8 STYLE).
 
-Compare Qdrant retrieval with and without `body_shapes_fit` filter. Target: +10pp with filter ON.
+---
 
-```bash
-uv run python scripts/ablation_body_filter.py \
-    --out docs/experiments/ablation_body_filter_v31.csv
-```
+## B. Bốn Ablation bắt buộc
 
-### E2E Latency Measurement
-
-```bash
-# Target: < 5-8s on GPU with streaming UX
-uv run python scripts/measure_latency.py \
-    --n-requests 50 \
-    --out docs/experiments/latency_v31.csv
-```
-
-### Ablation 4 — Greedy vs Beam Decoding (KB Build)
-
-Baked into Tầng 1 KB build pipeline (`Kien_truc_v3.1.md` §3.4 Bước 3). Measure FITB accuracy of resulting KB under each method:
+| # | Tầng | Mục tiêu | Script | Metric |
+|---|---|---|---|---|
+| 1 | Tầng 1 | Encoder variants: OT-labse zero-shot vs OT-labse fine-tuned Polyvore | `ablation_encoder.py` | FITB acc + Compat AUC |
+| 2 | Tầng 3 | Body conditioning on/off | `ablation_body_filter.py` | Body-cond Precision@5 (+10pp target) |
+| 3 | Tầng 3 | Occasion conditioning on/off | `ablation_occasion_filter.py` | Occasion-cond Precision@5 |
+| 4 | Tầng 1 | Greedy vs Beam decoding (FITB+Beam generation) | `ablation_decoding.py` | FITB acc của KB resulting |
 
 ```bash
+# 1 — Encoder (zero-shot vs fine-tuned OT-labse trên Polyvore)
+uv run python scripts/ablation_encoder.py --out docs/experiments/ablation_encoder.csv
+
+# 2 — Body filter
+uv run python scripts/ablation_body_filter.py --out docs/experiments/ablation_body_filter.csv
+
+# 3 — Occasion filter
+uv run python scripts/ablation_occasion_filter.py --out docs/experiments/ablation_occasion_filter.csv
+
+# 4 — Decoding (greedy vs beam)
 uv run python scripts/ablation_decoding.py \
     --kb-greedy data/kb/kb_greedy.parquet \
     --kb-beam   data/kb/kb_beam.parquet \
@@ -56,112 +51,65 @@ uv run python scripts/ablation_decoding.py \
 
 ---
 
-## Grading Experiment Cycles (encoder / composer)
-
----
-
-## Quick Start: Running a Grading Experiment
+## C. E2E Latency
 
 ```bash
-# 1. Start vector store
-make qdrant-up
-
-# 2. Single experiment (dry-run check)
-uv run om-exp run configs/encoder/clip_zs.yaml --dry-run
-
-# 3. Single experiment (real run, logs to W&B offline)
-uv run om-exp run configs/encoder/clip_zs.yaml
-
-# 4. Full cycle (all configs in a directory)
-uv run om-exp sweep configs/encoder/ --out-csv docs/experiments/ablation_encoder.csv
-
-# 5. View results
-cat docs/experiments/ablation_encoder.csv
+# Target: < 5–8s trên GPU với streaming UX
+uv run python scripts/measure_latency.py \
+    --n-requests 50 \
+    --out docs/experiments/latency.csv
 ```
 
 ---
 
-## Experiment Cycle Structure
+## D. FITB / Compat AUC trên Polyvore (`Kien_truc_v3.1.md` §3.6)
 
-Each cycle is a directory of YAML configs that differ on **exactly one axis**:
-
-```
-configs/
-  encoder/       # Axis: model (4 YAML files, same dataset/rows)
-  dataset/       # Axis: dataset type (3 YAML files, same model/rows)
-  rows/          # Axis: max_rows (3 YAML files, same model/dataset)
-  composer/      # Axis: dataset config + conditioning (5 YAML files)
-  body/          # Axis: pose model (2 YAML files)
-```
-
-Results accumulate in `docs/experiments/<ablation_name>.csv`. The `name` field in the YAML is the row key.
-
----
-
-## W&B Dashboard
-
-All runs log to project `outfitmatch-grading`. Group by:
-- `group` = directory name (e.g. `encoder`, `rows`)
-- `job_type` = task (`retrieval`, `fitb`, `compatibility`)
-
-Key metrics logged per run:
-- `recall@1`, `recall@5`, `recall@10`, `map` (retrieval)
-- `fitb_accuracy` (composer)
-- `compatibility_auc` (composer)
-- `train/loss` per step (during fine-tuning)
-
-To sync offline runs: `uv run wandb sync wandb/offline-run-*/`
-
----
-
-## Adding a New Experiment Config
-
-1. Copy the closest existing YAML from `configs/<axis>/`.
-2. Change `name` to a unique, descriptive string (e.g. `encoder-dinov2-zs`).
-3. Change the ONE field that represents the axis (e.g. `model.checkpoint`).
-4. Run `uv run om-exp run configs/<axis>/<new>.yaml --dry-run` to validate.
-5. Run it for real; it will auto-append to the CSV.
-
-**Do not change multiple axes in one config** — this breaks ablation interpretability.
-
----
-
-## Evaluating Results
-
-Use the aggregation script:
+OT-labse dùng frozen để build KB. Để báo cáo grading metric, fine-tune nhẹ OT trên
+Polyvore (FITB / compat chuẩn — KHÔNG liên quan token `[OCC]`/`[PREF]`).
 
 ```bash
-uv run python scripts/aggregate_ablations.py
+uv run python scripts/ot_eval_polyvore.py \
+    --checkpoint fkuyumcu/OutfitTransformer-labse \
+    --split test \
+    --out docs/experiments/ot_polyvore.csv
+```
+
+Metric pure-math nằm ở `src/outfitmatch/metrics/outfit.py`:
+- `fitb_accuracy(preds, labels)` — top-1 trong các candidate.
+- `compatibility_auc(scores, labels)` — `sklearn.metrics.roc_auc_score`.
+
+---
+
+## E. W&B (chỉ cho LoRA fine-tune)
+
+Project: `outfitmatch-v3.1`. LoRA training logs:
+- `train/loss` (step-level)
+- `eval/loss`, `eval/perplexity` (epoch-level)
+- 1 sample dialog completion mỗi 500 step (qua `WandbCallback` custom)
+
+Eval scripts (ablation/judge/latency) ghi thẳng vào CSV, KHÔNG dùng W&B.
+
+---
+
+## F. Tổng hợp kết quả → RESULTS.md
+
+```bash
+uv run python scripts/aggregate_experiments.py
 # writes docs/experiments/RESULTS.md
 ```
 
-RESULTS.md contains one comparison table per axis with the winning row bolded. This is the source for the final report's Experiments section.
+`RESULTS.md` là nguồn cho phần "Experiments" của báo cáo cuối kỳ — mỗi ablation
+một bảng với row tốt nhất bold.
 
 ---
 
-## Saving Model Checkpoints
+## G. Script structure convention
 
-Fine-tuned models are saved to `models/checkpoints/<name>.pt`. They are **not committed** (in `.gitignore`). Track them with DVC:
+Mỗi script eval ở `scripts/` đều:
+1. Nhận tham số CLI qua `typer` hoặc `argparse`.
+2. Output 1 CSV duy nhất ở `docs/experiments/`.
+3. Idempotent: chạy lại không phá kết quả cũ (append với header check).
+4. Có docstring đầu file chỉ ra: ablation nào, target metric, expected runtime.
 
-```bash
-dvc add models/checkpoints/encoder-fashionsiglip-ft.pt
-git add models/checkpoints/encoder-fashionsiglip-ft.pt.dvc
-git commit -m "chore: track fine-tuned encoder checkpoint with DVC"
-dvc push
-```
-
----
-
-## Dataset Sizes Reference
-
-| HF Dataset | HF Config | Split | Rows | Size |
-|---|---|---|---:|---:|
-| `Marqo/deepfashion-inshop` | default | data | 52.6K | 216 MB |
-| `Marqo/deepfashion-multimodal` | default | data | 42.5K | 153 MB |
-| `Marqo/fashion200k` | default | data | 201.6K | 3.5 GB |
-| `owj0421/polyvore-outfits` | disjoint_fill_in_the_blank | train | 17.0K | small |
-| `owj0421/polyvore-outfits` | nondisjoint_fill_in_the_blank | train | 53.3K | small |
-| `owj0421/polyvore-outfits` | disjoint_compatibility | train | 34.0K | small |
-| `owj0421/polyvore-outfits` | nondisjoint_compatibility | train | 106.6K | small |
-
-Row-count scaling cycle uses `max_rows: 5000 / 25000 / 100000 / null` on top of these.
+Sprint 9 hiện vẫn chưa có script — sẽ được implement khi Tầng 1-4 chạy thật.
+Trước Sprint 9, không có script eval nào trong repo.

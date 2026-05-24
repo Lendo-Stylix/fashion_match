@@ -1,12 +1,15 @@
-"""Initialize all databases required for the OutfitMatch project.
+"""Initialise databases required by v3.1-lite.
 
 Creates:
-  - data/raw/occasion_cache/occasion_cache.db  (SQLite — Gemini occasion labels)
-  - Qdrant collection 'catalog' (768-dim Cosine) — requires Qdrant running on :6333
+  - Qdrant `outfits` collection (vector dim verified from OT-labse checkpoint,
+    do NOT hardcode — see Kien_truc_v3.1.md §3.5).
+  - Payload indexes on: occasion, style, body_shapes_fit, price_tier, season, has_vn_store.
+  - SQLite cache `data/cache/gemini_tagging.db` for diskcache (LLM tagging in Tầng 1).
+  - Data directories (`data/custom/`, `data/kb/`, `data/stylist/`, `data/eval/`).
 
 Usage:
-    uv run python scripts/setup_databases.py
-    uv run python scripts/setup_databases.py --skip-qdrant   # if Qdrant not running yet
+    uv run python scripts/setup_databases.py --vector-dim 768
+    uv run python scripts/setup_databases.py --vector-dim 768 --skip-qdrant
 """
 from __future__ import annotations
 
@@ -16,133 +19,118 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
 
-
-# ── SQLite occasion cache ──────────────────────────────────────────────────────
-
-def setup_sqlite() -> None:
-    db_path = ROOT / "data" / "raw" / "occasion_cache" / "occasion_cache.db"
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-
-    conn = sqlite3.connect(db_path)
-    cur = conn.cursor()
-
-    cur.executescript("""
-        CREATE TABLE IF NOT EXISTS occasion_labels (
-            outfit_id   TEXT PRIMARY KEY,
-            occasion    TEXT NOT NULL,
-            confidence  REAL,
-            model       TEXT DEFAULT 'gemini-2.0-flash',
-            created_at  TEXT DEFAULT (datetime('now'))
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_occasion ON occasion_labels(occasion);
-    """)
-
-    conn.commit()
-    conn.close()
-    print(f"[SQLite] Created: {db_path}")
+from outfitmatch.kb.qdrant_index import PAYLOAD_INDEX_FIELDS  # noqa: E402
 
 
-# ── Qdrant catalog collection ──────────────────────────────────────────────────
+# ── Qdrant outfits collection (v3.1-lite Tầng 3) ───────────────────────────────
 
-def setup_qdrant() -> None:
+def setup_qdrant(vector_dim: int, host: str, port: int) -> None:
     try:
         from qdrant_client import QdrantClient
-        from qdrant_client.models import Distance, VectorParams
+        from qdrant_client.models import Distance, PayloadSchemaType, VectorParams
     except ImportError:
         print("[Qdrant] qdrant-client not installed — skipping")
         return
 
-    client = QdrantClient(host="localhost", port=6333, timeout=10)
+    client = QdrantClient(host=host, port=port, timeout=10)
 
     try:
-        collections = {c.name for c in client.get_collections().collections}
+        existing = {c.name for c in client.get_collections().collections}
     except Exception as e:
-        print(f"[Qdrant] Cannot connect to localhost:6333 — {e}")
-        print("         Start Qdrant with: docker run -p 6333:6333 qdrant/qdrant")
+        print(f"[Qdrant] Cannot connect to {host}:{port} — {e}")
+        print("         Start: docker compose up qdrant -d")
         return
 
-    if "catalog" not in collections:
+    if "outfits" not in existing:
         client.create_collection(
-            collection_name="catalog",
-            vectors_config=VectorParams(size=768, distance=Distance.COSINE),
+            collection_name="outfits",
+            vectors_config=VectorParams(size=vector_dim, distance=Distance.COSINE),
         )
-        print("[Qdrant] Created collection 'catalog' (768-dim, Cosine)")
+        print(f"[Qdrant] Created collection 'outfits' (dim={vector_dim}, Cosine)")
     else:
-        info = client.get_collection("catalog")
-        print(f"[Qdrant] Collection 'catalog' already exists — {info.points_count} points")
+        info = client.get_collection("outfits")
+        print(f"[Qdrant] Collection 'outfits' exists — {info.points_count} points")
 
-    # Body shape collection (for future body-aware retrieval)
-    if "body_shapes" not in collections:
-        client.create_collection(
-            collection_name="body_shapes",
-            vectors_config=VectorParams(size=512, distance=Distance.COSINE),
-        )
-        print("[Qdrant] Created collection 'body_shapes' (512-dim, Cosine)")
-    else:
-        print("[Qdrant] Collection 'body_shapes' already exists")
+    for field in PAYLOAD_INDEX_FIELDS:
+        try:
+            client.create_payload_index("outfits", field, PayloadSchemaType.KEYWORD)
+            print(f"[Qdrant] Payload index ready: {field}")
+        except Exception:
+            pass
+
+
+# ── SQLite cache for Gemini Flash LLM-tagging ──────────────────────────────────
+
+def setup_sqlite() -> None:
+    db_path = ROOT / "data" / "cache" / "gemini_tagging.db"
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.executescript("""
+        CREATE TABLE IF NOT EXISTS outfit_tags (
+            outfit_id     TEXT PRIMARY KEY,
+            occasion      TEXT,         -- JSON-encoded list of OCCASION enum values
+            style         TEXT,         -- JSON-encoded list of STYLE enum values
+            body_shapes   TEXT,         -- JSON-encoded list of BODY_SHAPE enum values
+            season        TEXT,         -- JSON-encoded list of SEASON enum values
+            color_palette TEXT,
+            explanation_vi TEXT,
+            model         TEXT DEFAULT 'gemini-2.0-flash',
+            created_at    TEXT DEFAULT (datetime('now'))
+        );
+    """)
+    conn.commit()
+    conn.close()
+    print(f"[SQLite] Created cache: {db_path}")
 
 
 # ── Data directories ──────────────────────────────────────────────────────────
 
 def setup_directories() -> None:
     dirs = [
-        "data/raw/body/images",
-        "data/raw/catalog/images",
-        "data/raw/outfits",
-        "data/raw/occasion_cache",
-        "data/raw/user_study/outfit_images",
-        "data/custom/body/images",
         "data/custom/catalog/images",
         "data/custom/outfits",
-        "data/processed",
+        "data/kb",
+        "data/polyvore",
+        "data/stylist",
+        "data/eval",
+        "data/cache",
     ]
     for d in dirs:
         path = ROOT / d
         path.mkdir(parents=True, exist_ok=True)
-        # Keep empty dirs in git with .gitkeep
         gitkeep = path / ".gitkeep"
         if not gitkeep.exists():
             gitkeep.touch()
-
     print(f"[Dirs] Created {len(dirs)} data directories")
-
-
-# ── DVC init check ────────────────────────────────────────────────────────────
-
-def check_dvc() -> None:
-    dvc_dir = ROOT / ".dvc"
-    if not dvc_dir.exists():
-        print("[DVC]  Not initialized. Run: dvc init && dvc remote add -d gdrive gdrive://<folder-id>")
-    else:
-        print(f"[DVC]  Already initialized at {dvc_dir}")
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--skip-qdrant", action="store_true",
-                        help="Skip Qdrant setup (use if Docker not running)")
+    parser = argparse.ArgumentParser(description="Initialise v3.1-lite databases")
+    parser.add_argument(
+        "--vector-dim", type=int, required=False, default=None,
+        help="OT-labse outfit_embedding dim (read from checkpoint config — Sprint 1).",
+    )
+    parser.add_argument("--host", default="localhost")
+    parser.add_argument("--port", type=int, default=6333)
+    parser.add_argument("--skip-qdrant", action="store_true")
     args = parser.parse_args()
 
-    print("=== OutfitMatch Database Setup ===\n")
-
+    print("=== OutfitMatch v3.1-lite — Database Setup ===\n")
     setup_directories()
     setup_sqlite()
 
-    if not args.skip_qdrant:
-        setup_qdrant()
-    else:
+    if args.skip_qdrant:
         print("[Qdrant] Skipped (--skip-qdrant)")
-
-    check_dvc()
+    elif args.vector_dim is None:
+        print("[Qdrant] Skipped — pass --vector-dim once you verified the OT-labse dim")
+    else:
+        setup_qdrant(args.vector_dim, args.host, args.port)
 
     print("\nSetup complete.")
-    print("Next steps:")
-    print("  1. Start Qdrant:  docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant")
-    print("  2. Init DVC:      dvc init && dvc remote add -d gdrive gdrive://<folder-id>")
-    print("  3. Add data:      dvc add data/raw/ && git add data/raw.dvc")
 
 
 if __name__ == "__main__":

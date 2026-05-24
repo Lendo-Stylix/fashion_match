@@ -23,8 +23,13 @@ from outfitmatch.vocab import (
 
 def test_all_enum_values_are_english_snake_case():
     all_enums = (
-        list(OCCASION) + list(STYLE) + list(BODY_SHAPE)
-        + list(SEASON) + list(PRICE_TIER) + list(ITEM_CATEGORY) + list(SKIN_TONE)
+        list(OCCASION)
+        + list(STYLE)
+        + list(BODY_SHAPE)
+        + list(SEASON)
+        + list(PRICE_TIER)
+        + list(ITEM_CATEGORY)
+        + list(SKIN_TONE)
     )
     for v in all_enums:
         assert v == v.lower() and " " not in v, f"Bad enum value: {v!r}"

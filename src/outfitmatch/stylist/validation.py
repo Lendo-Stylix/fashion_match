@@ -4,6 +4,7 @@ After Qwen3-VL generates a response, extract all outfit_id references and
 verify each one exists in the Knowledge Base. Any unrecognised ID is flagged
 as a hallucination and must NOT be shown to the user.
 """
+
 from __future__ import annotations
 
 import re
@@ -18,9 +19,7 @@ def extract_outfit_ids(text: str) -> list[str]:
     return _OUTFIT_ID_RE.findall(text)
 
 
-def validate_response(
-    response: str, valid_ids: Collection[str]
-) -> tuple[bool, list[str]]:
+def validate_response(response: str, valid_ids: Collection[str]) -> tuple[bool, list[str]]:
     """Check that every outfit ID in the response exists in the Knowledge Base.
 
     Args:

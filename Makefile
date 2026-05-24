@@ -1,4 +1,4 @@
-.PHONY: install test lint format demo api qdrant-up clean
+.PHONY: install test test-fast lint format demo qdrant-up qdrant-down clean
 
 install:
 	uv sync --group dev
@@ -22,11 +22,11 @@ format:
 qdrant-up:
 	docker compose up qdrant -d
 
+qdrant-down:
+	docker compose down
+
 demo: qdrant-up
 	uv run python src/outfitmatch/ui/gradio_app.py
-
-api:
-	uv run uvicorn src.outfitmatch.api.main:app --reload --port 8000
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true

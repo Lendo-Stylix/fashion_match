@@ -1,7 +1,0 @@
-name: composer-disjoint
-seed: 42
-task: fitb
-model: {kind: open_clip, checkpoint: "hf-hub:Marqo/marqo-fashionSigLIP"}
-dataset: {hf_id: owj0421/polyvore-outfits, config: disjoint_fill_in_the_blank, split: train, max_rows: 17000}
-composer: {n_heads: 8, n_layers: 4, use_body: false, use_occ: false}
-train: {epochs: 10, batch_size: 64, lr: 1.0e-4}

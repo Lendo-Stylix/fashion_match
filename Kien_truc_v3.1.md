@@ -484,5 +484,5 @@ deploy thật và có user. Chi tiết đầy đủ giữ trong `Kien_truc_v3.md
 
 ---
 
-*Hết — v3.1-lite. Tài liệu này thay thế `Kien_truc_v3.md` làm kế hoạch thực thi MVP;
-`Kien_truc_v3.md` được giữ lại làm nguồn tham chiếu cho Phụ lục A.*
+*Hết — v3.1-lite. Đây là tài liệu kiến trúc canonical duy nhất của dự án.
+Toàn bộ tham vọng đầy đủ của bản v3.0 đã được tổng hợp vào Phụ lục A bên trên.*

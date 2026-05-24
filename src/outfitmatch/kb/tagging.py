@@ -9,6 +9,7 @@ to minimise API cost.
 
 Implemented in Sprint 3-4. See Kien_truc_v3.1.md §3.4 Bước 5.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

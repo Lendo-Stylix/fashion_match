@@ -1,6 +1,0 @@
-name: rows-ft-5k
-seed: 42
-task: retrieval
-model: {kind: open_clip, checkpoint: "hf-hub:Marqo/marqo-fashionSigLIP", finetune: true}
-dataset: {hf_id: Marqo/fashion200k, config: default, split: data, max_rows: 5000}
-train: {epochs: 3, batch_size: 64, lr: 1.0e-5}

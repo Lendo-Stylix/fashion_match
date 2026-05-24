@@ -13,6 +13,7 @@ Pipeline (7 steps from Kien_truc_v3.1.md §7):
 Sprints 5-8 implement the full pipeline. Until then each step raises
 NotImplementedError with a clear sprint reference.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -27,16 +28,16 @@ if TYPE_CHECKING:
 class RecommendRequest:
     """Input to the v3.1-lite recommendation pipeline."""
 
-    occasion: str                           # Required — OCCASION enum value
+    occasion: str  # Required — OCCASION enum value
     height_cm: int | None = None
     weight_kg: int | None = None
-    style: str | None = None                # STYLE enum value
-    body_shape: str | None = None           # BODY_SHAPE enum value
-    skin_tone: str | None = None            # SKIN_TONE enum value
-    price_max: int | None = None            # Budget cap (VND)
+    style: str | None = None  # STYLE enum value
+    body_shape: str | None = None  # BODY_SHAPE enum value
+    skin_tone: str | None = None  # SKIN_TONE enum value
+    price_max: int | None = None  # Budget cap (VND)
     exclude_colors: list[str] = field(default_factory=list)
     quiz_answers: QuizAnswers | None = None  # From onboarding quiz (Tầng 4)
-    image_path: str | None = None           # Optional selfie for body analysis
+    image_path: str | None = None  # Optional selfie for body analysis
 
 
 @dataclass

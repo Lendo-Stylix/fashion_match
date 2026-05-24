@@ -8,6 +8,7 @@ Workflow:
     profile = quiz_to_profile(answers)
     top_outfits = rerank_by_preference(qdrant_candidates, profile, top_k=5)
 """
+
 from outfitmatch.quiz.rerank import rerank_by_preference, score_outfit_for_preference
 from outfitmatch.quiz.schema import PreferenceProfile, QuizAnswers, quiz_to_profile
 

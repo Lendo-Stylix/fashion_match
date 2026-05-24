@@ -5,6 +5,7 @@ before being stored in the KB. FITB/beam is locally greedy — not globally opti
 
 Implemented in Sprint 3-4. See Kien_truc_v3.1.md §3.4 Bước 4.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any

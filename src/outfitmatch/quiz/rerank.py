@@ -3,6 +3,7 @@
 Applies a simple additive scoring on top of compatibility_score
 based on the user's PreferenceProfile from the onboarding quiz.
 """
+
 from __future__ import annotations
 
 from outfitmatch.kb.schema import OutfitRecord

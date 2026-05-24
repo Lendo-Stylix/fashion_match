@@ -6,6 +6,7 @@ Usage (once Sprint 1-2 is implemented):
     from outfitmatch.kb.embedding import extract_item_embeddings
     items_with_embs = extract_item_embeddings(items, encoder, batch_size=32)
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any

@@ -11,6 +11,7 @@ Rules:
   - Never rename an existing enum value (it would invalidate the KB).
     Add new values; don't change old ones.
 """
+
 from __future__ import annotations
 
 OCCASION: tuple[str, ...] = (
@@ -134,9 +135,7 @@ SKIN_TONE_LABELS_VI: dict[str, str] = {
 }
 
 
-def validate_enum_values(
-    values: list[str], allowed: frozenset[str]
-) -> tuple[list[str], list[str]]:
+def validate_enum_values(values: list[str], allowed: frozenset[str]) -> tuple[list[str], list[str]]:
     """Split values into (valid, invalid) based on membership in allowed set.
 
     Used by LLM-tagging pipeline to reject stray values before writing to KB.

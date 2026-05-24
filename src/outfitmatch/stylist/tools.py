@@ -3,6 +3,7 @@
 All enum parameters are populated directly from vocab.py to guarantee
 consistency with Qdrant payload indexes.
 """
+
 from __future__ import annotations
 
 from outfitmatch.vocab import BODY_SHAPE, OCCASION, SKIN_TONE, STYLE

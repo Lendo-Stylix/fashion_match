@@ -9,6 +9,7 @@ Category rule: (1 top + 1 bottom + 1 shoes) OR (1 dress + 1 shoes);
 
 Implemented in Sprint 3-4.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
