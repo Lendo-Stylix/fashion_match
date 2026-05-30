@@ -1,0 +1,8 @@
+{
+  "commands": [
+    { "label": "ruff-check", "command": "uv", "args": ["run", "ruff", "check", "src", "tests"] },
+    { "label": "ruff-format", "command": "uv", "args": ["run", "ruff", "format", "--check", "src", "tests"] },
+    { "label": "mypy", "command": "uv", "args": ["run", "mypy", "src"] },
+    { "label": "pytest-fast", "command": "uv", "args": ["run", "pytest", "tests", "-x", "--no-cov", "-q"] }
+  ]
+}

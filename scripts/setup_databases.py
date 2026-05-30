@@ -17,9 +17,9 @@ import argparse
 import sqlite3
 from pathlib import Path
 
-ROOT = Path(__file__).parent.parent
+from outfitmatch.kb.qdrant_index import PAYLOAD_INDEX_FIELDS
 
-from outfitmatch.kb.qdrant_index import PAYLOAD_INDEX_FIELDS  # noqa: E402
+ROOT = Path(__file__).parent.parent
 
 
 # ── Qdrant outfits collection (v3.1-lite Tầng 3) ───────────────────────────────

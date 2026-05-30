@@ -1,18 +1,30 @@
 """Item embedding extraction using OutfitTransformer-labse.
 
-Implemented in Sprint 1-2. See Kien_truc_v3.1.md §3.4 Bước 2.
+The production encoder is expected to be an adapter around the HF checkpoint in
+``outfitmatch.kb.outfit_transformer`` plus image/text feature extractors. This module
+only depends on a tiny protocol so tests and experiments can use fake encoders:
 
-Usage (once Sprint 1-2 is implemented):
-    from outfitmatch.kb.embedding import extract_item_embeddings
-    items_with_embs = extract_item_embeddings(items, encoder, batch_size=32)
+* ``encoder.encode_items(items, batch_size=...) -> list[list[float]]``; or
+* ``encoder.encode_item(item) -> list[float]``.
 """
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from outfitmatch.kb.schema import ItemRecord
+
+
+def _as_float_list(values: Iterable[Any], *, item_id: str) -> list[float]:
+    try:
+        out = [float(v) for v in values]
+    except TypeError as exc:
+        raise ValueError(f"Encoder returned a non-iterable embedding for {item_id}") from exc
+    if not out:
+        raise ValueError(f"Encoder returned an empty embedding for {item_id}")
+    return out
 
 
 def extract_item_embeddings(
@@ -20,15 +32,32 @@ def extract_item_embeddings(
     encoder: Any,
     batch_size: int = 32,
 ) -> list[ItemRecord]:
-    """Extract embeddings for each item using the OT-labse Vision+Text encoder.
+    """Extract embeddings for each item using an OutfitTransformer-compatible encoder.
 
     Args:
         items: ItemRecords with image_path set; item_embedding will be populated.
-        encoder: OutfitTransformer-labse encoder loaded with trust_remote_code=True.
-                 Verify output dimension before creating the Qdrant collection.
-        batch_size: GPU batch size.
+        encoder: Adapter exposing either ``encode_items`` or ``encode_item``.
+        batch_size: Batch size passed to ``encode_items`` when available.
 
     Returns:
-        Same list with item_embedding populated in-place.
+        The same list with ``item_embedding`` populated in-place.
     """
-    raise NotImplementedError("Implement in Sprint 1-2: Tầng 1 Item Embedding Extraction")
+    if not items:
+        return items
+
+    if hasattr(encoder, "encode_items"):
+        embeddings = encoder.encode_items(items, batch_size=batch_size)
+        if len(embeddings) != len(items):
+            raise ValueError(
+                f"encoder returned {len(embeddings)} embeddings for {len(items)} items"
+            )
+        for item, embedding in zip(items, embeddings, strict=True):
+            item.item_embedding = _as_float_list(embedding, item_id=item.item_id)
+        return items
+
+    if hasattr(encoder, "encode_item"):
+        for item in items:
+            item.item_embedding = _as_float_list(encoder.encode_item(item), item_id=item.item_id)
+        return items
+
+    raise TypeError("encoder must provide encode_items(items, batch_size) or encode_item(item)")

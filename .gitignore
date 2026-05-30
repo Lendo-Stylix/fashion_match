@@ -26,13 +26,19 @@ qdrant_storage/
 !docs/experiments/*.csv
 mlruns/
 
-# Models / data (large files — scrape thủ công, không commit)
+# Models / data (generated locally, do not commit datasets)
 models/
-data/custom/catalog/images/
 data/cache/
+data/custom/catalog/*.parquet
+data/custom/catalog/images/*
+!data/custom/catalog/images/.gitkeep
+data/custom/outfits/*.parquet
+data/custom/outfits/*.jsonl
+data/custom/outfits/*.csv
 data/kb/
 data/polyvore/
 data/processed/
+data/raw/
 data/stylist/
 data/eval/
 *.pt
