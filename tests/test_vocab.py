@@ -3,6 +3,9 @@ from __future__ import annotations
 from outfitmatch.vocab import (
     BODY_SHAPE,
     BODY_SHAPE_SET,
+    FORMALITY,
+    FORMALITY_LABELS_VI,
+    FORMALITY_SET,
     ITEM_CATEGORY,
     ITEM_CATEGORY_SET,
     OCCASION,
@@ -17,6 +20,7 @@ from outfitmatch.vocab import (
     STYLE,
     STYLE_LABELS_VI,
     STYLE_SET,
+    formality_span_ok,
     validate_enum_values,
 )
 
@@ -69,3 +73,18 @@ def test_all_styles_have_vi_label():
 
 def test_price_tier_values():
     assert set(PRICE_TIER) == {"budget", "mid", "premium"}
+
+
+def test_formality_enum_labels_and_sets():
+    assert frozenset(FORMALITY) == FORMALITY_SET
+    for v in FORMALITY:
+        assert v == v.lower() and " " not in v, f"Bad enum value: {v!r}"
+        assert v in FORMALITY_LABELS_VI, f"Missing VI label: {v!r}"
+
+
+def test_formality_span_ok():
+    assert formality_span_ok(["casual", "smart_casual"]) is True  # adjacent → ok
+    assert formality_span_ok(["athletic", "formal"]) is False  # 3 apart
+    assert formality_span_ok(["casual", "formal"]) is False  # 2 apart
+    assert formality_span_ok([]) is True  # empty → ok
+    assert formality_span_ok(["casual", "bogus"]) is True  # unknown ignored

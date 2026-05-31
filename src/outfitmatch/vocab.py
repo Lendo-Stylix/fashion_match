@@ -81,6 +81,13 @@ SKIN_TONE: tuple[str, ...] = (
     "cool",
 )
 
+FORMALITY: tuple[str, ...] = (
+    "athletic",
+    "casual",
+    "smart_casual",
+    "formal",
+)
+
 # Frozen sets for O(1) membership checks
 OCCASION_SET: frozenset[str] = frozenset(OCCASION)
 STYLE_SET: frozenset[str] = frozenset(STYLE)
@@ -90,6 +97,7 @@ PRICE_TIER_SET: frozenset[str] = frozenset(PRICE_TIER)
 ITEM_CATEGORY_SET: frozenset[str] = frozenset(ITEM_CATEGORY)
 GENDER_SET: frozenset[str] = frozenset(GENDER)
 SKIN_TONE_SET: frozenset[str] = frozenset(SKIN_TONE)
+FORMALITY_SET: frozenset[str] = frozenset(FORMALITY)
 
 # Vietnamese display labels (UI only — never use for filtering or matching)
 OCCASION_LABELS_VI: dict[str, str] = {
@@ -149,6 +157,13 @@ SKIN_TONE_LABELS_VI: dict[str, str] = {
     "cool": "da lạnh",
 }
 
+FORMALITY_LABELS_VI: dict[str, str] = {
+    "athletic": "thể thao",
+    "casual": "thường ngày",
+    "smart_casual": "lịch sự nhẹ",
+    "formal": "trang trọng",
+}
+
 
 def validate_enum_values(values: list[str], allowed: frozenset[str]) -> tuple[list[str], list[str]]:
     """Split values into (valid, invalid) based on membership in allowed set.
@@ -158,3 +173,26 @@ def validate_enum_values(values: list[str], allowed: frozenset[str]) -> tuple[li
     valid = [v for v in values if v in allowed]
     invalid = [v for v in values if v not in allowed]
     return valid, invalid
+
+
+# Formality ladder for outfit-coherence filtering. Items in one outfit must stay
+# within FORMALITY_TOLERANCE steps on this ordinal ladder
+# (athletic < casual < smart_casual < formal); otherwise the combo is incoherent
+# (e.g. blazer + gym shorts). Only FORMALITY_RELEVANT_CATEGORIES participate;
+# bags/accessories are style-neutral and ignored.
+FORMALITY_RANK: dict[str, int] = {name: i for i, name in enumerate(FORMALITY)}
+FORMALITY_RELEVANT_CATEGORIES: frozenset[str] = frozenset(
+    {"top", "bottom", "dress", "shoes", "outerwear"}
+)
+FORMALITY_TOLERANCE: int = 1
+
+
+def formality_span_ok(formalities: list[str], tolerance: int = FORMALITY_TOLERANCE) -> bool:
+    """True if all formalities sit within ``tolerance`` steps on the ladder.
+
+    Unknown values are ignored; an empty / all-unknown list is considered OK.
+    """
+    ranks = [FORMALITY_RANK[f] for f in formalities if f in FORMALITY_RANK]
+    if not ranks:
+        return True
+    return max(ranks) - min(ranks) <= tolerance
