@@ -78,10 +78,11 @@ def test_bikini_top_still_top():
     assert categorize("Yuli Bikini Top") == "top"
 
 
-def test_underwear_is_not_shoes():
-    # "Quần lót" / "underwear" are intentionally NOT shoes; they should
-    # either map to bottom (quần lót) or return None (pure "underwear").
-    assert categorize("Quần lót nam cotton") == "bottom"
+def test_underwear_is_out_of_scope():
+    # Underwear must be dropped (not a valid outfit "bottom").
+    assert categorize("Quần lót nam cotton") is None
+    assert categorize("Quần síp nam briefs bamboo") is None
+    assert categorize("Combo 2 Chiếc Quần Lót Nam Boxer") is None
     assert categorize("Underwear basic set") is None
 
 

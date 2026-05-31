@@ -60,9 +60,7 @@ def build_registry() -> int:
             )
             for s in STORES
         ]
-        cur.executemany(
-            "INSERT INTO stores VALUES (?, ?, ?, ?, ?, ?, ?, ?)", rows
-        )
+        cur.executemany("INSERT INTO stores VALUES (?, ?, ?, ?, ?, ?, ?, ?)", rows)
         conn.commit()
         logger.info("seeded %d stores → %s", len(rows), REGISTRY_DB)
         return len(rows)

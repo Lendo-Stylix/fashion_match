@@ -1,10 +1,17 @@
-"""Re-tag catalog categories in-place using the current categorize() logic.
+"""Re-tag catalog categories in-place using store-native product_type + title.
 
-Run after fixing the category mapper to repair existing catalog rows without
-re-crawling. Re-classifies from `title_vi` (titles are the most reliable
-signal — Vietnamese fashion titles always lead with the category noun) and
-drops rows that no longer map to a valid category. Orphan rows in
-`item_store_links.parquet` are pruned to keep the two tables join-clean.
+Run after changing the categoriser to repair an existing catalog without
+re-crawling. For every catalog row it:
+
+  1. recovers the store-native ``product_type`` from the raw HTTP cache
+     (offline, via the same adapters used by the live scrape);
+  2. calls :func:`store_category_map.resolve_category` — store taxonomy first,
+     title-token categoriser as fallback;
+  3. drops rows that resolve to None (out-of-scope SKUs or unclassifiable) and
+     prunes the orphaned rows from ``item_store_links.parquet``;
+  4. persists the raw ``source_product_type`` column for traceability.
+
+Idempotent: re-running yields the same catalog.
 """
 
 from __future__ import annotations
@@ -17,8 +24,11 @@ from typing import TypedDict
 
 import pandas as pd
 
-from .base import CATALOG_DIR
-from .category_map import categorize
+from .base import CATALOG_DIR, new_client
+from .config import StoreConfig, active_stores
+from .shopify import RawProduct, fetch_products
+from .sitemap import fetch_products_via_html, fetch_products_via_product_json
+from .store_category_map import resolve_category
 
 logger = logging.getLogger(__name__)
 
@@ -31,25 +41,74 @@ class RetagReport(TypedDict):
     unchanged: int
     changed: int
     dropped: int
+    matched_raw: int
     new_category_counts: dict[str, int]
     transitions: dict[str, int]
     dropped_sample_titles: list[str]
     pruned_links: int
 
 
-def _recategorize(title: str) -> str | None:
-    return categorize(title or "")
+def _fetch_raw(store: StoreConfig) -> list[RawProduct]:
+    with new_client() as client:
+        if store.platform == "shopify_like":
+            return fetch_products(client, store, use_cache=True, offline=True)
+        if store.platform == "sitemap_product_json":
+            return fetch_products_via_product_json(client, store, use_cache=True, offline=True)
+        if store.platform == "sitemap_html":
+            return fetch_products_via_html(client, store, use_cache=True, offline=True)
+        return []
+
+
+def _build_raw_index() -> dict[tuple[str, str], RawProduct]:
+    """(store_id, source_product_id) → RawProduct, from offline raw cache."""
+    index: dict[tuple[str, str], RawProduct] = {}
+    for store in active_stores():
+        try:
+            raws = _fetch_raw(store)
+        except Exception as exc:  # offline cache miss / parse error — keep going
+            logger.warning("[%s] raw cache unavailable (%s)", store.store_id, exc)
+            continue
+        for rp in raws:
+            index[(store.store_id, rp.source_product_id)] = rp
+        logger.info("[%s] indexed %d raw products", store.store_id, len(raws))
+    return index
 
 
 def retag(*, dry_run: bool = False) -> RetagReport:
-    """Re-apply categorize() to every catalog row and rewrite parquet files."""
     if not CATALOG_PARQUET.exists():
         raise FileNotFoundError(CATALOG_PARQUET)
+    if not LINKS_PARQUET.exists():
+        raise FileNotFoundError(LINKS_PARQUET)
 
     cat = pd.read_parquet(CATALOG_PARQUET)
+    links = pd.read_parquet(LINKS_PARQUET)
+
+    # item_id → (store_id, source_product_id) — first link wins.
+    link_lookup: dict[str, tuple[str, str]] = {}
+    for row in links[["item_id", "store_id", "source_product_id"]].itertuples(index=False):
+        iid = str(row.item_id)
+        if iid not in link_lookup:
+            link_lookup[iid] = (str(row.store_id), str(row.source_product_id))
+
+    raw_index = _build_raw_index()
+
     old = cat["category"].astype(str).tolist()
     titles = cat["title_vi"].fillna("").tolist()
-    new = [_recategorize(t) for t in titles]
+    item_ids = cat["item_id"].astype(str).tolist()
+
+    new: list[str | None] = []
+    new_pt: list[str] = []
+    matched_raw = 0
+    for iid, title in zip(item_ids, titles, strict=False):
+        store_id, spid = link_lookup.get(iid, ("", ""))
+        rp = raw_index.get((store_id, spid))
+        if rp is not None:
+            matched_raw += 1
+            new.append(resolve_category(rp.title or title, rp.product_type, rp.tags, store_id))
+            new_pt.append(rp.product_type or "")
+        else:
+            new.append(resolve_category(title, "", None, store_id))
+            new_pt.append("")
 
     transitions: Counter[str] = Counter()
     dropped_titles: list[str] = []
@@ -59,29 +118,33 @@ def retag(*, dry_run: bool = False) -> RetagReport:
             dropped += 1
             if len(dropped_titles) < 25:
                 dropped_titles.append(title)
-            continue
-        if new_c == old_c:
+        elif new_c == old_c:
             unchanged += 1
         else:
             changed += 1
             transitions[f"{old_c} -> {new_c}"] += 1
 
-    cat = cat.assign(category=new)
+    cat = cat.assign(category=new, source_product_type=new_pt)
     keep = cat[cat["category"].notna()].copy()
+    # Re-order so source_product_type sits right after category.
+    cols = list(keep.columns)
+    if "source_product_type" in cols:
+        cols.remove("source_product_type")
+        cat_pos = cols.index("category") + 1
+        cols.insert(cat_pos, "source_product_type")
+        keep = keep[cols]
     new_counts = Counter(keep["category"].tolist())
 
     pruned_links = 0
     if not dry_run:
         keep.to_parquet(CATALOG_PARQUET, index=False)
-        if LINKS_PARQUET.exists():
-            links = pd.read_parquet(LINKS_PARQUET)
-            keep_ids = set(keep["item_id"].astype(str))
-            before = len(links)
-            links = links[links["item_id"].astype(str).isin(keep_ids)]
-            pruned_links = before - len(links)
-            links.to_parquet(LINKS_PARQUET, index=False)
+        keep_ids = set(keep["item_id"].astype(str))
+        before = len(links)
+        links = links[links["item_id"].astype(str).isin(keep_ids)]
+        pruned_links = before - len(links)
+        links.to_parquet(LINKS_PARQUET, index=False)
         logger.info(
-            "retag: %d kept (%d unchanged + %d changed), %d dropped, %d link rows pruned",
+            "retag: %d kept (%d unchanged + %d changed), %d dropped, %d links pruned",
             len(keep),
             unchanged,
             changed,
@@ -94,6 +157,7 @@ def retag(*, dry_run: bool = False) -> RetagReport:
         unchanged=unchanged,
         changed=changed,
         dropped=dropped,
+        matched_raw=matched_raw,
         new_category_counts=dict(new_counts),
         transitions=dict(transitions.most_common()),
         dropped_sample_titles=dropped_titles,

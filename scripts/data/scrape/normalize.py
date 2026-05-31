@@ -28,15 +28,21 @@ from pathlib import Path
 import pandas as pd
 
 from .base import CATALOG_DIR, IMAGE_DIR
-from .category_map import categorize
 from .config import StoreConfig
 from .shopify import RawProduct
+from .store_category_map import resolve_category
 
 # columns the item_store_links parquet must expose. `source_product_id` is the
 # stable per-store key used to dedupe item_ids across re-scrapes.
 LINK_COLUMNS = (
-    "item_id", "store_id", "source_product_id",
-    "product_url", "price_vnd", "sale_price_vnd", "sku", "in_stock",
+    "item_id",
+    "store_id",
+    "source_product_id",
+    "product_url",
+    "price_vnd",
+    "sale_price_vnd",
+    "sku",
+    "in_stock",
 )
 
 logger = logging.getLogger(__name__)
@@ -113,8 +119,9 @@ def _existing_max_index(parquet_path: Path) -> int:
 class NormalizedItem:
     item_id: str
     category: str
-    image_path: str         # repo-relative path
-    image_url: str          # remote URL — used by download_images.py
+    source_product_type: str  # raw store-native taxonomy value (traceability)
+    image_path: str  # repo-relative path
+    image_url: str  # remote URL — used by download_images.py
     title_vi: str
     desc_vi: str
     colors: list[str]
@@ -172,7 +179,7 @@ def normalize_products(
     for raw in raws:
         if not raw.images:
             continue
-        category = categorize(raw.title, raw.product_type, raw.tags)
+        category = resolve_category(raw.title, raw.product_type, raw.tags, store.store_id)
         if category is None:
             logger.debug("[%s] uncategorized: %s | %s", store.store_id, raw.title, raw.tags)
             continue
@@ -198,6 +205,7 @@ def normalize_products(
             NormalizedItem(
                 item_id=item_id,
                 category=category,
+                source_product_type=raw.product_type or "",
                 image_path=image_rel,
                 image_url=image_url,
                 title_vi=raw.title,
@@ -230,6 +238,7 @@ def write_frames(items: list[NormalizedItem]) -> tuple[Path, Path]:
         {
             "item_id": it.item_id,
             "category": it.category,
+            "source_product_type": it.source_product_type,
             "image_path": it.image_path,
             "title_vi": it.title_vi,
             "desc_vi": it.desc_vi,
@@ -263,16 +272,18 @@ def write_frames(items: list[NormalizedItem]) -> tuple[Path, Path]:
         )
     if LINKS_PARQUET.exists():
         old = pd.read_parquet(LINKS_PARQUET)
-        new_link = (
-            pd.concat([old, new_link], ignore_index=True)
-            .drop_duplicates(subset=["item_id", "store_id"], keep="last")
+        new_link = pd.concat([old, new_link], ignore_index=True).drop_duplicates(
+            subset=["item_id", "store_id"], keep="last"
         )
 
     new_cat.to_parquet(CATALOG_PARQUET, index=False)
     new_link.to_parquet(LINKS_PARQUET, index=False)
     logger.info(
         "wrote %d catalog rows / %d link rows → %s, %s",
-        len(new_cat), len(new_link), CATALOG_PARQUET, LINKS_PARQUET,
+        len(new_cat),
+        len(new_link),
+        CATALOG_PARQUET,
+        LINKS_PARQUET,
     )
     return CATALOG_PARQUET, LINKS_PARQUET
 

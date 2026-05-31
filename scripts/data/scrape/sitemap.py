@@ -103,9 +103,7 @@ def _product_urls_from_xml(
         likely = (
             "/products/" in path
             or "/product/" in path
-            or bool(
-                re.search(r"/[a-z0-9-]+(?:-[a-z]{1,4}\d{2,}|-[0-9]{4,}|z\d{5,})$", path)
-            )
+            or bool(re.search(r"/[a-z0-9-]+(?:-[a-z]{1,4}\d{2,}|-[0-9]{4,}|z\d{5,})$", path))
         )
         if not likely:
             continue
@@ -169,8 +167,12 @@ def fetch_products_via_product_json(
         json_url = loc.rstrip("/") + ".json"
         slug = urlparse(loc).path.strip("/").replace("/", "_") or "product"
         res = fetch_json(
-            client, json_url, store_id=store.store_id, cache_key=f"product_json_{slug}",
-            use_cache=use_cache, offline=offline,
+            client,
+            json_url,
+            store_id=store.store_id,
+            cache_key=f"product_json_{slug}",
+            use_cache=use_cache,
+            offline=offline,
         )
         if res.status != 200 or not isinstance(res.json_body, dict):
             continue
@@ -200,8 +202,12 @@ def fetch_products_via_html(
     ):
         slug = urlparse(loc).path.strip("/").replace("/", "_") or "product"
         res = fetch_text(
-            client, loc, store_id=store.store_id, cache_key=f"product_html_{slug}",
-            use_cache=use_cache, offline=offline,
+            client,
+            loc,
+            store_id=store.store_id,
+            cache_key=f"product_html_{slug}",
+            use_cache=use_cache,
+            offline=offline,
         )
         if res.status != 200 or not res.text:
             continue

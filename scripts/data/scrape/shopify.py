@@ -38,7 +38,7 @@ class RawProduct:
 
     source_store_id: str
     source_product_id: str
-    handle: str                       # slug used in canonical URL
+    handle: str  # slug used in canonical URL
     title: str
     vendor: str
     product_type: str
@@ -119,14 +119,19 @@ def fetch_products(
     returns >=1 product on page 1 wins; we then paginate it to the end.
     """
     endpoints = (
-        ("root",        "/products.json"),
+        ("root", "/products.json"),
         ("collections", "/collections/all/products.json"),
     )
     for tag, path in endpoints:
         out = _crawl_endpoint(
-            client, store, path,
-            endpoint_tag=tag, use_cache=use_cache,
-            page_size=page_size, offline=offline, product_limit=product_limit,
+            client,
+            store,
+            path,
+            endpoint_tag=tag,
+            use_cache=use_cache,
+            page_size=page_size,
+            offline=offline,
+            product_limit=product_limit,
         )
         if out:
             logger.info("[%s] endpoint=%s yielded %d products", store.store_id, tag, len(out))
@@ -153,13 +158,20 @@ def _crawl_endpoint(
         key = f"{endpoint_tag}_products_page_{page:02d}"
         url = f"{store.website}{path}?page={page}&limit={page_size}"
         result = fetch_json(
-            client, url, store_id=store.store_id, cache_key=key,
-            use_cache=use_cache, offline=offline,
+            client,
+            url,
+            store_id=store.store_id,
+            cache_key=key,
+            use_cache=use_cache,
+            offline=offline,
         )
         if result.status != 200 or not isinstance(result.json_body, dict):
             logger.debug(
                 "[%s/%s] stop at page %d (status=%s)",
-                store.store_id, endpoint_tag, page, result.status,
+                store.store_id,
+                endpoint_tag,
+                page,
+                result.status,
             )
             break
         products = result.json_body.get("products") or []
@@ -177,7 +189,12 @@ def _crawl_endpoint(
                 return out
         logger.debug(
             "[%s/%s] page %d → %d products (+%d new, cumul=%d)",
-            store.store_id, endpoint_tag, page, len(products), new_this_page, len(out),
+            store.store_id,
+            endpoint_tag,
+            page,
+            len(products),
+            new_this_page,
+            len(out),
         )
         if new_this_page == 0:
             break

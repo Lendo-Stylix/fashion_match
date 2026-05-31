@@ -63,35 +63,41 @@ Flags:
 
 ## How items are categorised
 
-`scripts/data/scrape/category_map.py` is a **token-based** classifier (not
-substring matching — that mis-tagged "Capri Pants" as accessory because of
-"cap", "Baggy" as bag, "Phối Túi" shirts as bag, etc).
+Category comes from **two cooperating signals** (see
+`scripts/data/scrape/store_category_map.py::resolve_category`):
 
-For each source (`title` → `product_type` → `tags`) it tokenises the text
-(Unicode word chars, `-` kept for "t-shirt"), then scans tokens left-to-right.
-At each position it tries, in order:
+1. **Store-native `product_type`** (authoritative) — each store ships its own
+   taxonomy, mapped to our enum via `store_category_map.py`. This is more
+   reliable than the title and is the only thing that can:
+   - separate `váy` (skirt → **bottom**) from `đầm` (dress) — e.g. rubies SKU
+     codes `VQ`/`VD`/`VN` are skirts, `DD`/`DN` are dresses;
+   - **drop out-of-scope SKUs**: underwear (`Quần Briefs`, `INNERWEAR`, `bra`),
+     phone cases, perfume, gift vouchers, keychains, 2-piece sets
+     (`Bộ Suits`, `clothing set`).
+2. **Title-token categoriser** (`category_map.py::categorize`) — fallback when
+   the store gives no `product_type` (YODY, Canifa). Token-based, not substring
+   (so "Capri"≠cap, "Baggy"≠bag, "Phối Túi"≠bag). It also drops underwear
+   titles (`Quần lót`, `briefs`, `boxer`) the store didn't tag.
 
-1. A two-token COMPOUND (`áo khoác` → outerwear, `chân váy` → bottom,
-   `đôi tất` → accessory, `ba lô` → bag).
-2. A single-token PRIMARY Vietnamese head noun (`áo`, `quần`, `đầm`, `giày`,
-   `túi`, `mũ`, …).
-3. An ENGLISH_TOKEN exact match (`shirt`, `pants`, `skirt`, `sneaker`, …).
+Resolution returns one of `top | bottom | dress | outerwear | shoes | bag |
+accessory` (see `vocab.ITEM_CATEGORY`) or **drops the item**.
 
-First hit wins. Returns one of `top | bottom | dress | outerwear | shoes |
-bag | accessory` (see `vocab.ITEM_CATEGORY`) or **drops the item** when no
-token matches (e.g. generic "VIENNE SET" or "Bộ đồ thể thao" 2-piece sets).
+The raw store value is persisted in the `source_product_type` column of
+`catalog_metadata.parquet` for traceability.
 
 ### Re-tagging an existing catalog
 
-If the categoriser changes, re-tag in place — no re-crawl needed:
+If either mapper changes, re-tag in place — no re-crawl needed. The tool reads
+store `product_type` back from the **offline raw HTTP cache**:
 
 ```bash
 uv run python -m scripts.data.scrape.retag_catalog --dry-run
 uv run python -m scripts.data.scrape.retag_catalog
 ```
 
-The script re-classifies every row from `title_vi`, drops rows that no longer
-map to a valid category, and prunes orphan rows from `item_store_links.parquet`.
+It re-classifies every row (store tag first, title fallback), drops rows that
+no longer map to a valid category, and prunes orphan rows from
+`item_store_links.parquet`. Idempotent.
 
 Style + occasion + body-fit tagging is **not** done here — that's the Gemini
 Flash tagging step in `src/outfitmatch/kb/tagging.py` (Sprint 3–4). This

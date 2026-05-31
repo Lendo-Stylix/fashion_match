@@ -20,15 +20,15 @@ from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
 class StoreConfig:
-    store_id: str                  # snake_case, used as folder + FK
+    store_id: str  # snake_case, used as folder + FK
     store_name: str
-    website: str                   # base URL, no trailing slash
-    platform: str                  # shopify_like | sitemap_product_json | sitemap_html | skip
-    store_type: str                # chain_brand | local_boutique | ecommerce_only | etc.
-    price_tier: str                # PRICE_TIER enum
-    target_gender: str             # women | men | unisex
-    style_tags: tuple[str, ...]    # subset of STYLE enum
-    max_pages: int = 40            # pagination cap (250 items/page)
+    website: str  # base URL, no trailing slash
+    platform: str  # shopify_like | sitemap_product_json | sitemap_html | skip
+    store_type: str  # chain_brand | local_boutique | ecommerce_only | etc.
+    price_tier: str  # PRICE_TIER enum
+    target_gender: str  # women | men | unisex
+    style_tags: tuple[str, ...]  # subset of STYLE enum
+    max_pages: int = 40  # pagination cap (250 items/page)
     notes: str = ""
     extra_paths: tuple[str, ...] = field(default_factory=tuple)
     # optional per-collection product feeds (handle, not URL)

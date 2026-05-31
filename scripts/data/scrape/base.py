@@ -22,6 +22,7 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
+
 def _find_repo_root(start: Path) -> Path:
     for parent in (start, *start.parents):
         if (parent / "pyproject.toml").exists():
@@ -121,9 +122,7 @@ def fetch_json(
                     logger.warning("non-JSON 200 from %s", url)
                     return FetchResult(url=url, status=200, json_body=None, from_cache=False)
                 cache_file.parent.mkdir(parents=True, exist_ok=True)
-                cache_file.write_text(
-                    json.dumps(body, ensure_ascii=False), encoding="utf-8"
-                )
+                cache_file.write_text(json.dumps(body, ensure_ascii=False), encoding="utf-8")
                 _polite_sleep()
                 return FetchResult(url=url, status=200, json_body=body, from_cache=False)
             if resp.status_code in (404, 401, 403):
@@ -131,9 +130,7 @@ def fetch_json(
                 return FetchResult(
                     url=url, status=resp.status_code, json_body=None, from_cache=False
                 )
-            logger.warning(
-                "retry %d/%d %s → %s", attempt, max_retries, url, resp.status_code
-            )
+            logger.warning("retry %d/%d %s → %s", attempt, max_retries, url, resp.status_code)
         except (httpx.RequestError, httpx.HTTPError) as exc:
             logger.warning("retry %d/%d %s → %r", attempt, max_retries, url, exc)
         time.sleep(backoff + random.random())
@@ -155,7 +152,9 @@ def fetch_text(
     cache_file = _text_cache_path(store_id, cache_key)
     if use_cache and cache_file.exists():
         return TextFetchResult(
-            url=url, status=200, text=cache_file.read_text(encoding="utf-8", errors="ignore"),
+            url=url,
+            status=200,
+            text=cache_file.read_text(encoding="utf-8", errors="ignore"),
             from_cache=True,
         )
     if offline:
@@ -177,9 +176,7 @@ def fetch_text(
                 return TextFetchResult(
                     url=url, status=resp.status_code, text=None, from_cache=False
                 )
-            logger.warning(
-                "text retry %d/%d %s → %s", attempt, max_retries, url, resp.status_code
-            )
+            logger.warning("text retry %d/%d %s → %s", attempt, max_retries, url, resp.status_code)
         except (httpx.RequestError, httpx.HTTPError) as exc:
             logger.warning("text retry %d/%d %s → %r", attempt, max_retries, url, exc)
         time.sleep(backoff + random.random())
@@ -211,9 +208,7 @@ def download_image(client: httpx.Client, url: str, dest: Path, max_retries: int 
                 dest.write_bytes(resp.content)
                 _polite_sleep(0.3, 0.8)
                 return True
-            logger.warning(
-                "img retry %d/%d %s → %s", attempt, max_retries, url, resp.status_code
-            )
+            logger.warning("img retry %d/%d %s → %s", attempt, max_retries, url, resp.status_code)
         except (httpx.RequestError, httpx.HTTPError) as exc:
             logger.warning("img retry %d/%d %s → %r", attempt, max_retries, url, exc)
         time.sleep(backoff + random.random())

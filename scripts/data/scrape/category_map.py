@@ -197,6 +197,31 @@ def _tokenize(text: str) -> list[str]:
     return [t.lower() for t in _TOKEN_RE.findall(text)]
 
 
+# Title substrings that mark an out-of-scope SKU (underwear / swimwear / sleep).
+# A title hit here drops the item even when a head-noun would otherwise match
+# (e.g. "Quần lót" must NOT become a bottom). Used as a fallback for stores
+# that ship no product_type (YODY, Canifa).
+TITLE_DROP_MARKERS: tuple[str, ...] = (
+    "quần lót",
+    "quần síp",
+    "đồ lót",
+    "đồ ngủ",
+    "underwear",
+    "lingerie",
+    "briefs",
+    "brief bamboo",
+)
+
+
+def _is_out_of_scope_title(text: str) -> bool:
+    low = (text or "").lower()
+    if any(m in low for m in TITLE_DROP_MARKERS):
+        return True
+    # "boxer" / "brief" only as standalone tokens (avoid false hits).
+    tokens = set(_tokenize(low))
+    return bool(tokens & {"boxer", "brief", "síp"})
+
+
 def _category_from_tokens(tokens: list[str]) -> str | None:
     for i, tok in enumerate(tokens):
         if i + 1 < len(tokens):
@@ -218,6 +243,8 @@ def categorize(title: str, product_type: str = "", tags: list[str] | None = None
     classification.
     """
     sources = (title, product_type, " ".join(str(t) for t in tags or []))
+    if _is_out_of_scope_title(title):
+        return None
     for src in sources:
         category = _category_from_tokens(_tokenize(src))
         if category:

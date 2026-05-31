@@ -31,34 +31,36 @@ Snapshot gần nhất đã validate:
 
 ### VN Store Catalog
 
-- `6003` catalog items (after token-based category retag dropped 239 ambiguous 2-piece sets / generic SET items)
-- `6003` item-store links
-- `5784` in-stock items dùng được để build outfit
+- `5845` catalog items (token + store-tag categoriser dropped out-of-scope SKUs: underwear, swimwear, phone cases, perfume, gift vouchers, 2-piece sets)
+- `5845` item-store links
 - `0` hard errors
-- `1` warning: `559` item thiếu `desc_vi`; chấp nhận được vì bước tagging sau có thể dựa vào title/image
+- `1` warning: `552` item thiếu `desc_vi`; chấp nhận được vì bước tagging sau có thể dựa vào title/image
 
 Store distribution:
 
 | Store | Items |
 |---|---:|
-| `yody_vn` | 2259 |
-| `aristino_vn` | 1544 |
-| `canifa_vn` | 1231 |
-| `rubies` | 474 |
-| `huelleyrose` | 308 |
+| `yody_vn` | 2227 |
+| `aristino_vn` | 1472 |
+| `canifa_vn` | 1190 |
+| `rubies` | 467 |
+| `huelleyrose` | 302 |
 | `dirtycoins` | 187 |
 
-Category distribution (after fix):
+Category distribution (store-tag first, title fallback):
 
 | Category | Items |
 |---|---:|
-| `top` | 3018 |
-| `bottom` | 1639 |
-| `outerwear` | 501 |
-| `dress` | 352 |
-| `accessory` | 228 |
-| `bag` | 141 |
+| `top` | 3004 |
+| `bottom` | 1531 |
+| `outerwear` | 500 |
+| `dress` | 314 |
+| `accessory` | 232 |
+| `bag` | 140 |
 | `shoes` | 124 |
+
+> Cột `source_product_type` trong `catalog_metadata.parquet` lưu nhãn gốc của store
+> (vd. `T-SHIRTS`, `Quần Âu`, `VQ`) để truy vết nguồn phân loại.
 
 ### Generated Outfit KB
 
@@ -121,6 +123,7 @@ Mỗi row là 1 item, tương thích với `ItemRecord` trong `src/outfitmatch/k
 |---|---|---:|---|
 | `item_id` | string | ✅ | Stable ID dạng `item_custom_NNNNN` |
 | `category` | string | ✅ | `top`, `bottom`, `dress`, `outerwear`, `shoes`, `bag`, `accessory` |
+| `source_product_type` | string | optional | Nhãn gốc của store trước khi map (vd. `T-SHIRTS`, `Quần Âu`, `VQ`); rỗng nếu store không cung cấp |
 | `image_path` | string | ✅ | Repo-relative path, ví dụ `data/custom/catalog/images/item_custom_00001.jpg` |
 | `title_vi` | string | ✅ | Tên sản phẩm từ store |
 | `desc_vi` | string | optional | Mô tả sản phẩm; có thể rỗng |
@@ -216,8 +219,8 @@ uv run python -m scripts.data.scrape.quality
 Expected summary gần nhất:
 
 ```text
-items: 6003
-links: 6003
+items: 5845
+links: 5845
 errors: 0
 warnings: 1
 ```
