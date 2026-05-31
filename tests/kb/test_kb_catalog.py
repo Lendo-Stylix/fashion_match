@@ -55,6 +55,8 @@ def _write_catalog(tmp_path: Path) -> tuple[Path, Path]:
                 "sale_price_vnd": None,
                 "sku": "SKU1",
                 "in_stock": True,
+                "available_sizes": '["S", "M", "L"]',
+                "sizes_in_stock": '["M", "L"]',
             },
             {
                 "item_id": "item_2",
@@ -65,6 +67,8 @@ def _write_catalog(tmp_path: Path) -> tuple[Path, Path]:
                 "sale_price_vnd": None,
                 "sku": "SKU2",
                 "in_stock": True,
+                "available_sizes": '["29", "30"]',
+                "sizes_in_stock": "[]",
             },
             {
                 "item_id": "item_3",
@@ -75,6 +79,8 @@ def _write_catalog(tmp_path: Path) -> tuple[Path, Path]:
                 "sale_price_vnd": None,
                 "sku": "SKU3",
                 "in_stock": False,
+                "available_sizes": '["M"]',
+                "sizes_in_stock": "[]",
             },
         ]
     ).to_parquet(links_path, index=False)
@@ -91,6 +97,13 @@ def test_load_catalog_items_joins_store_and_metadata(tmp_path):
     assert items[0].store["store_name"] == "YODY"
     assert items[0].store["title_vi"] == "Áo trắng"
     assert items[0].store["colors"] == ["Trắng"]
+
+
+def test_load_catalog_items_includes_sizes(tmp_path):
+    catalog_path, links_path = _write_catalog(tmp_path)
+    items = load_catalog_items(catalog_path, links_path)
+    assert items[0].store["available_sizes"] == ["S", "M", "L"]
+    assert items[0].store["sizes_in_stock"] == ["M", "L"]
 
 
 def test_group_items_by_category_respects_limit_per_category(tmp_path):

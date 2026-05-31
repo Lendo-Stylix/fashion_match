@@ -126,6 +126,8 @@ Mỗi item ăn khớp 1-1 với `ItemRecord` trong `src/outfitmatch/kb/schema.py
 | `sale_price_vnd` | integer | ❌ | `199000` (null nếu không có sale) |
 | `sku` | string | ❌ | `CNF-AT-001-WHT` |
 | `in_stock` | boolean | ✅ | `true` |
+| `available_sizes` | JSON list[str] | ❌ | Tất cả size store niêm yết (upper-cased), trích từ variant options. |
+| `sizes_in_stock` | JSON list[str] | ❌ | Subset còn hàng (`variant.available == true`). |
 
 > Một `item_id` có thể có nhiều rows (cùng item bán ở nhiều store). Lúc index Qdrant,
 > merge thành array trong `ItemRecord.store` payload.

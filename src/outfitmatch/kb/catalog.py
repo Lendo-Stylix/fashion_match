@@ -81,6 +81,8 @@ def load_catalog_items(
                     "title_vi": str(row.get("title_vi") or ""),
                     "desc_vi": str(row.get("desc_vi") or ""),
                     "colors": _parse_colors(row.get("colors")),
+                    "available_sizes": _parse_colors(row.get("available_sizes")),
+                    "sizes_in_stock": _parse_colors(row.get("sizes_in_stock")),
                 },
             )
         )

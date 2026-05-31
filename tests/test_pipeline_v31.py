@@ -34,3 +34,8 @@ def test_recommend_result_structure():
     assert result.occasion == "office"
     assert result.explanation_vi == ""
     assert result.latency_ms == 0.0
+
+
+def test_recommend_result_has_suggested_sizes_default():
+    result = RecommendResult(outfits=[], body_shape="rectangle", occasion="office")
+    assert result.suggested_sizes == {}

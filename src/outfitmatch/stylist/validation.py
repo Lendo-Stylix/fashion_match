@@ -12,6 +12,9 @@ from collections.abc import Collection
 
 # Matches OF_XXXXX where X is a digit — adjust if outfit_id format changes.
 _OUTFIT_ID_RE = re.compile(r"\bOF_\d{5,}\b")
+# Size only counts when explicitly written as "size X" / "cỡ X" to keep false
+# positives near zero in normal Vietnamese prose.
+_SIZE_MENTION_RE = re.compile(r"\b(?:size|cỡ)\s+([A-Za-z]{1,3}|\d{1,3})\b", re.IGNORECASE)
 
 
 def extract_outfit_ids(text: str) -> list[str]:
@@ -35,4 +38,17 @@ def validate_response(response: str, valid_ids: Collection[str]) -> tuple[bool, 
     """
     found = extract_outfit_ids(response)
     invalid = [i for i in found if i not in valid_ids]
+    return len(invalid) == 0, invalid
+
+
+def extract_size_mentions(text: str) -> list[str]:
+    """Return size tokens written as ``size X`` / ``cỡ X`` in upper-case order."""
+    return [m.group(1).upper() for m in _SIZE_MENTION_RE.finditer(text)]
+
+
+def validate_sizes(response: str, available_sizes: Collection[str]) -> tuple[bool, list[str]]:
+    """Check every explicitly-mentioned size exists in the real available sizes."""
+    allowed = {str(s).upper() for s in available_sizes}
+    found = extract_size_mentions(response)
+    invalid = [size for size in found if size not in allowed]
     return len(invalid) == 0, invalid

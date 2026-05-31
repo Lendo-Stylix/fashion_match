@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 from outfitmatch.stylist.tools import SEARCH_OUTFITS_TOOL
-from outfitmatch.stylist.validation import extract_outfit_ids, validate_response
+from outfitmatch.stylist.validation import (
+    extract_outfit_ids,
+    extract_size_mentions,
+    validate_response,
+    validate_sizes,
+)
 from outfitmatch.vocab import OCCASION, STYLE
 
 
@@ -52,5 +57,28 @@ def test_validate_response_detects_hallucination():
 
 def test_validate_response_no_ids_is_valid():
     ok, invalid = validate_response("Xin chào, bạn cần giúp gì?", {"OF_00001"})
+    assert ok is True
+    assert invalid == []
+
+
+def test_extract_size_mentions_finds_sizes():
+    assert extract_size_mentions("Bạn nên chọn size M hoặc size L.") == ["M", "L"]
+    assert extract_size_mentions("Mình gợi ý cỡ XL nhé.") == ["XL"]
+
+
+def test_validate_sizes_all_valid():
+    ok, invalid = validate_sizes("Gợi ý size M cho bạn.", {"S", "M", "L"})
+    assert ok is True
+    assert invalid == []
+
+
+def test_validate_sizes_detects_hallucination():
+    ok, invalid = validate_sizes("Bạn mặc size XXL nhé.", {"S", "M"})
+    assert ok is False
+    assert "XXL" in invalid
+
+
+def test_validate_sizes_ignores_non_size_text():
+    ok, invalid = validate_sizes("Mình nghĩ bộ này hợp với bạn.", {"S"})
     assert ok is True
     assert invalid == []

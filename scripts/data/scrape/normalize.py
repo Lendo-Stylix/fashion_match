@@ -44,6 +44,8 @@ LINK_COLUMNS = (
     "sale_price_vnd",
     "sku",
     "in_stock",
+    "available_sizes",
+    "sizes_in_stock",
 )
 
 logger = logging.getLogger(__name__)
@@ -58,6 +60,7 @@ PRICE_MAX_VND = 50_000_000
 
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
 _WS_RE = re.compile(r"\s+")
+_SIZE_LIKE_RE = re.compile(r"[XSMLxsml0-9.\-/ ]{1,8}")
 
 
 def _strip_html(html: str, max_len: int = 600) -> str:
@@ -76,6 +79,16 @@ def _strip_html(html: str, max_len: int = 600) -> str:
     return text[:max_len]
 
 
+def _looks_like_size(val: str) -> bool:
+    v = val.strip()
+    if not v:
+        return False
+    low = v.lower()
+    if "size" in low or "kích" in low or "free" in low:
+        return True
+    return bool(_SIZE_LIKE_RE.fullmatch(v))
+
+
 def _infer_colors(variants: list[dict]) -> list[str]:
     """Best-effort: pull color names from variant option fields."""
     colors: list[str] = []
@@ -85,10 +98,7 @@ def _infer_colors(variants: list[dict]) -> list[str]:
             val = (v.get(k) or "").strip()
             if not val:
                 continue
-            # heuristic: option strings that look like sizes (S/M/L/35/36/40, "Free size")
-            if re.fullmatch(r"[XSMLxsml0-9.\-/ ]{1,8}", val):
-                continue
-            if "size" in val.lower() or "kích" in val.lower():
+            if _looks_like_size(val):
                 continue
             low = val.lower()
             if low in seen:
@@ -96,6 +106,31 @@ def _infer_colors(variants: list[dict]) -> list[str]:
             seen.add(low)
             colors.append(val)
     return colors[:8]
+
+
+def _infer_sizes(variants: list[dict]) -> tuple[list[str], list[str]]:
+    """Pull size labels from variant option fields.
+
+    Returns ``(available_sizes, sizes_in_stock)``. Order of first appearance is
+    preserved and labels are upper-cased so ``m``/``M`` collapse.
+    """
+    all_sizes: list[str] = []
+    in_stock: list[str] = []
+    seen: set[str] = set()
+    seen_stock: set[str] = set()
+    for v in variants:
+        for k in ("option1", "option2", "option3"):
+            val = (v.get(k) or "").strip()
+            if not val or not _looks_like_size(val):
+                continue
+            norm = val.upper()
+            if norm not in seen:
+                seen.add(norm)
+                all_sizes.append(norm)
+            if bool(v.get("available")) and norm not in seen_stock:
+                seen_stock.add(norm)
+                in_stock.append(norm)
+    return all_sizes, in_stock
 
 
 def _existing_max_index(parquet_path: Path) -> int:
@@ -137,6 +172,8 @@ class NormalizedItem:
     sale_price_vnd: int | None
     sku: str
     in_stock: bool
+    available_sizes: list[str]
+    sizes_in_stock: list[str]
 
 
 def _load_existing_link_map() -> dict[tuple[str, str], str]:
@@ -197,6 +234,7 @@ def normalize_products(
             idx += 1
             link_map[key] = item_id
         image_url = raw.images[0]
+        available_sizes, sizes_in_stock = _infer_sizes(raw.variants)
         # extension: parse from URL path, fallback .jpg
         ext = ".jpg"
         m = re.search(r"\.(jpe?g|png|webp)(?:\?|$)", image_url, re.IGNORECASE)
@@ -223,6 +261,8 @@ def normalize_products(
                 sale_price_vnd=raw.min_sale_price_vnd,
                 sku=raw.primary_sku,
                 in_stock=raw.any_in_stock,
+                available_sizes=available_sizes,
+                sizes_in_stock=sizes_in_stock,
             )
         )
     return items
@@ -262,6 +302,8 @@ def write_frames(items: list[NormalizedItem]) -> tuple[Path, Path]:
             "sale_price_vnd": (int(it.sale_price_vnd) if it.sale_price_vnd else None),
             "sku": it.sku,
             "in_stock": bool(it.in_stock),
+            "available_sizes": json.dumps(it.available_sizes, ensure_ascii=False),
+            "sizes_in_stock": json.dumps(it.sizes_in_stock, ensure_ascii=False),
         }
         for it in items
     ]

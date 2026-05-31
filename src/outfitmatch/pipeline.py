@@ -49,6 +49,7 @@ class RecommendResult:
     occasion: str
     explanation_vi: str = ""
     latency_ms: float = 0.0
+    suggested_sizes: dict[str, str] = field(default_factory=dict)
 
 
 def recommend_outfit(request: RecommendRequest) -> RecommendResult:

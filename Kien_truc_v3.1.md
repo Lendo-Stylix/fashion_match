@@ -389,7 +389,12 @@ thực và dễ debug. (Vector search outfit-outfit có thể bổ sung sau, xem
 2. Map câu trả lời → **preference profile** (style ưu tiên, màu ưu tiên, `price_tier`).
 3. **Re-rank rule-based:** outfit nào khớp style/màu/budget từ quiz được cộng điểm; sort lại
    Top ~30–50 → Top 3–5.
-4. **Feedback (like/skip/mua)** được *lưu lại* phục vụ GNN tương lai, nhưng MVP chưa dùng.
+4. **Size gợi ý (runtime):** `quiz/sizing.py` map `(height, weight, gender)` → alpha-size
+   cho `top` / `dress` / `outerwear`, rồi giao với `available_sizes` của item. Qwen3-VL
+   chỉ trình bày size; `validate_sizes` chặn size không có thật. `OutfitRecord` giữ
+   size-agnostic vì OT chấm compatibility thị giác và outfit là template tái dùng cho
+   nhiều người.
+5. **Feedback (like/skip/mua)** được *lưu lại* phục vụ GNN tương lai, nhưng MVP chưa dùng.
 
 ---
 

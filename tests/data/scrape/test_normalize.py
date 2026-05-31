@@ -138,6 +138,47 @@ def test_new_products_get_fresh_ids_after_existing_map():
     assert [i.item_id for i in items] == ["item_custom_00010", "item_custom_00050"]
 
 
+def test_extracts_sizes_from_variants():
+    items = normalize_products([_raw()], _store(), start_index=1, existing_link_map={})
+    it = items[0]
+    assert it.available_sizes == ["M", "L"]
+    assert it.sizes_in_stock == ["M"]
+
+
+def test_free_size_is_captured():
+    raw = _raw(
+        variants=[
+            {
+                "sku": "F",
+                "price": "299000",
+                "available": True,
+                "option1": "Free size",
+            }
+        ]
+    )
+    items = normalize_products([raw], _store(), start_index=1, existing_link_map={})
+    assert items[0].available_sizes == ["FREE SIZE"]
+
+
+def test_write_frames_includes_size_columns(tmp_path, monkeypatch):
+    import json
+
+    import pandas as pd
+
+    monkeypatch.setattr(normalize, "CATALOG_DIR", tmp_path)
+    monkeypatch.setattr(normalize, "CATALOG_PARQUET", tmp_path / "catalog_metadata.parquet")
+    monkeypatch.setattr(normalize, "LINKS_PARQUET", tmp_path / "item_store_links.parquet")
+
+    items = normalize_products([_raw()], _store(), existing_link_map={})
+    write_frames(items)
+
+    links = pd.read_parquet(tmp_path / "item_store_links.parquet")
+    assert "available_sizes" in links.columns
+    assert "sizes_in_stock" in links.columns
+    assert json.loads(links.loc[0, "available_sizes"]) == ["M", "L"]
+    assert json.loads(links.loc[0, "sizes_in_stock"]) == ["M"]
+
+
 def test_write_frames_updates_existing_catalog_row(tmp_path, monkeypatch):
     monkeypatch.setattr(normalize, "CATALOG_DIR", tmp_path)
     monkeypatch.setattr(normalize, "CATALOG_PARQUET", tmp_path / "catalog_metadata.parquet")
