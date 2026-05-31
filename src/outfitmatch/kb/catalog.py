@@ -11,7 +11,7 @@ import pandas as pd
 from scripts.data.scrape.config import STORES_BY_ID
 
 from outfitmatch.kb.schema import ItemRecord
-from outfitmatch.vocab import GENDER_SET, ITEM_CATEGORY_SET
+from outfitmatch.vocab import FORMALITY_SET, GENDER_SET, ITEM_CATEGORY_SET
 
 
 def _parse_colors(raw: Any) -> list[str]:
@@ -61,6 +61,9 @@ def load_catalog_items(
             gender = "unisex"
         if genders is not None and gender not in genders:
             continue
+        formality = str(row.get("formality") or "casual")
+        if formality not in FORMALITY_SET:
+            formality = "casual"
         store_id = str(row.get("store_id") or "")
         store = STORES_BY_ID.get(store_id)
         out.append(
@@ -70,6 +73,7 @@ def load_catalog_items(
                 image_path=str(row.get("image_path") or ""),
                 item_embedding=[],
                 gender=gender,
+                formality=formality,
                 store={
                     "store_id": store_id,
                     "store_name": store.store_name if store else store_id,

@@ -15,6 +15,7 @@ class ItemRecord:
     item_embedding: list[float]  # dim = OUTFIT_EMBED_DIM (verify from checkpoint)
     store: dict  # {store_id, store_name, product_url, price_vnd, in_stock}
     gender: str = "unisex"  # GENDER enum value (men|women|unisex|kid)
+    formality: str = "casual"  # FORMALITY enum value — used by outfit-coherence filter
 
 
 @dataclass

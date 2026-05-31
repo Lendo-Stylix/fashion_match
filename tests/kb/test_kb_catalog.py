@@ -21,6 +21,7 @@ def _write_catalog(tmp_path: Path) -> tuple[Path, Path]:
                 "colors": '["Trắng"]',
                 "collected_date": "2026-05-30",
                 "collector": "unit",
+                "formality": "formal",
             },
             {
                 "item_id": "item_2",
@@ -31,6 +32,7 @@ def _write_catalog(tmp_path: Path) -> tuple[Path, Path]:
                 "colors": '["Đen"]',
                 "collected_date": "2026-05-30",
                 "collector": "unit",
+                "formality": "casual",
             },
             {
                 "item_id": "item_3",
@@ -41,6 +43,7 @@ def _write_catalog(tmp_path: Path) -> tuple[Path, Path]:
                 "colors": "[]",
                 "collected_date": "2026-05-30",
                 "collector": "unit",
+                "formality": "casual",
             },
         ]
     ).to_parquet(catalog_path, index=False)
@@ -97,6 +100,13 @@ def test_load_catalog_items_joins_store_and_metadata(tmp_path):
     assert items[0].store["store_name"] == "YODY"
     assert items[0].store["title_vi"] == "Áo trắng"
     assert items[0].store["colors"] == ["Trắng"]
+
+
+def test_load_catalog_items_reads_formality(tmp_path):
+    catalog_path, links_path = _write_catalog(tmp_path)
+    items = load_catalog_items(catalog_path, links_path)
+    assert items[0].formality == "formal"
+    assert items[1].formality == "casual"
 
 
 def test_load_catalog_items_includes_sizes(tmp_path):
