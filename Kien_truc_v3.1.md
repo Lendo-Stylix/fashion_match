@@ -211,6 +211,12 @@ lại `compatibility_score`. FITB greedy/beam chỉ tối ưu *cục bộ từng
 hài hòa toàn cục; phải re-score. Chỉ giữ outfit có `score ≥ ngưỡng` (chốt ngưỡng ở Sprint 3
 dựa phân phối điểm thực tế).
 
+> **Coherence hard-filter (lúc generate).** Ngoài đồng gender, generation ép mọi outfit nằm
+> trong cùng dải **formality** (athletic < casual < smart_casual < formal, tolerance 1 bậc)
+> qua `_is_valid_combo`. Chặn tổ hợp lạc quẻ (vd: blazer + quần short thể thao) mà OT không tự
+> loại được (OT chỉ chấm visual, không suy luận dịp). QA gate `formality_clash_outfits` trong
+> build report bắt regression. OT vẫn xếp hạng *trong* tập đã hợp lệ.
+
 **Bước 5 — LLM Metadata Enrichment.** OT chỉ cho điểm + vector, không biết outfit này hợp
 dịp nào. Dùng **Gemini Flash** (không phải GPT-4o/Qwen-72B — rẻ hơn, đã có hạ tầng
 `diskcache` trong dự án) gán nhãn cho outfit qua ảnh các item:

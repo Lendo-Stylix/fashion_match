@@ -112,6 +112,7 @@ Mỗi item ăn khớp 1-1 với `ItemRecord` trong `src/outfitmatch/kb/schema.py
 | `title_vi` | string | ✅ | Tiêu đề sản phẩm theo store (LaBSE xử lý đa ngôn ngữ) |
 | `desc_vi` | string | ❌ | Mô tả sản phẩm |
 | `colors` | string (JSON list) | ❌ | màu hiển thị, free-form (vd `["trắng","navy"]`) |
+| `formality` | string | ❌ | `FORMALITY` enum (athletic/casual/smart_casual/formal) — suy ra từ title/product_type, dùng cho coherence-filter lúc build outfit |
 | `collected_date` | date | ✅ | `YYYY-MM-DD` — flag stale nếu > 90 ngày |
 | `collector` | string | ✅ | Tên người thu thập (để trace) |
 
