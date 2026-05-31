@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from outfitmatch.kb.schema import ItemRecord, OutfitRecord
 
 from outfitmatch.kb.schema import OutfitRecord
+from outfitmatch.vocab import FORMALITY_RELEVANT_CATEGORIES, formality_span_ok
 
 OPTIONAL_CATEGORIES: tuple[str, ...] = ("outerwear", "bag", "accessory")
 
@@ -33,6 +34,24 @@ def _combo_gender(items: list[ItemRecord]) -> str | None:
     if len(non_unisex) > 1:
         return None
     return next(iter(non_unisex)) if non_unisex else "unisex"
+
+
+def _is_coherent(items: list[ItemRecord]) -> bool:
+    """True if the outfit's core garments stay within one formality band.
+
+    Only FORMALITY_RELEVANT_CATEGORIES (top/bottom/dress/shoes/outerwear) count;
+    bags/accessories are style-neutral and ignored. Blocks combos like
+    blazer + gym shorts.
+    """
+    formalities = [
+        item.formality for item in items if item.category in FORMALITY_RELEVANT_CATEGORIES
+    ]
+    return formality_span_ok(formalities)
+
+
+def _is_valid_combo(items: list[ItemRecord]) -> bool:
+    """A combo is buildable only if gender-consistent AND formality-coherent."""
+    return _combo_gender(items) is not None and _is_coherent(items)
 
 
 def _price_tier(total: int) -> str:
@@ -94,13 +113,13 @@ def _base_combinations(items_by_category: dict[str, list[ItemRecord]]) -> list[l
         items_by_category.get("bottom", []),
         items_by_category.get("shoes", []),
     ):
-        if _combo_gender([top, bottom, shoes]) is not None:
+        if _is_valid_combo([top, bottom, shoes]):
             combos.append([top, bottom, shoes])
     for dress, shoes in itertools.product(
         items_by_category.get("dress", []),
         items_by_category.get("shoes", []),
     ):
-        if _combo_gender([dress, shoes]) is not None:
+        if _is_valid_combo([dress, shoes]):
             combos.append([dress, shoes])
     return combos
 
@@ -117,7 +136,7 @@ def _with_optional_items(
         if candidates and category not in used and rng.random() < 0.35:
             # Only add an optional item that keeps the outfit gender-consistent.
             choice = rng.choice(candidates)
-            if _combo_gender([*items, choice]) is not None:
+            if _is_valid_combo([*items, choice]):
                 items.append(choice)
     return items
 

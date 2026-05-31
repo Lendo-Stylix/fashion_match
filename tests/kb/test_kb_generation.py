@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from outfitmatch.kb.generation import generate_fitb_beam, generate_random_scored
+from outfitmatch.kb.generation import (
+    _base_combinations,
+    _is_coherent,
+    generate_fitb_beam,
+    generate_random_scored,
+)
 from outfitmatch.kb.schema import ItemRecord
 
 
@@ -10,6 +15,7 @@ def _item(
     price: int,
     emb: list[float] | None = None,
     gender: str = "unisex",
+    formality: str = "casual",
 ) -> ItemRecord:
     return ItemRecord(
         item_id=item_id,
@@ -17,6 +23,7 @@ def _item(
         image_path=f"data/custom/catalog/images/{item_id}.jpg",
         item_embedding=emb or [1.0, 0.0],
         gender=gender,
+        formality=formality,
         store={
             "store_id": "test_store",
             "store_name": "Test Store",
@@ -126,3 +133,34 @@ def test_unisex_items_pair_into_both_genders():
     outfits = generate_random_scored(_gendered_catalog(), ScoringEncoder(), n_candidates=50)
     genders = {o.gender for o in outfits}
     assert "men" in genders and "women" in genders
+
+
+def test_is_coherent_blocks_formality_clash():
+    blazer = _item("blz", "top", 100_000, formality="formal")
+    gym = _item("gym", "bottom", 100_000, formality="athletic")
+    shoe = _item("sh", "shoes", 100_000, formality="formal")
+    assert _is_coherent([blazer, gym, shoe]) is False
+
+
+def test_is_coherent_allows_adjacent_bands():
+    polo = _item("p", "top", 100_000, formality="smart_casual")
+    chino = _item("c", "bottom", 100_000, formality="casual")
+    loafer = _item("l", "shoes", 100_000, formality="smart_casual")
+    assert _is_coherent([polo, chino, loafer]) is True
+
+
+def test_is_coherent_ignores_accessory_formality():
+    top = _item("t", "top", 100_000, formality="casual")
+    bottom = _item("b", "bottom", 100_000, formality="casual")
+    shoe = _item("s", "shoes", 100_000, formality="casual")
+    formal_bag = _item("bag", "bag", 100_000, formality="formal")  # not a relevant cat
+    assert _is_coherent([top, bottom, shoe, formal_bag]) is True
+
+
+def test_base_combinations_excludes_formality_clash():
+    catalog = {
+        "top": [_item("formal_top", "top", 100_000, formality="formal")],
+        "bottom": [_item("athletic_bottom", "bottom", 100_000, formality="athletic")],
+        "shoes": [_item("formal_shoe", "shoes", 100_000, formality="formal")],
+    }
+    assert _base_combinations(catalog) == []  # only clashing combo → nothing built
