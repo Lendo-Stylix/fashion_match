@@ -31,34 +31,34 @@ Snapshot gần nhất đã validate:
 
 ### VN Store Catalog
 
-- `6242` catalog items
-- `6242` item-store links
-- `6021` in-stock items dùng được để build outfit
+- `6003` catalog items (after token-based category retag dropped 239 ambiguous 2-piece sets / generic SET items)
+- `6003` item-store links
+- `5784` in-stock items dùng được để build outfit
 - `0` hard errors
-- `1` warning: `560` item thiếu `desc_vi`; chấp nhận được vì bước tagging sau có thể dựa vào title/image
+- `1` warning: `559` item thiếu `desc_vi`; chấp nhận được vì bước tagging sau có thể dựa vào title/image
 
 Store distribution:
 
 | Store | Items |
 |---|---:|
-| `yody_vn` | 2301 |
-| `aristino_vn` | 1698 |
-| `canifa_vn` | 1235 |
+| `yody_vn` | 2259 |
+| `aristino_vn` | 1544 |
+| `canifa_vn` | 1231 |
 | `rubies` | 474 |
-| `huelleyrose` | 310 |
-| `dirtycoins` | 224 |
+| `huelleyrose` | 308 |
+| `dirtycoins` | 187 |
 
-Category distribution:
+Category distribution (after fix):
 
 | Category | Items |
 |---|---:|
-| `top` | 3014 |
-| `bottom` | 1485 |
-| `outerwear` | 450 |
-| `bag` | 425 |
-| `accessory` | 414 |
-| `dress` | 309 |
-| `shoes` | 145 |
+| `top` | 3018 |
+| `bottom` | 1639 |
+| `outerwear` | 501 |
+| `dress` | 352 |
+| `accessory` | 228 |
+| `bag` | 141 |
+| `shoes` | 124 |
 
 ### Generated Outfit KB
 
@@ -216,8 +216,8 @@ uv run python -m scripts.data.scrape.quality
 Expected summary gần nhất:
 
 ```text
-items: 6242
-links: 6242
+items: 6003
+links: 6003
 errors: 0
 warnings: 1
 ```

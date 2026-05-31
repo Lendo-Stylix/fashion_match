@@ -63,11 +63,35 @@ Flags:
 
 ## How items are categorised
 
-`scripts/data/scrape/category_map.py` runs a Vietnamese + English keyword heuristic
-over `title + product_type + tags`. Order matters: `dress` is matched before
-`top` (so "đầm" doesn't end up as a t-shirt), `outerwear` before `top`, etc.
-Returns one of `top | bottom | dress | outerwear | shoes | bag | accessory`
-(see `vocab.ITEM_CATEGORY`) or **drops the item** when no group hits.
+`scripts/data/scrape/category_map.py` is a **token-based** classifier (not
+substring matching — that mis-tagged "Capri Pants" as accessory because of
+"cap", "Baggy" as bag, "Phối Túi" shirts as bag, etc).
+
+For each source (`title` → `product_type` → `tags`) it tokenises the text
+(Unicode word chars, `-` kept for "t-shirt"), then scans tokens left-to-right.
+At each position it tries, in order:
+
+1. A two-token COMPOUND (`áo khoác` → outerwear, `chân váy` → bottom,
+   `đôi tất` → accessory, `ba lô` → bag).
+2. A single-token PRIMARY Vietnamese head noun (`áo`, `quần`, `đầm`, `giày`,
+   `túi`, `mũ`, …).
+3. An ENGLISH_TOKEN exact match (`shirt`, `pants`, `skirt`, `sneaker`, …).
+
+First hit wins. Returns one of `top | bottom | dress | outerwear | shoes |
+bag | accessory` (see `vocab.ITEM_CATEGORY`) or **drops the item** when no
+token matches (e.g. generic "VIENNE SET" or "Bộ đồ thể thao" 2-piece sets).
+
+### Re-tagging an existing catalog
+
+If the categoriser changes, re-tag in place — no re-crawl needed:
+
+```bash
+uv run python -m scripts.data.scrape.retag_catalog --dry-run
+uv run python -m scripts.data.scrape.retag_catalog
+```
+
+The script re-classifies every row from `title_vi`, drops rows that no longer
+map to a valid category, and prunes orphan rows from `item_store_links.parquet`.
 
 Style + occasion + body-fit tagging is **not** done here — that's the Gemini
 Flash tagging step in `src/outfitmatch/kb/tagging.py` (Sprint 3–4). This
