@@ -99,10 +99,12 @@ def main(argv: list[str] | None = None) -> int:
     write_outfits(outfits, args.output)
     logger.info("wrote %d outfits → %s", len(outfits), args.output)
     item_gender = {item.item_id: item.gender for item in items}
+    item_formality = {item.item_id: item.formality for item in items}
     outfit_report = evaluate_outfit_frame(
         pd.read_parquet(args.output),
         price_tier_targets=args.price_tier_targets,
         item_gender=item_gender,
+        item_formality=item_formality,
     )
     logger.info("outfit build report:\n%s", summarize_outfit_report(outfit_report))
     return 0

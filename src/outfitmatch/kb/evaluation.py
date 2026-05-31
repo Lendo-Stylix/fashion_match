@@ -8,7 +8,7 @@ from typing import Any
 
 import pandas as pd
 
-from outfitmatch.vocab import PRICE_TIER
+from outfitmatch.vocab import FORMALITY_RELEVANT_CATEGORIES, PRICE_TIER, formality_span_ok
 
 
 @dataclass(frozen=True)
@@ -21,6 +21,7 @@ class OutfitBuildReport:
     gen_method_counts: dict[str, int]
     gender_counts: dict[str, int]
     mixed_gender_count: int
+    formality_clash_count: int
     unique_combo_count: int
     invalid_rule_count: int
     score_min: float
@@ -64,11 +65,34 @@ def _count_mixed_gender(frame: pd.DataFrame, item_gender: dict[str, str]) -> int
     return mixed
 
 
+def _count_formality_clash(frame: pd.DataFrame, item_formality: dict[str, str]) -> int:
+    """Outfits whose core garments span more than one formality band.
+
+    Uses the parallel ``item_ids`` / ``categories`` JSON columns; only
+    FORMALITY_RELEVANT_CATEGORIES participate. Unknown items default to ``casual``.
+    """
+    if "item_ids" not in frame or "categories" not in frame:
+        return 0
+    clashes = 0
+    for raw_ids, raw_cats in zip(frame["item_ids"], frame["categories"]):
+        ids = _loads_list(raw_ids)
+        cats = _loads_list(raw_cats)
+        formalities = [
+            item_formality.get(iid, "casual")
+            for iid, cat in zip(ids, cats)
+            if cat in FORMALITY_RELEVANT_CATEGORIES
+        ]
+        if not formality_span_ok(formalities):
+            clashes += 1
+    return clashes
+
+
 def evaluate_outfit_frame(
     frame: pd.DataFrame,
     *,
     price_tier_targets: dict[str, float],
     item_gender: dict[str, str] | None = None,
+    item_formality: dict[str, str] | None = None,
 ) -> OutfitBuildReport:
     """Compute deterministic quality and bias metrics for generated outfit rows.
 
@@ -98,6 +122,7 @@ def evaluate_outfit_frame(
             else {}
         ),
         mixed_gender_count=_count_mixed_gender(frame, item_gender or {}),
+        formality_clash_count=_count_formality_clash(frame, item_formality or {}),
         unique_combo_count=int(frame["item_ids"].nunique()) if "item_ids" in frame else 0,
         invalid_rule_count=int((~frame["categories"].map(_is_valid_rule)).sum()),
         score_min=float(scores.min()) if not scores.empty else 0.0,
@@ -117,6 +142,7 @@ def summarize_outfit_report(report: OutfitBuildReport) -> str:
             f"gen_methods: {json.dumps(report.gen_method_counts, ensure_ascii=False)}",
             f"genders: {json.dumps(report.gender_counts, ensure_ascii=False)}",
             f"mixed_gender_outfits: {report.mixed_gender_count}",
+            f"formality_clash_outfits: {report.formality_clash_count}",
             f"unique_combos: {report.unique_combo_count}",
             f"invalid_rules: {report.invalid_rule_count}",
             f"score_min: {report.score_min:.3f}",
