@@ -1,5 +1,6 @@
-from outfitmatch.vocab import FORMALITY_SET
 from scripts.data.scrape.formality_map import infer_formality
+
+from outfitmatch.vocab import FORMALITY_SET
 
 
 def test_athletic():

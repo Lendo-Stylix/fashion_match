@@ -74,12 +74,12 @@ def _count_formality_clash(frame: pd.DataFrame, item_formality: dict[str, str]) 
     if "item_ids" not in frame or "categories" not in frame:
         return 0
     clashes = 0
-    for raw_ids, raw_cats in zip(frame["item_ids"], frame["categories"]):
+    for raw_ids, raw_cats in zip(frame["item_ids"], frame["categories"], strict=False):
         ids = _loads_list(raw_ids)
         cats = _loads_list(raw_cats)
         formalities = [
             item_formality.get(iid, "casual")
-            for iid, cat in zip(ids, cats)
+            for iid, cat in zip(ids, cats, strict=False)
             if cat in FORMALITY_RELEVANT_CATEGORIES
         ]
         if not formality_span_ok(formalities):
