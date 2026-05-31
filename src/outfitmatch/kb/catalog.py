@@ -11,7 +11,7 @@ import pandas as pd
 from scripts.data.scrape.config import STORES_BY_ID
 
 from outfitmatch.kb.schema import ItemRecord
-from outfitmatch.vocab import ITEM_CATEGORY_SET
+from outfitmatch.vocab import GENDER_SET, ITEM_CATEGORY_SET
 
 
 def _parse_colors(raw: Any) -> list[str]:
@@ -33,6 +33,7 @@ def load_catalog_items(
     links_path: Path,
     *,
     in_stock_only: bool = True,
+    genders: set[str] | None = None,
 ) -> list[ItemRecord]:
     """Join scraper catalog/link parquet files into sorted ``ItemRecord`` objects.
 
@@ -40,6 +41,9 @@ def load_catalog_items(
     generation operates on ``ItemRecord`` only, so this function adds useful raw
     fields (title, description, colors, SKU) into ``ItemRecord.store`` while keeping
     the canonical schema unchanged.
+
+    ``genders`` (optional) restricts the returned items to those wearer genders
+    (e.g. ``{"men", "women", "unisex"}`` to exclude kids' wear).
     """
     catalog = pd.read_parquet(catalog_path)
     links = pd.read_parquet(links_path)
@@ -52,6 +56,11 @@ def load_catalog_items(
         category = str(row.get("category") or "")
         if category not in ITEM_CATEGORY_SET:
             continue
+        gender = str(row.get("gender") or "unisex")
+        if gender not in GENDER_SET:
+            gender = "unisex"
+        if genders is not None and gender not in genders:
+            continue
         store_id = str(row.get("store_id") or "")
         store = STORES_BY_ID.get(store_id)
         out.append(
@@ -60,6 +69,7 @@ def load_catalog_items(
                 category=category,
                 image_path=str(row.get("image_path") or ""),
                 item_embedding=[],
+                gender=gender,
                 store={
                     "store_id": store_id,
                     "store_name": store.store_name if store else store_id,

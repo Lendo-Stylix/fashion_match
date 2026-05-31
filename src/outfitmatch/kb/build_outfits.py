@@ -230,6 +230,7 @@ def outfits_to_frame(outfits: list[OutfitRecord]) -> pd.DataFrame:
             {
                 "outfit_id": outfit.outfit_id,
                 "schema_version": outfit.schema_version,
+                "gender": outfit.gender,
                 "item_ids": json.dumps([item.item_id for item in outfit.items]),
                 "categories": json.dumps([item.category for item in outfit.items]),
                 "compatibility_score": outfit.compatibility_score,
@@ -244,6 +245,7 @@ def outfits_to_frame(outfits: list[OutfitRecord]) -> pd.DataFrame:
         columns=[
             "outfit_id",
             "schema_version",
+            "gender",
             "item_ids",
             "categories",
             "compatibility_score",

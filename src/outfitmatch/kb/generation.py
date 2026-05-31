@@ -22,6 +22,19 @@ from outfitmatch.kb.schema import OutfitRecord
 OPTIONAL_CATEGORIES: tuple[str, ...] = ("outerwear", "bag", "accessory")
 
 
+def _combo_gender(items: list[ItemRecord]) -> str | None:
+    """Shared wearer gender of a combo, or None if it mixes incompatible genders.
+
+    ``unisex`` items pair with anything. A combo is valid only when its
+    non-unisex items all agree (all men, or all women, or all kid). The returned
+    value is that shared gender, or ``unisex`` when every item is unisex.
+    """
+    non_unisex = {item.gender for item in items} - {"unisex"}
+    if len(non_unisex) > 1:
+        return None
+    return next(iter(non_unisex)) if non_unisex else "unisex"
+
+
 def _price_tier(total: int) -> str:
     if total < 300_000:
         return "budget"
@@ -69,22 +82,26 @@ def _make_outfit(
         has_vn_store=all(bool(item.store.get("product_url")) for item in items),
         stylist_explanation_vi="",
         gen_method=method,
+        gender=_combo_gender(items) or "unisex",
     )
 
 
 def _base_combinations(items_by_category: dict[str, list[ItemRecord]]) -> list[list[ItemRecord]]:
+    """All valid (top+bottom+shoes) / (dress+shoes) combos with no gender clash."""
     combos: list[list[ItemRecord]] = []
     for top, bottom, shoes in itertools.product(
         items_by_category.get("top", []),
         items_by_category.get("bottom", []),
         items_by_category.get("shoes", []),
     ):
-        combos.append([top, bottom, shoes])
+        if _combo_gender([top, bottom, shoes]) is not None:
+            combos.append([top, bottom, shoes])
     for dress, shoes in itertools.product(
         items_by_category.get("dress", []),
         items_by_category.get("shoes", []),
     ):
-        combos.append([dress, shoes])
+        if _combo_gender([dress, shoes]) is not None:
+            combos.append([dress, shoes])
     return combos
 
 
@@ -98,7 +115,10 @@ def _with_optional_items(
     for category in OPTIONAL_CATEGORIES:
         candidates = items_by_category.get(category, [])
         if candidates and category not in used and rng.random() < 0.35:
-            items.append(rng.choice(candidates))
+            # Only add an optional item that keeps the outfit gender-consistent.
+            choice = rng.choice(candidates)
+            if _combo_gender([*items, choice]) is not None:
+                items.append(choice)
     return items
 
 

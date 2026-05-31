@@ -29,6 +29,7 @@ import pandas as pd
 
 from .base import CATALOG_DIR, IMAGE_DIR
 from .config import StoreConfig
+from .gender_map import infer_gender
 from .shopify import RawProduct
 from .store_category_map import resolve_category
 
@@ -120,6 +121,7 @@ class NormalizedItem:
     item_id: str
     category: str
     source_product_type: str  # raw store-native taxonomy value (traceability)
+    gender: str  # GENDER enum value (men|women|unisex|kid)
     image_path: str  # repo-relative path
     image_url: str  # remote URL — used by download_images.py
     title_vi: str
@@ -206,6 +208,7 @@ def normalize_products(
                 item_id=item_id,
                 category=category,
                 source_product_type=raw.product_type or "",
+                gender=infer_gender(raw.title, raw.product_type, store.store_id, category),
                 image_path=image_rel,
                 image_url=image_url,
                 title_vi=raw.title,
@@ -239,6 +242,7 @@ def write_frames(items: list[NormalizedItem]) -> tuple[Path, Path]:
             "item_id": it.item_id,
             "category": it.category,
             "source_product_type": it.source_product_type,
+            "gender": it.gender,
             "image_path": it.image_path,
             "title_vi": it.title_vi,
             "desc_vi": it.desc_vi,

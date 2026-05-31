@@ -57,6 +57,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--no-price-balance", action="store_true")
     parser.add_argument("--skip-quality-check", action="store_true")
+    parser.add_argument(
+        "--include-kid",
+        action="store_true",
+        help="Include kids' wear (default: adult-only — men/women/unisex).",
+    )
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args(argv)
 
@@ -72,9 +77,11 @@ def main(argv: list[str] | None = None) -> int:
             logger.error("catalog has quality errors; aborting")
             return 1
 
-    items = load_catalog_items(args.catalog, args.links)
+    # Adult-only KB by default: kids' items must not mix into adult outfits.
+    genders = None if args.include_kid else {"men", "women", "unisex"}
+    items = load_catalog_items(args.catalog, args.links, genders=genders)
     items_by_category = group_items_by_category(items, limit_per_category=args.limit_per_category)
-    logger.info("loaded %d in-stock items", len(items))
+    logger.info("loaded %d in-stock items (genders=%s)", len(items), genders or "all")
     logger.info("category caps: %s", {k: len(v) for k, v in sorted(items_by_category.items())})
 
     price_targets = None if args.no_price_balance else args.price_tier_targets
@@ -91,8 +98,11 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     write_outfits(outfits, args.output)
     logger.info("wrote %d outfits → %s", len(outfits), args.output)
+    item_gender = {item.item_id: item.gender for item in items}
     outfit_report = evaluate_outfit_frame(
-        pd.read_parquet(args.output), price_tier_targets=args.price_tier_targets
+        pd.read_parquet(args.output),
+        price_tier_targets=args.price_tier_targets,
+        item_gender=item_gender,
     )
     logger.info("outfit build report:\n%s", summarize_outfit_report(outfit_report))
     return 0

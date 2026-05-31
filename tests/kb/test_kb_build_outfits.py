@@ -111,6 +111,7 @@ def test_outfits_to_frame_is_parquet_friendly():
     assert list(frame.columns) == [
         "outfit_id",
         "schema_version",
+        "gender",
         "item_ids",
         "categories",
         "compatibility_score",

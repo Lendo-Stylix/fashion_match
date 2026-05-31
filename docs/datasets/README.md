@@ -124,6 +124,7 @@ Mỗi row là 1 item, tương thích với `ItemRecord` trong `src/outfitmatch/k
 | `item_id` | string | ✅ | Stable ID dạng `item_custom_NNNNN` |
 | `category` | string | ✅ | `top`, `bottom`, `dress`, `outerwear`, `shoes`, `bag`, `accessory` |
 | `source_product_type` | string | optional | Nhãn gốc của store trước khi map (vd. `T-SHIRTS`, `Quần Âu`, `VQ`); rỗng nếu store không cung cấp |
+| `gender` | string | ✅ | Giới tính người mặc: `men`, `women`, `unisex`, `kid` (suy ra từ title + brand + category) |
 | `image_path` | string | ✅ | Repo-relative path, ví dụ `data/custom/catalog/images/item_custom_00001.jpg` |
 | `title_vi` | string | ✅ | Tên sản phẩm từ store |
 | `desc_vi` | string | optional | Mô tả sản phẩm; có thể rỗng |
@@ -168,6 +169,7 @@ Mỗi row là 1 outfit generated, compact để dễ share/index.
 |---|---|---:|---|
 | `outfit_id` | string | ✅ | `OF_00001`, `OF_00002`, ... |
 | `schema_version` | string | ✅ | Hiện tại là `3.1` |
+| `gender` | string | ✅ | Giới tính outfit: `men`, `women`, `unisex`, `kid`. Mọi item trong outfit luôn cùng giới (unisex ghép được cả hai) |
 | `item_ids` | JSON string list | ✅ | Danh sách item trong outfit |
 | `categories` | JSON string list | ✅ | Category tương ứng với item |
 | `compatibility_score` | float | ✅ | Score sau re-score deterministic baseline |

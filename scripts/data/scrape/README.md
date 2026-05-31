@@ -85,6 +85,16 @@ accessory` (see `vocab.ITEM_CATEGORY`) or **drops the item**.
 The raw store value is persisted in the `source_product_type` column of
 `catalog_metadata.parquet` for traceability.
 
+## Wearer gender
+
+`scripts/data/scrape/gender_map.py::infer_gender` tags each item `men | women |
+unisex | kid` so outfit generation never pairs a men's top with a women's skirt.
+Signals (decreasing reliability): explicit title token (`nam`/`nữ`/`bé trai`/
+`unisex`/`men`/`women`/`kid`) → single-gender brand default (aristino=men,
+rubies/huelleyrose=women, dirtycoins=unisex) → category prior (`dress`→women).
+`unisex` is the safe fallback and combines with both. Stored in the `gender`
+column; outfit generation defaults to adult-only (`men/women/unisex`).
+
 ### Re-tagging an existing catalog
 
 If either mapper changes, re-tag in place — no re-crawl needed. The tool reads

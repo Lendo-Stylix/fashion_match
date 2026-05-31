@@ -26,6 +26,7 @@ import pandas as pd
 
 from .base import CATALOG_DIR, new_client
 from .config import StoreConfig, active_stores
+from .gender_map import infer_gender
 from .shopify import RawProduct, fetch_products
 from .sitemap import fetch_products_via_html, fetch_products_via_product_json
 from .store_category_map import resolve_category
@@ -43,6 +44,7 @@ class RetagReport(TypedDict):
     dropped: int
     matched_raw: int
     new_category_counts: dict[str, int]
+    new_gender_counts: dict[str, int]
     transitions: dict[str, int]
     dropped_sample_titles: list[str]
     pruned_links: int
@@ -98,17 +100,22 @@ def retag(*, dry_run: bool = False) -> RetagReport:
 
     new: list[str | None] = []
     new_pt: list[str] = []
+    new_gender: list[str] = []
     matched_raw = 0
     for iid, title in zip(item_ids, titles, strict=False):
         store_id, spid = link_lookup.get(iid, ("", ""))
         rp = raw_index.get((store_id, spid))
         if rp is not None:
             matched_raw += 1
-            new.append(resolve_category(rp.title or title, rp.product_type, rp.tags, store_id))
+            resolved = resolve_category(rp.title or title, rp.product_type, rp.tags, store_id)
+            new.append(resolved)
             new_pt.append(rp.product_type or "")
+            new_gender.append(infer_gender(rp.title or title, rp.product_type, store_id, resolved))
         else:
-            new.append(resolve_category(title, "", None, store_id))
+            resolved = resolve_category(title, "", None, store_id)
+            new.append(resolved)
             new_pt.append("")
+            new_gender.append(infer_gender(title, "", store_id, resolved))
 
     transitions: Counter[str] = Counter()
     dropped_titles: list[str] = []
@@ -124,16 +131,18 @@ def retag(*, dry_run: bool = False) -> RetagReport:
             changed += 1
             transitions[f"{old_c} -> {new_c}"] += 1
 
-    cat = cat.assign(category=new, source_product_type=new_pt)
+    cat = cat.assign(category=new, source_product_type=new_pt, gender=new_gender)
     keep = cat[cat["category"].notna()].copy()
-    # Re-order so source_product_type sits right after category.
+    # Re-order so source_product_type + gender sit right after category.
     cols = list(keep.columns)
-    if "source_product_type" in cols:
-        cols.remove("source_product_type")
-        cat_pos = cols.index("category") + 1
-        cols.insert(cat_pos, "source_product_type")
-        keep = keep[cols]
+    for moved in ("source_product_type", "gender"):
+        if moved in cols:
+            cols.remove(moved)
+    cat_pos = cols.index("category") + 1
+    cols[cat_pos:cat_pos] = ["source_product_type", "gender"]
+    keep = keep[cols]
     new_counts = Counter(keep["category"].tolist())
+    gender_counts = Counter(keep["gender"].tolist())
 
     pruned_links = 0
     if not dry_run:
@@ -159,6 +168,7 @@ def retag(*, dry_run: bool = False) -> RetagReport:
         dropped=dropped,
         matched_raw=matched_raw,
         new_category_counts=dict(new_counts),
+        new_gender_counts=dict(gender_counts),
         transitions=dict(transitions.most_common()),
         dropped_sample_titles=dropped_titles,
         pruned_links=pruned_links,

@@ -19,6 +19,8 @@ class OutfitBuildReport:
     price_tier_counts: dict[str, int]
     price_tier_shares: dict[str, float]
     gen_method_counts: dict[str, int]
+    gender_counts: dict[str, int]
+    mixed_gender_count: int
     unique_combo_count: int
     invalid_rule_count: int
     score_min: float
@@ -46,10 +48,33 @@ def _is_valid_rule(raw_categories: Any) -> bool:
     return {"top", "bottom", "shoes"} <= categories or {"dress", "shoes"} <= categories
 
 
+def _count_mixed_gender(frame: pd.DataFrame, item_gender: dict[str, str]) -> int:
+    """Number of outfits whose items mix incompatible genders (men+women+kid).
+
+    ``unisex`` items pair with anything, so an outfit is mixed only when its
+    non-unisex item genders disagree.
+    """
+    if "item_ids" not in frame:
+        return 0
+    mixed = 0
+    for raw in frame["item_ids"]:
+        genders = {item_gender.get(iid, "unisex") for iid in _loads_list(raw)}
+        if len(genders - {"unisex"}) > 1:
+            mixed += 1
+    return mixed
+
+
 def evaluate_outfit_frame(
-    frame: pd.DataFrame, *, price_tier_targets: dict[str, float]
+    frame: pd.DataFrame,
+    *,
+    price_tier_targets: dict[str, float],
+    item_gender: dict[str, str] | None = None,
 ) -> OutfitBuildReport:
-    """Compute deterministic quality and bias metrics for generated outfit rows."""
+    """Compute deterministic quality and bias metrics for generated outfit rows.
+
+    ``item_gender`` (item_id → GENDER) enables the mixed-gender integrity check;
+    when omitted the count is 0.
+    """
     total = len(frame)
     price_counts = {tier: int((frame["price_tier"] == tier).sum()) for tier in PRICE_TIER}
     price_shares = {tier: (price_counts[tier] / total if total else 0.0) for tier in PRICE_TIER}
@@ -67,6 +92,12 @@ def evaluate_outfit_frame(
         price_tier_counts=price_counts,
         price_tier_shares={tier: round(price_shares[tier], 4) for tier in PRICE_TIER},
         gen_method_counts={str(k): int(v) for k, v in frame["gen_method"].value_counts().items()},
+        gender_counts=(
+            {str(k): int(v) for k, v in frame["gender"].value_counts().items()}
+            if "gender" in frame
+            else {}
+        ),
+        mixed_gender_count=_count_mixed_gender(frame, item_gender or {}),
         unique_combo_count=int(frame["item_ids"].nunique()) if "item_ids" in frame else 0,
         invalid_rule_count=int((~frame["categories"].map(_is_valid_rule)).sum()),
         score_min=float(scores.min()) if not scores.empty else 0.0,
@@ -84,6 +115,8 @@ def summarize_outfit_report(report: OutfitBuildReport) -> str:
             f"price_tiers: {json.dumps(report.price_tier_counts, ensure_ascii=False)}",
             f"price_shares: {json.dumps(report.price_tier_shares, ensure_ascii=False)}",
             f"gen_methods: {json.dumps(report.gen_method_counts, ensure_ascii=False)}",
+            f"genders: {json.dumps(report.gender_counts, ensure_ascii=False)}",
+            f"mixed_gender_outfits: {report.mixed_gender_count}",
             f"unique_combos: {report.unique_combo_count}",
             f"invalid_rules: {report.invalid_rule_count}",
             f"score_min: {report.score_min:.3f}",

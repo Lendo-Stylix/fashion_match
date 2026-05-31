@@ -11,6 +11,7 @@ Usage:
     uv run python scripts/setup_databases.py --vector-dim 768
     uv run python scripts/setup_databases.py --vector-dim 768 --skip-qdrant
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,6 +24,7 @@ ROOT = Path(__file__).parent.parent
 
 
 # ── Qdrant outfits collection (v3.1-lite Tầng 3) ───────────────────────────────
+
 
 def setup_qdrant(vector_dim: int, host: str, port: int) -> None:
     try:
@@ -61,6 +63,7 @@ def setup_qdrant(vector_dim: int, host: str, port: int) -> None:
 
 # ── SQLite cache for Gemini Flash LLM-tagging ──────────────────────────────────
 
+
 def setup_sqlite() -> None:
     db_path = ROOT / "data" / "cache" / "gemini_tagging.db"
     db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -87,6 +90,7 @@ def setup_sqlite() -> None:
 
 # ── Data directories ──────────────────────────────────────────────────────────
 
+
 def setup_directories() -> None:
     dirs = [
         "data/custom/catalog/images",
@@ -108,10 +112,14 @@ def setup_directories() -> None:
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Initialise v3.1-lite databases")
     parser.add_argument(
-        "--vector-dim", type=int, required=False, default=None,
+        "--vector-dim",
+        type=int,
+        required=False,
+        default=None,
         help="OT-labse outfit_embedding dim (read from checkpoint config — Sprint 1).",
     )
     parser.add_argument("--host", default="localhost")

@@ -68,6 +68,13 @@ ITEM_CATEGORY: tuple[str, ...] = (
     "accessory",
 )
 
+GENDER: tuple[str, ...] = (
+    "men",
+    "women",
+    "unisex",
+    "kid",
+)
+
 SKIN_TONE: tuple[str, ...] = (
     "warm",
     "neutral",
@@ -81,6 +88,7 @@ BODY_SHAPE_SET: frozenset[str] = frozenset(BODY_SHAPE)
 SEASON_SET: frozenset[str] = frozenset(SEASON)
 PRICE_TIER_SET: frozenset[str] = frozenset(PRICE_TIER)
 ITEM_CATEGORY_SET: frozenset[str] = frozenset(ITEM_CATEGORY)
+GENDER_SET: frozenset[str] = frozenset(GENDER)
 SKIN_TONE_SET: frozenset[str] = frozenset(SKIN_TONE)
 
 # Vietnamese display labels (UI only — never use for filtering or matching)
@@ -126,6 +134,13 @@ PRICE_TIER_LABELS_VI: dict[str, str] = {
     "budget": "bình dân (<300K)",
     "mid": "tầm trung (300K–800K)",
     "premium": "cao cấp (>800K)",
+}
+
+GENDER_LABELS_VI: dict[str, str] = {
+    "men": "nam",
+    "women": "nữ",
+    "unisex": "unisex",
+    "kid": "trẻ em",
 }
 
 SKIN_TONE_LABELS_VI: dict[str, str] = {

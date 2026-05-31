@@ -4,12 +4,19 @@ from outfitmatch.kb.generation import generate_fitb_beam, generate_random_scored
 from outfitmatch.kb.schema import ItemRecord
 
 
-def _item(item_id: str, category: str, price: int, emb: list[float] | None = None) -> ItemRecord:
+def _item(
+    item_id: str,
+    category: str,
+    price: int,
+    emb: list[float] | None = None,
+    gender: str = "unisex",
+) -> ItemRecord:
     return ItemRecord(
         item_id=item_id,
         category=category,
         image_path=f"data/custom/catalog/images/{item_id}.jpg",
         item_embedding=emb or [1.0, 0.0],
+        gender=gender,
         store={
             "store_id": "test_store",
             "store_name": "Test Store",
@@ -71,3 +78,51 @@ def test_generate_fitb_beam_prefers_high_scoring_completion():
     assert [item.item_id for item in outfits[0].items] == ["top_1", "bottom_1", "shoes_good"]
     assert outfits[0].gen_method == "fitb_beam"
     assert outfits[0].compatibility_score == 0.0
+
+
+def _gendered_catalog() -> dict[str, list[ItemRecord]]:
+    return {
+        "top": [
+            _item("top_men", "top", 100_000, gender="men"),
+            _item("top_women", "top", 110_000, gender="women"),
+            _item("top_uni", "top", 120_000, gender="unisex"),
+        ],
+        "bottom": [
+            _item("bottom_men", "bottom", 200_000, gender="men"),
+            _item("bottom_women", "bottom", 210_000, gender="women"),
+        ],
+        "shoes": [
+            _item("shoes_men", "shoes", 300_000, gender="men"),
+            _item("shoes_women", "shoes", 310_000, gender="women"),
+            _item("shoes_uni", "shoes", 320_000, gender="unisex"),
+        ],
+        "dress": [_item("dress_women", "dress", 400_000, gender="women")],
+        "accessory": [_item("acc_men", "accessory", 50_000, gender="men")],
+    }
+
+
+def _assert_no_mixed_gender(outfits: list) -> None:
+    for outfit in outfits:
+        genders = {item.gender for item in outfit.items} - {"unisex"}
+        assert len(genders) <= 1, f"mixed-gender outfit: {[i.item_id for i in outfit.items]}"
+        # the recorded outfit gender must match its items
+        assert outfit.gender == (next(iter(genders)) if genders else "unisex")
+
+
+def test_random_scored_never_mixes_gender():
+    outfits = generate_random_scored(_gendered_catalog(), ScoringEncoder(), n_candidates=50)
+    assert outfits
+    _assert_no_mixed_gender(outfits)
+
+
+def test_fitb_beam_never_mixes_gender():
+    outfits = generate_fitb_beam(_gendered_catalog(), FitbEncoder(), n_outfits=50)
+    assert outfits
+    _assert_no_mixed_gender(outfits)
+
+
+def test_unisex_items_pair_into_both_genders():
+    # A unisex top can appear in both a men's and a women's outfit.
+    outfits = generate_random_scored(_gendered_catalog(), ScoringEncoder(), n_candidates=50)
+    genders = {o.gender for o in outfits}
+    assert "men" in genders and "women" in genders

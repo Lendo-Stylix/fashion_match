@@ -14,6 +14,7 @@ class ItemRecord:
     image_path: str  # local path under data/custom/catalog/images/
     item_embedding: list[float]  # dim = OUTFIT_EMBED_DIM (verify from checkpoint)
     store: dict  # {store_id, store_name, product_url, price_vnd, in_stock}
+    gender: str = "unisex"  # GENDER enum value (men|women|unisex|kid)
 
 
 @dataclass
@@ -40,6 +41,7 @@ class OutfitRecord:
 
     stylist_explanation_vi: str  # Vietnamese explanation — display only
     gen_method: str  # "fitb_beam" | "random_scored"
+    gender: str = "unisex"  # GENDER enum value — every item in the outfit agrees
 
     def to_qdrant_payload(self) -> dict:
         """Serialize to Qdrant point payload.
@@ -50,6 +52,7 @@ class OutfitRecord:
         return {
             "outfit_id": self.outfit_id,
             "schema_version": self.schema_version,
+            "gender": self.gender,
             "occasion": self.occasion,
             "style": self.style,
             "body_shapes_fit": self.body_shapes_fit,
