@@ -198,3 +198,21 @@ def test_write_frames_updates_existing_catalog_row(tmp_path, monkeypatch):
     catalog = pd.read_parquet(tmp_path / "catalog_metadata.parquet")
     assert catalog.shape[0] == 1
     assert catalog.loc[0, "title_vi"] == "Áo thun mới"
+
+
+def test_infers_formality():
+    items = normalize_products([_raw()], _store(), start_index=1, existing_link_map={})
+    assert items[0].formality == "casual"  # "Áo thun cotton basic" → casual
+
+
+def test_formality_written_to_catalog(tmp_path, monkeypatch):
+    import pandas as pd
+
+    monkeypatch.setattr(normalize, "CATALOG_DIR", tmp_path)
+    monkeypatch.setattr(normalize, "CATALOG_PARQUET", tmp_path / "catalog_metadata.parquet")
+    monkeypatch.setattr(normalize, "LINKS_PARQUET", tmp_path / "item_store_links.parquet")
+
+    write_frames(normalize_products([_raw()], _store(), existing_link_map={}))
+    cat = pd.read_parquet(tmp_path / "catalog_metadata.parquet")
+    assert "formality" in cat.columns
+    assert cat.loc[0, "formality"] == "casual"

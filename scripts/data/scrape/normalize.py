@@ -29,6 +29,7 @@ import pandas as pd
 
 from .base import CATALOG_DIR, IMAGE_DIR
 from .config import StoreConfig
+from .formality_map import infer_formality
 from .gender_map import infer_gender
 from .shopify import RawProduct
 from .store_category_map import resolve_category
@@ -157,6 +158,7 @@ class NormalizedItem:
     category: str
     source_product_type: str  # raw store-native taxonomy value (traceability)
     gender: str  # GENDER enum value (men|women|unisex|kid)
+    formality: str  # FORMALITY enum value (athletic|casual|smart_casual|formal)
     image_path: str  # repo-relative path
     image_url: str  # remote URL — used by download_images.py
     title_vi: str
@@ -247,6 +249,7 @@ def normalize_products(
                 category=category,
                 source_product_type=raw.product_type or "",
                 gender=infer_gender(raw.title, raw.product_type, store.store_id, category),
+                formality=infer_formality(raw.title, raw.product_type, category, raw.tags),
                 image_path=image_rel,
                 image_url=image_url,
                 title_vi=raw.title,
@@ -283,6 +286,7 @@ def write_frames(items: list[NormalizedItem]) -> tuple[Path, Path]:
             "category": it.category,
             "source_product_type": it.source_product_type,
             "gender": it.gender,
+            "formality": it.formality,
             "image_path": it.image_path,
             "title_vi": it.title_vi,
             "desc_vi": it.desc_vi,
