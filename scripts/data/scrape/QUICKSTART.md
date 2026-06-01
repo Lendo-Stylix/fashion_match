@@ -60,7 +60,7 @@ uv run pytest tests/data/scrape -v
 ## When you're done
 - `data/cache/store_registry.db` — SQLite, queryable with any SQLite viewer.
 - `data/custom/catalog/catalog_metadata.parquet` — `ItemRecord`-compatible.
-- `data/custom/catalog/item_store_links.parquet` — item ↔ store mapping.
+- `data/custom/catalog/item_store_links.parquet` — item ↔ store mapping, including `available_sizes` and `sizes_in_stock`.
 - `data/custom/catalog/images/item_custom_*.jpg|png|webp` — image files.
 
 Next step is **Tầng 1 KB pipeline** (`src/outfitmatch/kb/`) which consumes

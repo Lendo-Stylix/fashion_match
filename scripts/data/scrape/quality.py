@@ -28,6 +28,9 @@ LINKS_PARQUET = CATALOG_DIR / "item_store_links.parquet"
 CATALOG_COLUMNS: tuple[str, ...] = (
     "item_id",
     "category",
+    "source_product_type",
+    "gender",
+    "formality",
     "image_path",
     "title_vi",
     "desc_vi",
@@ -44,6 +47,8 @@ LINK_COLUMNS: tuple[str, ...] = (
     "sale_price_vnd",
     "sku",
     "in_stock",
+    "available_sizes",
+    "sizes_in_stock",
 )
 
 _URL_RE = re.compile(r"^https?://[^\s/$.?#].[^\s]*$", re.IGNORECASE)
@@ -144,8 +149,22 @@ def check_catalog(
     repo_root: Path = REPO_ROOT,
 ) -> QualityReport:
     """Validate scraped catalog/link parquet files and return a quality report."""
-    catalog = _read_parquet(catalog_path)
-    links = _read_parquet(links_path)
+    return check_frames(_read_parquet(catalog_path), _read_parquet(links_path), repo_root=repo_root)
+
+
+def check_frames(
+    catalog: pd.DataFrame,
+    links: pd.DataFrame,
+    *,
+    repo_root: Path = REPO_ROOT,
+    check_images: bool = True,
+) -> QualityReport:
+    """In-memory core of :func:`check_catalog`.
+
+    ``check_images=False`` skips the local-file existence check, which is useful
+    when the batch gate runs before downloading images or when a smoke test uses
+    ``--no-images``.
+    """
     issues: list[QualityIssue] = []
 
     missing_catalog = _missing_columns(catalog, CATALOG_COLUMNS)
@@ -218,16 +237,19 @@ def check_catalog(
         sample=invalid_colors,
     )
 
-    image_paths = catalog["image_path"].fillna("").astype(str)
-    missing_image = catalog.loc[~image_paths.map(lambda p: bool(p) and (repo_root / p).exists())]
-    _issue(
-        issues,
-        level="error",
-        code="missing_image_file",
-        message="image_path must point to an existing local file",
-        count=int(missing_image.shape[0]),
-        sample=missing_image["image_path"],
-    )
+    if check_images:
+        image_paths = catalog["image_path"].fillna("").astype(str)
+        missing_image = catalog.loc[
+            ~image_paths.map(lambda p: bool(p) and (repo_root / p).exists())
+        ]
+        _issue(
+            issues,
+            level="error",
+            code="missing_image_file",
+            message="image_path must point to an existing local file",
+            count=int(missing_image.shape[0]),
+            sample=missing_image["image_path"],
+        )
 
     catalog_ids = set(catalog["item_id"].astype(str))
     link_ids = set(links["item_id"].astype(str))

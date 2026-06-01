@@ -19,6 +19,8 @@ Các file phụ trợ:
 |---|---|
 | `data/cache/store_registry.db` | SQLite registry store/brand được scraper seed từ `scripts/data/scrape/config.py` |
 | `data/cache/raw/<store_id>/` | Raw HTTP/text cache để replay parse mà không crawl lại store |
+| `data/custom/catalog/scrape_manifest.json` | Kết quả quality gate từng batch; `--rescrape-failed` đọc file này để retry đúng store/chunk bị quality-failed |
+| `data/custom/catalog/quarantine/` | Chỉ xuất hiện khi có batch fail quality gate; chứa Parquet/JSON bằng chứng để debug parser/normalizer |
 | `link_web.txt` | Danh sách website/store đã khảo sát |
 
 > Lưu ý: `data/custom/**/*.parquet`, `data/custom/catalog/images/*`, `data/cache/` đã được `.gitignore`. Muốn coworker có dataset thì phải share artifact riêng, không chỉ pull Git.
@@ -27,37 +29,38 @@ Các file phụ trợ:
 
 ## 2. Current snapshot
 
-Snapshot gần nhất đã validate:
+Snapshot gần nhất (rebuild `2026-06-01`) đã validate:
 
 ### VN Store Catalog
 
-- `5845` catalog items (token + store-tag categoriser dropped out-of-scope SKUs: underwear, swimwear, phone cases, perfume, gift vouchers, 2-piece sets)
-- `5845` item-store links
+- `5618` catalog items (quality-gated rebuild từ 6 store adapter-backed; categoriser tiếp tục loại out-of-scope SKUs như underwear, phone cases, perfume, gift vouchers, 2-piece sets)
+- `5618` item-store links
+- `25/25` manifest batches passed; không có quarantine directory
 - `0` hard errors
-- `1` warning: `552` item thiếu `desc_vi`; chấp nhận được vì bước tagging sau có thể dựa vào title/image
+- `1` warning: `556` item thiếu `desc_vi`; chấp nhận được vì bước tagging sau có thể dựa vào title/image
 
 Store distribution:
 
 | Store | Items |
 |---|---:|
-| `yody_vn` | 2227 |
-| `aristino_vn` | 1472 |
-| `canifa_vn` | 1190 |
-| `rubies` | 467 |
-| `huelleyrose` | 302 |
-| `dirtycoins` | 187 |
+| `yody_vn` | 2301 |
+| `aristino_vn` | 1606 |
+| `canifa_vn` | 684 |
+| `rubies` | 468 |
+| `huelleyrose` | 328 |
+| `dirtycoins` | 231 |
 
 Category distribution (store-tag first, title fallback):
 
 | Category | Items |
 |---|---:|
-| `top` | 3004 |
-| `bottom` | 1531 |
-| `outerwear` | 500 |
-| `dress` | 314 |
-| `accessory` | 232 |
-| `bag` | 140 |
-| `shoes` | 124 |
+| `top` | 2796 |
+| `bottom` | 1456 |
+| `outerwear` | 375 |
+| `dress` | 364 |
+| `accessory` | 351 |
+| `bag` | 143 |
+| `shoes` | 133 |
 
 > Cột `source_product_type` trong `catalog_metadata.parquet` lưu nhãn gốc của store
 > (vd. `T-SHIRTS`, `Quần Âu`, `VQ`) để truy vết nguồn phân loại.
@@ -67,7 +70,8 @@ Category distribution (store-tag first, title fallback):
 - `1000` generated outfits
 - `1000` unique item combinations
 - `0` invalid category-rule combinations
-- Compatibility score range: `0.650–0.980`
+- Compatibility score range: `0.600–0.980`
+- `0` mixed-gender outfits; `0` formality-clash outfits
 - Method mix: `700` FITB-beam / `300` random-scored
 - Price-tier mix, tuned for Vietnamese mainstream users:
   - `budget`: `200` outfits (`20%`)
@@ -95,6 +99,7 @@ data/
     ├── catalog/
     │   ├── catalog_metadata.parquet
     │   ├── item_store_links.parquet
+    │   ├── scrape_manifest.json
     │   └── images/
     │       ├── item_custom_00001.jpg
     │       └── ...
@@ -125,6 +130,7 @@ Mỗi row là 1 item, tương thích với `ItemRecord` trong `src/outfitmatch/k
 | `category` | string | ✅ | `top`, `bottom`, `dress`, `outerwear`, `shoes`, `bag`, `accessory` |
 | `source_product_type` | string | optional | Nhãn gốc của store trước khi map (vd. `T-SHIRTS`, `Quần Âu`, `VQ`); rỗng nếu store không cung cấp |
 | `gender` | string | ✅ | Giới tính người mặc: `men`, `women`, `unisex`, `kid` (suy ra từ title + brand + category) |
+| `formality` | string | ✅ | Mức độ trang trọng suy ra từ category/title, hiện dùng các giá trị như `casual`, `smart_casual`, `formal`, `athletic` |
 | `image_path` | string | ✅ | Repo-relative path, ví dụ `data/custom/catalog/images/item_custom_00001.jpg` |
 | `title_vi` | string | ✅ | Tên sản phẩm từ store |
 | `desc_vi` | string | optional | Mô tả sản phẩm; có thể rỗng |
@@ -158,6 +164,8 @@ Mỗi row là link mua + giá cho một item ở một store.
 | `sale_price_vnd` | int/null | optional | Giá sale nếu có |
 | `sku` | string/null | optional | SKU/variant |
 | `in_stock` | bool | ✅ | Chỉ item in-stock được dùng để build outfit |
+| `available_sizes` | JSON string list | optional | Toàn bộ size option scraper đọc được từ variant/product page |
+| `sizes_in_stock` | JSON string list | optional | Các size hiện còn hàng tại thời điểm scrape |
 
 ---
 
@@ -221,8 +229,8 @@ uv run python -m scripts.data.scrape.quality
 Expected summary gần nhất:
 
 ```text
-items: 5845
-links: 5845
+items: 5618
+links: 5618
 errors: 0
 warnings: 1
 ```
@@ -290,6 +298,7 @@ Khuyến nghị tạo archive chỉ chứa artifact cần thiết:
 Compress-Archive -Path `
   data/custom/catalog/catalog_metadata.parquet,`
   data/custom/catalog/item_store_links.parquet,`
+  data/custom/catalog/scrape_manifest.json,`
   data/custom/catalog/images,`
   data/custom/outfits/generated_outfits.parquet,`
   data/cache/store_registry.db `
@@ -321,7 +330,7 @@ wandb/
 3. **Không đổi enum value.** `category`, `price_tier`, style/occasion/body fields phải theo `src/outfitmatch/vocab.py`.
 4. **Không commit dataset.** Git chỉ track code, README, schema/docs. Dataset đi qua artifact share riêng.
 5. **Ảnh là local path.** `image_path` phải trỏ tới file trong repo, không dùng hotlink remote làm input cho KB.
-6. **Generated Outfit KB hiện là prototype deterministic.** Metadata tagging đầy đủ (`occasion`, `style`, `body_shapes_fit`, `season`, explanation) sẽ được bổ sung ở bước Gemini tagging/Qdrant indexing sau.
+6. **Generated Outfit KB hiện là prototype deterministic.** Metadata tagging đầy đủ (`occasion`, `style`, `body_shapes_fit`, `season`, explanation) vẫn cần bước Gemini tagging trước khi index phục vụ retrieval; `qdrant_index.py` đã có implementation để upsert `OutfitRecord` có embedding/metadata vào collection `outfits`.
 
 ---
 
@@ -337,4 +346,5 @@ wandb/
 | `src/outfitmatch/kb/catalog.py` | Load catalog Parquet thành `ItemRecord` |
 | `src/outfitmatch/kb/build_outfits.py` | Generate + balance outfit records |
 | `src/outfitmatch/kb/evaluation.py` | Summary/evaluation cho generated outfit KB |
+| `src/outfitmatch/kb/qdrant_index.py` | Create collection + payload indexes, upsert KB outfits to Qdrant |
 | `src/outfitmatch/kb/schema.py` | Canonical `ItemRecord` / `OutfitRecord` |

@@ -1,6 +1,11 @@
 import scripts.data.scrape.normalize as normalize
 from scripts.data.scrape.config import StoreConfig
-from scripts.data.scrape.normalize import normalize_products, write_frames
+from scripts.data.scrape.normalize import (
+    normalize_products,
+    to_catalog_frame,
+    to_links_frame,
+    write_frames,
+)
 from scripts.data.scrape.shopify import RawProduct
 
 
@@ -158,6 +163,19 @@ def test_free_size_is_captured():
     )
     items = normalize_products([raw], _store(), start_index=1, existing_link_map={})
     assert items[0].available_sizes == ["FREE SIZE"]
+
+
+def test_to_frames_have_expected_columns():
+    items = normalize_products([_raw()], _store(), start_index=1, existing_link_map={})
+    cat = to_catalog_frame(items)
+    links = to_links_frame(items)
+
+    assert {"item_id", "category", "gender", "formality", "colors"} <= set(cat.columns)
+    assert {"item_id", "store_id", "price_vnd", "available_sizes", "sizes_in_stock"} <= set(
+        links.columns
+    )
+    assert len(cat) == 1
+    assert len(links) == 1
 
 
 def test_write_frames_includes_size_columns(tmp_path, monkeypatch):

@@ -10,7 +10,7 @@ according to `docs/datasets/STORE_CATALOG_VN.md`.
 | `data/cache/store_registry.db` | SQLite — `stores` table seeded from `scripts/data/scrape/config.py` |
 | `data/cache/raw/<store_id>/products_page_NN.json` | Raw `/products.json` responses (replayable) |
 | `data/custom/catalog/catalog_metadata.parquet` | One row per item (`ItemRecord`-compatible) |
-| `data/custom/catalog/item_store_links.parquet` | item ↔ store mapping with price/SKU/stock |
+| `data/custom/catalog/item_store_links.parquet` | item ↔ store mapping with price/SKU/stock + available_sizes |
 | `data/custom/catalog/images/item_custom_NNNNN.jpg` | Primary product image, local copy |
 
 Schema is the contract published in `docs/datasets/STORE_CATALOG_VN.md` §4. All
@@ -58,8 +58,38 @@ Flags:
 | `--dry-run` | Fetch + normalize only; do not write parquet/images. |
 | `--offline` | Reserved for future use; currently raw cache is always consulted first. |
 | `--collector NAME` | Set the `collector` field written into `catalog_metadata.parquet`. |
+| `--batch-size N` | Items per quality-gated batch. Default: 250. |
+| `--min-yield R` | Minimum normalized/raw ratio before quarantining a whole store. |
+| `--no-gate` | Disable the batch quality gate and write directly to parquet. |
+| `--rescrape-failed` | Re-run only store/chunks marked quality-failed in `scrape_manifest.json`. |
 | `--skip-registry` | Don't re-seed `store_registry.db`. |
 | `-v` / `--verbose` | DEBUG-level logging. |
+
+## Batched scrape with quality gate
+
+Each store is split into `--batch-size` chunks. Every chunk passes the in-memory
+quality gate (`quality.check_frames`) **before** it is merged into the main
+catalog parquet.
+
+- passing batch -> promoted into `catalog_metadata.parquet` / `item_store_links.parquet`
+- quality-failed batch -> written into `data/custom/catalog/quarantine/<store>__<chunk>/`
+- all outcomes -> tracked in `data/custom/catalog/scrape_manifest.json`
+
+```bash
+# scrape with gate enabled (default)
+uv run python -m scripts.data.scrape.run --batch-size 250
+
+# retry only quality-failed batches from the manifest
+uv run python -m scripts.data.scrape.run --rescrape-failed
+
+# legacy direct-write mode
+uv run python -m scripts.data.scrape.run --no-gate
+```
+
+A batch is quarantined when the gate finds **data-quality problems** (invalid
+category, missing title, bad colors JSON, missing image, broken join, invalid
+store/url/price, etc.) or when a store's normalize/raw yield falls below
+`--min-yield`.
 
 ## How items are categorised
 
@@ -94,6 +124,17 @@ Signals (decreasing reliability): explicit title token (`nam`/`nữ`/`bé trai`/
 rubies/huelleyrose=women, dirtycoins=unisex) → category prior (`dress`→women).
 `unisex` is the safe fallback and combines with both. Stored in the `gender`
 column; outfit generation defaults to adult-only (`men/women/unisex`).
+
+## Item sizes
+
+`normalize.py` also extracts variant size labels into `item_store_links.parquet`:
+
+- `available_sizes`: every size label seen across variants, upper-cased
+- `sizes_in_stock`: subset where `variant.available == True`
+
+These fields stay at the item/store-link layer; generated outfits remain
+size-agnostic templates. Runtime personalization (`src/outfitmatch/quiz/sizing.py`)
+uses them to suggest sizes for alpha-size categories only.
 
 ### Re-tagging an existing catalog
 
@@ -139,7 +180,11 @@ scraper only produces clean items with valid `category` and a working image.
 
 ```
 tests/data/scrape/test_category_map.py   # keyword heuristic
-tests/data/scrape/test_normalize.py      # raw → NormalizedItem mapping + price guards
+tests/data/scrape/test_normalize.py      # raw → NormalizedItem mapping + frame builders
+tests/data/scrape/test_quality.py        # parquet + in-memory data-quality checks
+tests/data/scrape/test_batch_gate.py     # chunking / gate / quarantine
+tests/data/scrape/test_manifest.py      # manifest round-trip + failed-batch query
+tests/data/scrape/test_run_gate.py      # gate-and-promote orchestration
 ```
 
 Run: `uv run pytest tests/data/scrape -v`.

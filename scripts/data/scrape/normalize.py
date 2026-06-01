@@ -271,6 +271,63 @@ def normalize_products(
     return items
 
 
+def to_catalog_frame(items: list[NormalizedItem]) -> pd.DataFrame:
+    """One catalog-metadata row per normalized item."""
+    return pd.DataFrame(
+        [
+            {
+                "item_id": it.item_id,
+                "category": it.category,
+                "source_product_type": it.source_product_type,
+                "gender": it.gender,
+                "formality": it.formality,
+                "image_path": it.image_path,
+                "title_vi": it.title_vi,
+                "desc_vi": it.desc_vi,
+                "colors": json.dumps(it.colors, ensure_ascii=False),
+                "collected_date": it.collected_date,
+                "collector": it.collector,
+            }
+            for it in items
+        ],
+        columns=[
+            "item_id",
+            "category",
+            "source_product_type",
+            "gender",
+            "formality",
+            "image_path",
+            "title_vi",
+            "desc_vi",
+            "colors",
+            "collected_date",
+            "collector",
+        ],
+    )
+
+
+def to_links_frame(items: list[NormalizedItem]) -> pd.DataFrame:
+    """One store-link row per normalized item."""
+    return pd.DataFrame(
+        [
+            {
+                "item_id": it.item_id,
+                "store_id": it.store_id,
+                "source_product_id": it.source_product_id,
+                "product_url": it.product_url,
+                "price_vnd": int(it.price_vnd),
+                "sale_price_vnd": (int(it.sale_price_vnd) if it.sale_price_vnd else None),
+                "sku": it.sku,
+                "in_stock": bool(it.in_stock),
+                "available_sizes": json.dumps(it.available_sizes, ensure_ascii=False),
+                "sizes_in_stock": json.dumps(it.sizes_in_stock, ensure_ascii=False),
+            }
+            for it in items
+        ],
+        columns=list(LINK_COLUMNS),
+    )
+
+
 def write_frames(items: list[NormalizedItem]) -> tuple[Path, Path]:
     """Append-merge normalized items into the catalog parquet files.
 
@@ -280,40 +337,8 @@ def write_frames(items: list[NormalizedItem]) -> tuple[Path, Path]:
     """
     CATALOG_DIR.mkdir(parents=True, exist_ok=True)
 
-    cat_rows = [
-        {
-            "item_id": it.item_id,
-            "category": it.category,
-            "source_product_type": it.source_product_type,
-            "gender": it.gender,
-            "formality": it.formality,
-            "image_path": it.image_path,
-            "title_vi": it.title_vi,
-            "desc_vi": it.desc_vi,
-            "colors": json.dumps(it.colors, ensure_ascii=False),
-            "collected_date": it.collected_date,
-            "collector": it.collector,
-        }
-        for it in items
-    ]
-    link_rows = [
-        {
-            "item_id": it.item_id,
-            "store_id": it.store_id,
-            "source_product_id": it.source_product_id,
-            "product_url": it.product_url,
-            "price_vnd": int(it.price_vnd),
-            "sale_price_vnd": (int(it.sale_price_vnd) if it.sale_price_vnd else None),
-            "sku": it.sku,
-            "in_stock": bool(it.in_stock),
-            "available_sizes": json.dumps(it.available_sizes, ensure_ascii=False),
-            "sizes_in_stock": json.dumps(it.sizes_in_stock, ensure_ascii=False),
-        }
-        for it in items
-    ]
-
-    new_cat = pd.DataFrame(cat_rows)
-    new_link = pd.DataFrame(link_rows)
+    new_cat = to_catalog_frame(items)
+    new_link = to_links_frame(items)
 
     if CATALOG_PARQUET.exists():
         old = pd.read_parquet(CATALOG_PARQUET)
