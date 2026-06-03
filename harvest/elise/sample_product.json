@@ -1,0 +1,69 @@
+{
+  "id": "FF2507030DMWOKK",
+  "handle": "dam-kaki-be-dinh-co-trai-ff2507030dmwokk",
+  "title": "ĐẦM KAKI BE ĐÍNH CỔ TRAI",
+  "vendor": "Elise",
+  "type": "Đầm",
+  "description": "",
+  "available": true,
+  "tags": [],
+  "images": [
+    "https://elise.vn/media/catalog/product/cache/bb52e54e5ec1828d48ae8bf7c98f9f69/f/f/ff2507030dmwokk.jpg",
+    "https://elise.vn/media/catalog/product/cache/bb52e54e5ec1828d48ae8bf7c98f9f69/f/f/ff2507030dmwokk1.jpg",
+    "https://elise.vn/media/catalog/product/cache/bb52e54e5ec1828d48ae8bf7c98f9f69/f/f/ff2507030dmwokk5.jpg",
+    "https://elise.vn/media/catalog/product/cache/bb52e54e5ec1828d48ae8bf7c98f9f69/f/f/ff2507030dmwokk4.jpg",
+    "https://elise.vn/media/catalog/product/cache/bb52e54e5ec1828d48ae8bf7c98f9f69/f/f/ff2507030dmwokk3.jpg",
+    "https://elise.vn/media/catalog/product/cache/bb52e54e5ec1828d48ae8bf7c98f9f69/f/f/ff2507030dmwokk2.jpg"
+  ],
+  "featured_image": "https://elise.vn/media/catalog/product/cache/bb52e54e5ec1828d48ae8bf7c98f9f69/f/f/ff2507030dmwokk.jpg",
+  "options": [
+    "Kích thước"
+  ],
+  "url": "https://elise.vn/dam-kaki-be-dinh-co-trai-ff2507030dmwokk.html",
+  "_scraped_category": "Đầm",
+  "_scraped_url": "https://elise.vn/dam-kaki-be-dinh-co-trai-ff2507030dmwokk.html",
+  "variants": [
+    {
+      "id": 74556,
+      "sku": "FF2507030DMWOKK_S",
+      "title": "S",
+      "option1": "S",
+      "price": 1258800,
+      "compare_at_price": 2098000,
+      "available": true,
+      "inventory_quantity": 126.0
+    },
+    {
+      "id": 74557,
+      "sku": "FF2507030DMWOKK_M",
+      "title": "M",
+      "option1": "M",
+      "price": 1258800,
+      "compare_at_price": 2098000,
+      "available": true,
+      "inventory_quantity": 201.0
+    },
+    {
+      "id": 74558,
+      "sku": "FF2507030DMWOKK_L",
+      "title": "L",
+      "option1": "L",
+      "price": 1258800,
+      "compare_at_price": 2098000,
+      "available": true,
+      "inventory_quantity": 114.0
+    },
+    {
+      "id": 74559,
+      "sku": "FF2507030DMWOKK_XL",
+      "title": "XL",
+      "option1": "XL",
+      "price": 1258800,
+      "compare_at_price": 2098000,
+      "available": true,
+      "inventory_quantity": 40.0
+    }
+  ],
+  "price": 1258800,
+  "compare_at_price": 2098000
+}

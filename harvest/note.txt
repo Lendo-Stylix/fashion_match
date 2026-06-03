@@ -1,0 +1,1 @@
+kết hợp AX Tree (trích xuất static text) + DOM Tree (ảnh mẫu sản phẩm)

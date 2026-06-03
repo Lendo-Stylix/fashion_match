@@ -1,0 +1,174 @@
+{
+  "available": true,
+  "compare_at_price_max": 420000000.0,
+  "compare_at_price_min": 420000000.0,
+  "compare_at_price_varies": false,
+  "compare_at_price": 420000000.0,
+  "content": null,
+  "description": "<p>FORM DÁNG: Form Premio</p><p>THIẾT KẾ:<br>- Áo Blazer nam phom Premio phù hợp mọi dáng người, luôn giữ được phần ve áo ổn định ngay cả khi mở cúc, và tạo được phần thắt eo tôn dáng người mặc.<br>- Áo thuộc BST Xuân Hè 2024 của Aristino, với họa tiết được<br>- Áo thiết kế lịch lãm với 2 khuy cài, 4 khuy tay áo, 2 đường xẻ tà truyền thống nhưng vẫn trẻ trung, tạo điểm nhấn thời thượng cho quý ông.</p><p>CHẤT LIỆU:<br>83.3% Polyester 14% Rayon 2.7% SPD</p><p>MÀU SẮC: Hồng 2 kẻ Jacquard</p><p>SIZE: M/L/XL</p>",
+  "featured_image": "https://product.hstatic.net/200000887901/product/hoac-blazer-nam-aristino-abzm040z__2__81f785d760af4e349c29908895297d93_49ba3f525f254963b1415b3895d6e392.jpg",
+  "handle": "ao-khoac-blazer-nam-aristino-abzm040z",
+  "id": 1056322122,
+  "images": [
+    "https://product.hstatic.net/200000887901/product/hoac-blazer-nam-aristino-abzm040z__2__81f785d760af4e349c29908895297d93_49ba3f525f254963b1415b3895d6e392.jpg",
+    "https://product.hstatic.net/200000887901/product/hoac-blazer-nam-aristino-abzm040z__4__cc8f610c51f74d7fa421cfaf27f608d2_25ad6ef3acb2474ca56714ef54a55b13.jpg",
+    "https://product.hstatic.net/200000887901/product/hoac-blazer-nam-aristino-abzm040z__7__e08d977eb0fb481193c50efde9b4de91_2ddf78891c3b490ba3abd6ac26e10381.jpg"
+  ],
+  "options": [
+    "Màu",
+    "Kích thước"
+  ],
+  "price": 420000000.0,
+  "price_max": 420000000.0,
+  "price_min": 420000000.0,
+  "price_varies": false,
+  "tags": [
+    "BF10%",
+    "TOPKG",
+    "Premio : form suits/ blazer Arisboss",
+    "25T đến 40T",
+    "TOPBF",
+    "Nam",
+    "Premio",
+    "NGUYENGIA",
+    "Nam 2024",
+    "BF2024",
+    "ABZM040Z",
+    "SL10%",
+    "Vest - Suits",
+    "HNG",
+    "TOP",
+    "Không phân dòng hàng",
+    "YD",
+    "NOTON",
+    "Hàng cũ",
+    "tangaothun",
+    "CTBL250152",
+    "HÀNG TẠI SR",
+    "gift",
+    "BF2025",
+    "BF2025_30%"
+  ],
+  "template_suffix": null,
+  "title": "Áo khoác Blazer Nam Aristino ABZM040Z",
+  "type": "Áo Blazer",
+  "url": "/products/ao-khoac-blazer-nam-aristino-abzm040z",
+  "pagetitle": "Áo khoác Blazer Nam Aristino ABZM040Z",
+  "metadescription": "Áo khoác Blazer Nam Aristino ABZM040Z ✓Giá tốt nhất và khuyến mãi hot chỉ có tại website aristino.com ✓Aristino Tiếp Nối Huyền Thoại - Tủ đồ của Quý Ông. ✓ Chất lượng cao, uy tín, giá tốt ✓ Chính hãng ✓ Giao hàng miễn phí ✓ Hotline 1800 6226 ✓ Mua ngay!",
+  "variants": [
+    {
+      "id": 1131460920,
+      "barcode": "ABZM040ZWTR49P002073",
+      "available": true,
+      "price": 420000000.0,
+      "sku": "ABZM040ZWTR49P002073",
+      "option1": "Hồng 2 kẻ Jacquard",
+      "option2": "M",
+      "option3": "",
+      "options": [
+        "Hồng 2 kẻ Jacquard",
+        "M"
+      ],
+      "inventory_quantity": 2.0,
+      "old_inventory_quantity": 6.0,
+      "title": "Hồng 2 kẻ Jacquard / M",
+      "weight": 200.0,
+      "compare_at_price": 420000000.0,
+      "inventory_management": "haravan",
+      "inventory_policy": "deny",
+      "selected": false,
+      "url": null,
+      "featured_image": {
+        "id": 1424064377,
+        "created_at": "0001-01-01T00:00:00",
+        "position": 1,
+        "product_id": 1056322122,
+        "updated_at": "0001-01-01T00:00:00",
+        "src": "https://product.hstatic.net/200000887901/product/hoac-blazer-nam-aristino-abzm040z__2__81f785d760af4e349c29908895297d93_49ba3f525f254963b1415b3895d6e392.jpg",
+        "variant_ids": [
+          1131460920,
+          1131460922,
+          1131460917
+        ]
+      }
+    },
+    {
+      "id": 1131460922,
+      "barcode": "ABZM040ZWTR49P002074",
+      "available": true,
+      "price": 420000000.0,
+      "sku": "ABZM040ZWTR49P002074",
+      "option1": "Hồng 2 kẻ Jacquard",
+      "option2": "L",
+      "option3": "",
+      "options": [
+        "Hồng 2 kẻ Jacquard",
+        "L"
+      ],
+      "inventory_quantity": 4.0,
+      "old_inventory_quantity": 7.0,
+      "title": "Hồng 2 kẻ Jacquard / L",
+      "weight": 200.0,
+      "compare_at_price": 420000000.0,
+      "inventory_management": "haravan",
+      "inventory_policy": "deny",
+      "selected": false,
+      "url": null,
+      "featured_image": {
+        "id": 1424064377,
+        "created_at": "0001-01-01T00:00:00",
+        "position": 1,
+        "product_id": 1056322122,
+        "updated_at": "0001-01-01T00:00:00",
+        "src": "https://product.hstatic.net/200000887901/product/hoac-blazer-nam-aristino-abzm040z__2__81f785d760af4e349c29908895297d93_49ba3f525f254963b1415b3895d6e392.jpg",
+        "variant_ids": [
+          1131460920,
+          1131460922,
+          1131460917
+        ]
+      }
+    },
+    {
+      "id": 1131460917,
+      "barcode": "ABZM040ZWTR49P002075",
+      "available": true,
+      "price": 420000000.0,
+      "sku": "ABZM040ZWTR49P002075",
+      "option1": "Hồng 2 kẻ Jacquard",
+      "option2": "XL",
+      "option3": "",
+      "options": [
+        "Hồng 2 kẻ Jacquard",
+        "XL"
+      ],
+      "inventory_quantity": 1.0,
+      "old_inventory_quantity": 4.0,
+      "title": "Hồng 2 kẻ Jacquard / XL",
+      "weight": 200.0,
+      "compare_at_price": 420000000.0,
+      "inventory_management": "haravan",
+      "inventory_policy": "deny",
+      "selected": false,
+      "url": null,
+      "featured_image": {
+        "id": 1424064377,
+        "created_at": "0001-01-01T00:00:00",
+        "position": 1,
+        "product_id": 1056322122,
+        "updated_at": "0001-01-01T00:00:00",
+        "src": "https://product.hstatic.net/200000887901/product/hoac-blazer-nam-aristino-abzm040z__2__81f785d760af4e349c29908895297d93_49ba3f525f254963b1415b3895d6e392.jpg",
+        "variant_ids": [
+          1131460920,
+          1131460922,
+          1131460917
+        ]
+      }
+    }
+  ],
+  "vendor": "Aristino",
+  "published_at": "2024-11-08T15:44:48.327Z",
+  "created_at": "2024-08-20T09:12:49.855Z",
+  "not_allow_promotion": false,
+  "_scraped_category": "Áo Blazer",
+  "_scraped_url": "https://aristino.com/products/ao-khoac-blazer-nam-aristino-abzm040z"
+}
