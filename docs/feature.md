@@ -52,11 +52,11 @@ Sprint 8 — sizing support for runtime personalization. Commit: pending
 
 ## pipeline-v31 — v3.1-lite E2E Request/Result Types
 
-`src/outfitmatch/pipeline.py` — `RecommendRequest` (occasion required; everything else optional: height_cm, weight_kg, style, body_shape, skin_tone, price_max, exclude_colors, quiz_answers, image_path) and `RecommendResult` (outfits, body_shape, occasion, explanation_vi, latency_ms, suggested_sizes) establishing the v3.1-lite pipeline contract.
+`src/outfitmatch/pipeline.py` defines `RecommendRequest` (occasion required; everything else optional: height_cm, weight_kg, style, body_shape, skin_tone, price_max, exclude_colors, quiz_answers, image_path) and `RecommendResult` (outfits, body_shape, occasion, explanation_vi, latency_ms, suggested_sizes). `recommend_outfit()` now wires Tầng 3 graph retrieval into Tầng 4 quiz rerank + runtime size suggestion, with injectable `graph` / `seed_ids` / `qdrant_url` hooks for tests and smoke runs.
 
-Full pipeline implementation in Sprint 5–8. See `docs/ARCHITECTURE.md §7` for the flow.
+Qwen explanation generation is still deferred, so `explanation_vi` stays empty here; the retrieval/personalization path is fully runnable. See `docs/ARCHITECTURE.md §7` for the broader flow.
 
-Sprint 0 — scaffolding. Commit: `refactor: update pipeline.py to v3.1-lite RecommendRequest/Result flow`
+Sprint 5/8 — graph retrieval pipeline wire-up. Commit: pending
 
 ---
 
@@ -107,6 +107,40 @@ Sprint 1/3 — OT experiment scaffold. Commit: pending
 Qdrant point IDs are deterministic UUID5 values derived from `outfit_id` because raw IDs like `OF_00001` are not valid Qdrant point IDs; the canonical ID remains in payload as `payload["outfit_id"]` for validation/retrieval display.
 
 Sprint 3/5 — Qdrant indexing implementation. Commit: pending
+
+---
+
+## outfit-graph-kb — Compatibility Graph Construction
+
+`src/outfitmatch/kb/pair_scoring.py` adds a pluggable `PairScorer` protocol plus deterministic `HeuristicPairScorer` for sparse graph edge weights. `src/outfitmatch/kb/graph.py` builds canonical item-item edges only when category, gender, and formality constraints all hold, then keeps top-K neighbors per partner category.
+
+`src/outfitmatch/kb/graph_store.py` persists `data/custom/graph/item_edges.parquet`, loads an in-memory `OutfitGraph` adjacency (`neighbors()` / `edge_weight()` / `item()`), and indexes item nodes into Qdrant `items` with filterable payload fields for future seed-node retrieval. Operational CLI: `uv run python -m scripts.data.kb.build_graph` (`--incremental`, `--no-qdrant`, `--limit-per-category`).
+
+Current adult-catalog graph build (`men|women|unisex`): `4694` item nodes, `316103` canonical edges, build time `27.4s`, degree min/median/max `60 / 76 / 2809`, and no forbidden `top-top` / `top-dress` edges in the output parquet.
+
+Sprint 1/3 — Graph KB construction + storage. Commit: pending
+
+---
+
+## graph-retrieval — Seed Filter + Clique Traversal + Derived OutfitRecord
+
+`src/outfitmatch/retrieval.py` replaces materialized-outfit lookup with Tầng 3 graph retrieval: filter anchor `top` / `dress` items on Qdrant `items` by formality→occasion, stock, and store availability; fall back to a direct graph scan when Qdrant seeds are unavailable; then assemble clique-safe outfits via `src/outfitmatch/kb/traversal.py`.
+
+`src/outfitmatch/kb/assemble_record.py` converts assembled item sets back into standard `OutfitRecord`s by deriving `occasion` from formality, `style` from store `style_tags`, and `color_palette` from item colors. `body_shape` remains intentionally deferred (`body_shapes_fit=[]`) until item-level semantic tagging exists.
+
+Smoke E2E on the real graph: `uv run python -c "from outfitmatch.kb.catalog import load_catalog_items; from outfitmatch.kb.graph_store import load_graph; from outfitmatch.retrieval import search_outfits; from outfitmatch.pipeline import RecommendRequest; from scripts.data.scrape.base import CATALOG_DIR; items=load_catalog_items(CATALOG_DIR/'catalog_metadata.parquet', CATALOG_DIR/'item_store_links.parquet'); graph=load_graph(items=items); seeds=[it.item_id for it in items if it.category in ('top','dress')][:200]; recs=search_outfits(RecommendRequest(occasion='office'), graph=graph, seed_ids=seeds, top_n=10); print('outfits:', len(recs)); print('sample cats:', [[item.category for item in rec.items] for rec in recs[:3]])"`.
+
+Sprint 2/3 — Graph traversal retrieval + pipeline integration. Commit: pending
+
+---
+
+## graph-grading — Coverage / Coherence / FITB Recall for Graph KB
+
+`src/outfitmatch/metrics/retrieval.py` adds generic `recall_at_k()` plus graph-native `fitb_recall_at_k()`: mask one item from an assembled outfit, rank clique-valid completions by mean edge weight, and measure top-K recovery. `src/outfitmatch/kb/graph_eval.py` replaces materialized-KB diversity grading with `GraphReport` (`catalog_coverage`, `coherence_violations`, degree stats, reuse p95).
+
+Operational CLI: `uv run python -m scripts.data.kb.eval_graph --seeds 0 --occasion office` for full-sweep grading, or `--seeds 300` for a quick sanity sweep. Current full-sweep baseline on the adult graph: `4694` nodes, `316103` edges, `catalog_coverage=0.7069`, `coherence_violations=0`, `fitb_recall@5=0.9813`, `n_assembled=7350`, `item_reuse_p95=27`. Occasion ablation (`office`) drops coverage to `0.3613`; greedy traversal (`beam=1`) drops coverage to `0.6451`.
+
+Sprint 3/3 — Graph-native grading + ablation harness. Commit: pending
 
 ---
 

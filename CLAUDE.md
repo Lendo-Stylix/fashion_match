@@ -41,8 +41,8 @@ hoặc bug. Chỉ fallback sang Grep/Read khi codegraph không đủ chi tiết 
 **OutfitMatch** — Body & Occasion-Aware Fashion Recommender (DPL302m, 7 tuần, 3 dev).
 
 Hệ thống multimodal: user gửi text + (tùy chọn) ảnh + thông tin quiz onboarding →
-Qwen3-VL parse intent → Qdrant filter outfits → quiz re-rank → hiển thị Top 3-5 outfit
-kèm giải thích tiếng Việt + link mua tại store VN.
+Qwen3-VL parse intent → Qdrant filter seed item → graph traversal ráp outfit →
+quiz re-rank → hiển thị Top 3-5 outfit kèm giải thích tiếng Việt + link mua tại store VN.
 
 ## Python & Package Manager
 
@@ -77,13 +77,19 @@ uv run pytest tests/test_quiz.py::test_quiz_to_profile -v
 ```
 src/outfitmatch/
   vocab.py            # Controlled vocabulary — single source of truth for ALL enums
-  kb/                 # Tầng 1: Outfit Knowledge Base
+  kb/                 # Graph KB + legacy materialized generators
     schema.py           # ItemRecord + OutfitRecord (schema_version="3.1")
+    catalog.py          # Load scraped catalog rows thành ItemRecord
     embedding.py        # OT-labse item embedding extraction (Sprint 1-2)
-    generation.py       # FITB+Beam (70%) + random+score (30%) outfit gen (Sprint 3-4)
-    scoring.py          # OT re-score every outfit, threshold filter (Sprint 3-4)
-    tagging.py          # Gemini Flash metadata tagging với enum validation (Sprint 3-4)
-    qdrant_index.py     # Index KB outfits lên Qdrant + payload indexes (Sprint 5)
+    graph.py            # Sparse item-compatibility graph builder
+    graph_store.py      # item_edges.parquet + Qdrant `items` node index
+    traversal.py        # Clique-safe outfit assembly from seed items
+    assemble_record.py  # Derive OutfitRecord tags from assembled graph items
+    graph_eval.py       # GraphReport (coverage/coherence/reuse)
+    generation.py       # Legacy materialized outfit generation helpers
+    scoring.py          # Heuristic/OT scoring helpers
+    tagging.py          # Gemini Flash metadata tagging với enum validation
+    qdrant_index.py     # Legacy `outfits` collection indexer for materialized outfits
   stylist/            # Tầng 2: Qwen3-VL-8B + LoRA conversational stylist
     tools.py            # SEARCH_OUTFITS_TOOL với enum-typed params (vocab.py)
     validation.py       # extract_outfit_ids + validate_response (chống hallucination)
@@ -93,13 +99,15 @@ src/outfitmatch/
     schema.py           # QuizAnswers + PreferenceProfile + quiz_to_profile
     rerank.py           # score_outfit_for_preference + rerank_by_preference
   metrics/
-    outfit.py           # fitb_accuracy + compatibility_auc (cho OT grading eval §3.6)
-  pipeline.py         # E2E RecommendRequest → RecommendResult (Sprint 5-8)
+    outfit.py           # FITB accuracy + Compatibility AUC trên Polyvore
+    retrieval.py        # Recall@K + graph-native FITB recall@K
+  retrieval.py       # Tầng 3 seed filter + traversal + post-filter
+  pipeline.py        # E2E RecommendRequest → RecommendResult
   seeding.py
-  ui/                 # Gradio demo (Sprint 8)
+  ui/                # Gradio demo (Sprint 8)
 
-tests/                # Mirror cấu trúc src/, mỗi v3.1 module một file test
-docs/                 # ARCHITECTURE.md, EXPERIMENT_GUIDE.md, datasets/, superpowers/plans/
+tests/               # Mirror cấu trúc src/, mỗi v3.1 module một file test
+docs/                # ARCHITECTURE.md, EXPERIMENT_GUIDE.md, datasets/, superpowers/plans/
 ```
 
 ## Architecture (v3.1-lite, 4 tầng) — xem `docs/ARCHITECTURE.md`
@@ -113,9 +121,10 @@ docs/                 # ARCHITECTURE.md, EXPERIMENT_GUIDE.md, datasets/, superpo
    hỏi lại khi thiếu info, gọi `search_outfits` tool (enum-typed params từ `vocab.py`),
    validate `outfit_id` trước khi hiển thị (chống hallucinate).
 
-3. **Tầng 3 — Retrieval.** Qdrant `outfits` collection. Filter metadata trước
-   (occasion / style / body_shapes_fit / price_tier / has_vn_store / exclude_colors),
-   sort theo `compatibility_score` precomputed — **không vector search mơ hồ**.
+3. **Tầng 3 — Retrieval.** Qdrant `items` collection filter **seed item** (`top` / `dress`)
+   theo gender / formality(→occasion) / in_stock / has_vn_store, rồi graph traversal ráp
+   outfit là clique; `style`, `price_max`, `exclude_colors` được post-filter trên
+   `OutfitRecord` đã dẫn xuất — **không vector search mơ hồ**.
 
 4. **Tầng 4 — Personalization.** Quiz 5 câu (style / occasions / colors / budget /
    height-weight) → `PreferenceProfile` → re-rank rule-based:
@@ -168,6 +177,8 @@ Ba luồng data **độc lập** (`Kien_truc_v3.1.md` §3.3):
 - **OT grading eval**: Polyvore (public benchmark) — chỉ dùng để báo cáo FITB acc + Compat AUC.
 - **Stylist LoRA training**: hội thoại synthetic sinh bằng Gemini.
 
+Mỗi lần thay đổi dataset trong folder `@data`, cần cập nhật lại hf repo Nhat-Quang/VN_Fashion_data
+
 ## Branch & Definition of Done
 
 Branch hiện tại: `Model` (đang phát triển v3.1-lite).
@@ -183,15 +194,17 @@ Feature **done** khi:
 
 | Metric | Target | Cách đo |
 |---|---|---|
-| Recall@5 (Qdrant retrieval) | encoder baseline + 5pp | `outfits` collection filter+sort |
+| Recall@5 (graph FITB) | baseline full-sweep hiện tại ≈ 0.98; dùng làm regression guard | `fitb_recall_at_k` mask 1 item, traversal recover top-5 |
+| Catalog coverage (diversity) | ≥ 0.60 full-sweep (`--seeds 0`) | `GraphReport.catalog_coverage` — % item dùng trong ≥1 outfit ráp |
+| Coherence violations | = 0 (hard) | `GraphReport` — edge vi phạm category/gender/formality |
 | FITB accuracy | ≥ 55% | OT-labse trên Polyvore (`Kien_truc_v3.1.md` §3.6) |
 | Compatibility AUC | ≥ 0.85 | OT-labse trên Polyvore |
-| Body-cond. Precision@5 | + 10pp vs non-conditional | Ablation bật/tắt filter body_shape ở Tầng 3 |
+| Body-cond. Precision@5 | PENDING item semantic tagging | Chưa đo được cho graph MVP vì node chưa có body-fit tag |
 | E2E latency | < 5–8s GPU / cloud (streaming) | Đo trên GPU — chốt số mục tiêu Sprint 0 |
 | LLM-as-judge (Gemini) | Mean ≥ 3.5 / 5 | Gemini chấm output E2E |
 
 4 ablations bắt buộc (`Kien_truc_v3.1.md` §8):
 (1) encoder variants — OT-labse zero-shot vs OT-labse fine-tuned Polyvore;
-(2) body conditioning on/off (Tầng 3 filter);
-(3) occasion conditioning on/off (Tầng 3 filter);
-(4) greedy vs beam decoding (Tầng 1 KB build).
+(2) body conditioning on/off — **PENDING item semantic tagging**;
+(3) occasion conditioning on/off — seed-filter có/không `formalities_for_occasion` (`eval_graph`);
+(4) greedy vs beam — `AssemblyConfig(beam=1)` vs `beam=3` (`eval_graph`).

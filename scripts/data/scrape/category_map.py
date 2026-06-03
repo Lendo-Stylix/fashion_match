@@ -44,6 +44,8 @@ COMPOUND_TOKEN: dict[tuple[str, str], str] = {
     ("áo", "blazer"): "outerwear",
     ("áo", "phao"): "outerwear",
     ("áo", "dạ"): "outerwear",
+    ("áo", "chống"): "outerwear",  # áo chống nắng / áo chống UV
+    ("sơ", "mi"): "top",  # avoid false shoe hit from "Oxford" shirt fabric/style
     ("chân", "váy"): "bottom",
     ("ba", "lô"): "bag",
     ("phụ", "kiện"): "accessory",

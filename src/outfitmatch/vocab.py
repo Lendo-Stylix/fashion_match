@@ -196,3 +196,26 @@ def formality_span_ok(formalities: list[str], tolerance: int = FORMALITY_TOLERAN
     if not ranks:
         return True
     return max(ranks) - min(ranks) <= tolerance
+
+
+# Coarse formality → admissible occasions. Graph nodes carry no per-item occasion
+# tag, so retrieval derives occasion fit from an item's formality band. Keep every
+# value inside OCCASION.
+FORMALITY_OCCASIONS: dict[str, frozenset[str]] = {
+    "athletic": frozenset({"home_casual", "travel", "school"}),
+    "casual": frozenset({"school", "cafe_hangout", "home_casual", "travel", "date"}),
+    "smart_casual": frozenset({"office", "interview", "school", "date", "cafe_hangout", "party"}),
+    "formal": frozenset({"office", "interview", "wedding", "party", "date"}),
+}
+
+
+def occasions_for_formality(formality: str) -> frozenset[str]:
+    """Occasions a given formality band is appropriate for (⊆ OCCASION)."""
+    return FORMALITY_OCCASIONS.get(formality, frozenset())
+
+
+def formalities_for_occasion(occasion: str) -> set[str]:
+    """Inverse: formality bands whose items suit ``occasion`` (for seed filtering)."""
+    return {
+        formality for formality, occasions in FORMALITY_OCCASIONS.items() if occasion in occasions
+    }

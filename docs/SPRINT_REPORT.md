@@ -24,9 +24,9 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  TẦNG 1 — KB Builder (Offline)                           │
-│  OutfitTransformer-labse (frozen)                        │
-│  FITB+Beam → 5–20K outfit từ store VN                   │
+│  TẦNG 1 — Graph KB Builder (Offline)                     │
+│  OutfitTransformer-labse (frozen) → item embedding       │
+│  pair_scoring + graph → sparse item-compat graph         │
 └──────────────────────┬──────────────────────────────────┘
                        ↓
 ┌─────────────────────────────────────────────────────────┐
@@ -36,8 +36,8 @@
 └──────────────────────┬──────────────────────────────────┘
                        ↓
 ┌─────────────────────────────────────────────────────────┐
-│  TẦNG 3 — Retrieval Engine (Qdrant)                      │
-│  Filter metadata → sort theo compatibility_score         │
+│  TẦNG 3 — Retrieval Engine (Qdrant items + traversal)    │
+│  Filter seed item → graph traversal ráp clique outfit     │
 └──────────────────────┬──────────────────────────────────┘
                        ↓
 ┌─────────────────────────────────────────────────────────┐
@@ -263,8 +263,10 @@ integration testing smoke test toàn bộ luồng.
 |--------|--------|----------------|
 | FITB Accuracy | ≥ 55% | OT-labse trên Polyvore mini |
 | Compatibility AUC | ≥ 0.85 | OT-labse trên Polyvore |
-| Recall@5 (Qdrant) | encoder baseline + 5pp | Filter+sort query |
-| Body-cond. Precision@5 | +10pp vs non-conditional | Ablation body_shape filter |
+| Recall@5 (graph FITB) | regression guard (≈ 0.98 full-sweep) | `fitb_recall_at_k` mask 1 item, traversal recover |
+| Catalog coverage (diversity) | ≥ 0.60 full-sweep | `GraphReport.catalog_coverage` |
+| Coherence violations | = 0 (hard) | `GraphReport` edge gate regression |
+| Body-cond. Precision@5 | PENDING item semantic tagging | (chưa đo cho graph MVP) |
 | E2E Latency | < 5–8s GPU | Đo trên GPU / cloud |
 | LLM-as-judge (Gemini) | Mean ≥ 3.5/5 | Gemini chấm 30 E2E outputs |
 

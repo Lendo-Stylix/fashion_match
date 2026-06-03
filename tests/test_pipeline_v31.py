@@ -1,14 +1,49 @@
 from __future__ import annotations
 
-import pytest
-
 from outfitmatch.pipeline import RecommendRequest, RecommendResult, recommend_outfit
 
 
-def test_recommend_outfit_raises_not_implemented():
-    req = RecommendRequest(occasion="office")
-    with pytest.raises(NotImplementedError, match="Sprint"):
-        recommend_outfit(req)
+def test_recommend_outfit_assembles_from_injected_graph():
+    from outfitmatch.kb.graph import Edge
+    from outfitmatch.kb.graph_store import OutfitGraph
+    from outfitmatch.kb.schema import ItemRecord
+
+    def item(item_id: str, category: str) -> ItemRecord:
+        return ItemRecord(
+            item_id=item_id,
+            category=category,
+            image_path="",
+            item_embedding=[0.1],
+            gender="men",
+            formality="smart_casual",
+            store={
+                "store_id": "aristino_vn",
+                "price_vnd": 300_000,
+                "colors": [],
+                "product_url": "https://x",
+                "in_stock": True,
+            },
+        )
+
+    graph = OutfitGraph(
+        [item("t", "top"), item("b", "bottom")],
+        [Edge("b", "t", "bottom", "top", 0.9)],
+    )
+    result = recommend_outfit(RecommendRequest(occasion="office"), graph=graph, seed_ids=["t"])
+    assert len(result.outfits) >= 1
+    assert result.occasion == "office"
+    assert result.outfits[0].gen_method == "graph_traversal"
+
+
+def test_recommend_outfit_empty_seeds_is_safe():
+    from outfitmatch.kb.graph_store import OutfitGraph
+
+    result = recommend_outfit(
+        RecommendRequest(occasion="office"),
+        graph=OutfitGraph([], []),
+        seed_ids=[],
+    )
+    assert result.outfits == []
 
 
 def test_recommend_request_requires_occasion():

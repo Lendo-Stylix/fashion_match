@@ -2,12 +2,23 @@ from __future__ import annotations
 
 import pandas as pd
 
-from outfitmatch.kb.build_outfits import build_outfit_records, outfits_to_frame
+from outfitmatch.kb.build_outfits import (
+    OutfitDiversityConfig,
+    build_outfit_records,
+    outfits_to_frame,
+)
 from outfitmatch.kb.schema import ItemRecord
 from outfitmatch.vocab import PRICE_TIER_SET
 
 
-def _item(item_id: str, category: str, price: int) -> ItemRecord:
+def _item(
+    item_id: str,
+    category: str,
+    price: int,
+    *,
+    gender: str = "unisex",
+    store_id: str = "test",
+) -> ItemRecord:
     return ItemRecord(
         item_id=item_id,
         category=category,
@@ -16,11 +27,12 @@ def _item(item_id: str, category: str, price: int) -> ItemRecord:
         store={
             "price_vnd": price,
             "product_url": f"https://test.vn/{item_id}",
-            "store_id": "test",
+            "store_id": store_id,
             "title_vi": item_id,
             "desc_vi": "",
             "colors": [],
         },
+        gender=gender,
     )
 
 
@@ -96,6 +108,53 @@ def test_price_balanced_build_preserves_fitb_random_ratio_when_feasible():
         "fitb_beam": 7,
         "random_scored": 3,
     }
+
+
+def test_diversity_config_caps_reuse_and_prefers_dress_when_feasible():
+    items_by_category = {
+        "top": [
+            _item(f"top_{i}", "top", 150_000, gender="women", store_id="store_a") for i in range(8)
+        ],
+        "bottom": [
+            _item(f"bottom_{i}", "bottom", 150_000, gender="women", store_id="store_b")
+            for i in range(8)
+        ],
+        "dress": [
+            _item(f"dress_{i}", "dress", 300_000, gender="women", store_id="store_c")
+            for i in range(8)
+        ],
+        "shoes": [
+            _item(f"shoes_{i}", "shoes", 100_000, gender="women", store_id="store_d")
+            for i in range(8)
+        ],
+    }
+
+    outfits = build_outfit_records(
+        items_by_category,
+        n_outfits=16,
+        fitb_ratio=0.5,
+        price_tier_targets={"mid": 1.0},
+        diversity_config=OutfitDiversityConfig(
+            max_item_reuse=6,
+            target_gender_shares={"women": 1.0},
+            max_gender_shares={"women": 1.0},
+            target_dress_share=0.25,
+            max_dress_share=0.50,
+            target_store_slot_shares={
+                "store_a": 0.25,
+                "store_b": 0.25,
+                "store_c": 0.15,
+                "store_d": 0.35,
+            },
+            max_scan_per_pick=500,
+        ),
+    )
+
+    item_counts = pd.Series(
+        item.item_id for outfit in outfits for item in outfit.items
+    ).value_counts()
+    assert int(item_counts.max()) <= 6
+    assert sum(any(item.category == "dress" for item in outfit.items) for outfit in outfits) >= 4
 
 
 def test_outfits_to_frame_is_parquet_friendly():

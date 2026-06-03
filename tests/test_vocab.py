@@ -20,7 +20,9 @@ from outfitmatch.vocab import (
     STYLE,
     STYLE_LABELS_VI,
     STYLE_SET,
+    formalities_for_occasion,
     formality_span_ok,
+    occasions_for_formality,
     validate_enum_values,
 )
 
@@ -88,3 +90,16 @@ def test_formality_span_ok():
     assert formality_span_ok(["casual", "formal"]) is False  # 2 apart
     assert formality_span_ok([]) is True  # empty → ok
     assert formality_span_ok(["casual", "bogus"]) is True  # unknown ignored
+
+
+def test_occasions_for_formality_subset_of_occasion():
+    for formality in FORMALITY:
+        occasions = occasions_for_formality(formality)
+        assert occasions, f"no occasions for {formality}"
+        assert occasions <= OCCASION_SET
+
+
+def test_formalities_for_occasion_inverse():
+    assert "office" in occasions_for_formality("formal")
+    assert "formal" in formalities_for_occasion("office")
+    assert "athletic" not in formalities_for_occasion("wedding")

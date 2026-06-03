@@ -28,26 +28,40 @@ trên một bộ test prompt (cover đủ 9 OCCASION × 8 STYLE).
 | # | Tầng | Mục tiêu | Script | Metric |
 |---|---|---|---|---|
 | 1 | Tầng 1 | Encoder variants: OT-labse zero-shot vs OT-labse fine-tuned Polyvore | `ablation_encoder.py` | FITB acc + Compat AUC |
-| 2 | Tầng 3 | Body conditioning on/off | `ablation_body_filter.py` | Body-cond Precision@5 (+10pp target) |
-| 3 | Tầng 3 | Occasion conditioning on/off | `ablation_occasion_filter.py` | Occasion-cond Precision@5 |
-| 4 | Tầng 1 | Greedy vs Beam decoding (FITB+Beam generation) | `ablation_decoding.py` | FITB acc của KB resulting |
+| 2 | Tầng 3 | Body conditioning on/off | _pending item semantic tagging_ | Body-cond Precision@5 (+10pp target) |
+| 3 | Tầng 3 | Occasion conditioning on/off | `scripts.data.kb.eval_graph --occasion ...` | coverage + FITB recall của graph |
+| 4 | Tầng 3 | Greedy vs Beam traversal (`beam=1` vs `beam=3`) | `scripts.data.kb.eval_graph` | coverage + FITB recall của graph |
 
 ```bash
 # 1 — Encoder (zero-shot vs fine-tuned OT-labse trên Polyvore)
 uv run python scripts/ablation_encoder.py --out docs/experiments/ablation_encoder.csv
 
 # 2 — Body filter
-uv run python scripts/ablation_body_filter.py --out docs/experiments/ablation_body_filter.csv
+# BLOCKED: cần item body-fit tagging trước khi bật ablation graph
 
-# 3 — Occasion filter
-uv run python scripts/ablation_occasion_filter.py --out docs/experiments/ablation_occasion_filter.csv
-
-# 4 — Decoding (greedy vs beam)
-uv run python scripts/ablation_decoding.py \
-    --kb-greedy data/kb/kb_greedy.parquet \
-    --kb-beam   data/kb/kb_beam.parquet \
-    --out docs/experiments/ablation_decoding.csv
+# 3 + 4 — Occasion filter + traversal beam ablation
+uv run python -m scripts.data.kb.eval_graph --seeds 300 --occasion office
+# full-sweep grading baseline:
+uv run python -m scripts.data.kb.eval_graph --seeds 0 --occasion office
 ```
+
+## Graph KB eval (v3.1 graph)
+
+Dùng `scripts.data.kb.eval_graph` để đọc trực tiếp graph hiện tại:
+
+```bash
+uv run python -m scripts.data.kb.eval_graph --seeds 300
+uv run python -m scripts.data.kb.eval_graph --seeds 0 --occasion office
+```
+
+Đọc các số sau:
+- `catalog_coverage` — diversity chính của graph KB
+- `coherence_violations` — **phải bằng 0**
+- `fitb_recall@5` — self-consistency Recall@5 của graph
+- `ablation occasion` — seed filter có/không `formalities_for_occasion`
+- `ablation decoding` — `beam=1` vs `beam=3`
+
+`body_shape` ablation vẫn chờ item-tagging follow-up.
 
 ---
 
@@ -105,11 +119,11 @@ một bảng với row tốt nhất bold.
 
 ## G. Script structure convention
 
-Mỗi script eval ở `scripts/` đều:
+Mỗi script eval cuối kỳ ở `scripts/` đều:
 1. Nhận tham số CLI qua `typer` hoặc `argparse`.
 2. Output 1 CSV duy nhất ở `docs/experiments/`.
 3. Idempotent: chạy lại không phá kết quả cũ (append với header check).
 4. Có docstring đầu file chỉ ra: ablation nào, target metric, expected runtime.
 
-Sprint 9 hiện vẫn chưa có script — sẽ được implement khi Tầng 1-4 chạy thật.
-Trước Sprint 9, không có script eval nào trong repo.
+Ngoại lệ hiện tại: `scripts.data.kb.eval_graph` là harness vận hành cho graph KB,
+log thẳng ra stdout để sanity-check coverage / coherence / FITB recall trước Sprint 9.

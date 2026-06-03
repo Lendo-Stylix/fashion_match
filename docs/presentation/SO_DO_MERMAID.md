@@ -17,11 +17,11 @@
 flowchart TD
     IN(["INPUT: text + optional selfie + quiz answers"])
 
-    subgraph T1["TẦNG 1 — Outfit Knowledge Base  ·  src/outfitmatch/kb"]
+    subgraph T1["TẦNG 1 — Outfit Graph KB  ·  src/outfitmatch/kb"]
         direction TB
-        T1A["OutfitTransformer-labse frozen\nFITB+Beam (70%) + Random+Score (30%)"]
-        T1B["Re-score ALL outfits with OT compatibility"]
-        T1C["Gemini Flash tagging → occasion / style / body / season\n(enum-constrained — vocab.py)"]
+        T1A["OutfitTransformer-labse frozen → item embedding"]
+        T1B["pair_scoring + graph.py → sparse item-compat graph\n(category/gender/formality gated, top-K)"]
+        T1C["graph_store.py → item_edges.parquet + Qdrant items nodes"]
         T1A --> T1B --> T1C
     end
 
@@ -32,10 +32,10 @@ flowchart TD
         T2A --> T2B
     end
 
-    subgraph T3["TẦNG 3 — Retrieval Engine  ·  Qdrant"]
+    subgraph T3["TẦNG 3 — Retrieval Engine  ·  Qdrant items + traversal"]
         direction TB
-        T3A["Filter metadata: occasion, style, body_shapes_fit\nprice_tier, has_vn_store=True, exclude_colors"]
-        T3B["Sort by compatibility_score (precomputed)\n+ diversity penalty → Top 30-50"]
+        T3A["Filter seed item (top/dress): gender, formality→occasion\nin_stock, has_vn_store=True"]
+        T3B["Graph traversal ráp clique → OutfitRecord\npost-filter style/price/colors → Top 30-50"]
         T3A --> T3B
     end
 
@@ -49,7 +49,7 @@ flowchart TD
     OUT(["OUTPUT: Top 3-5 outfits + store VN + giá VND + link mua\n+ giải thích tiếng Việt cá nhân hóa"])
 
     IN --> T2A
-    T1C -.->|"KB 5-20K outfits (offline)"| T3A
+    T1C -.->|"graph KB: items + edges (offline)"| T3A
     T2B -->|"search filters"| T3A
     T3B -->|"30-50 candidates"| T4A
     T4B --> OUT
@@ -82,7 +82,7 @@ sequenceDiagram
 
     API->>QW: generate tool call search_outfits(filters)
     QW-->>API: search_outfits({occasion, style, body_shape, price_max})
-    API->>QD: filter metadata + sort by compatibility_score
+    API->>QD: filter seed items → graph traversal ráp clique
     QD-->>API: 30-50 OutfitRecord candidates
 
     API->>RR: rerank_by_preference(outfits, profile, top_k=5)
@@ -108,15 +108,15 @@ flowchart TD
     SRC["VN Store Catalog\nYODY · Canifa · Format · The Blues\nUniqlo VN · Zara VN · H&M VN · Libé · HNOSS"]
 
     S1["Bước 1 — Ingestion & Preprocessing\nScrape → normalize schema → resize ảnh\nGhép title_vi + desc_vi cho text tower"]
-    S2["Bước 2 — Item Embedding Extraction (offline)\nOT-labse Vision+Text encoder → vector\nLưu Parquet · xác minh OUTFIT_EMBED_DIM từ checkpoint"]
-    S3["Bước 3 — Candidate Generation\n70% FITB+Beam (beam=3, top-k sampling)\n30% Random+Score (OT pre-filter, không phải CLIP)"]
-    S4["Bước 4 — Re-scoring BẮT BUỘC\nMọi outfit OT re-score compatibility\nChỉ giữ outfit ≥ ngưỡng (chốt Sprint 3)"]
-    S5["Bước 5 — Gemini Flash Tagging\nGán occasion/style/body_shapes_fit/season\nValidate vs vocab.py — reject invalid values"]
-    S6["Bước 6 — Index vào Qdrant\nCollection outfits · payload indexes\n5-20K outfits (chất lượng > số lượng)"]
+    S2["Bước 2 — Item Embedding Extraction (offline)\nOT-labse Vision+Text encoder → vector\nLưu Parquet · xác minh ITEM_EMBED_DIM từ checkpoint"]
+    S3["Bước 3 — Pair Scoring\npair_scoring.py → bounded edge weight\ngiữa item nodes co-wearable"]
+    S4["Bước 4 — Graph Build (gated)\ngraph.py: edge chỉ khi category/gender/formality hợp lệ\ntop-K=15 mỗi partner-category, canonical src<dst"]
+    S5["Bước 5 — Item formality + gender inference\n(suy từ title/store/garment prior)\nValidate vs vocab.py — reject invalid values"]
+    S6["Bước 6 — Persist + Index\nitem_edges.parquet + Qdrant items collection\npayload indexes (category/gender/formality/...)"]
 
     SRC --> S1 --> S2 --> S3 --> S4 --> S5 --> S6
 
-    NOTE1["⚠️ Re-score là bắt buộc:\nFITB/beam chỉ tối ưu cục bộ\nkhông đảm bảo hài hòa toàn cục"]
+    NOTE1["⚠️ Hard constraint tách khỏi weight:\ngraph.py quyết định edge tồn tại\npair_scoring chỉ cho weight bị chặn"]
     S4 -.-> NOTE1
 
     NOTE2["3 data stream độc lập:\n· KB: VN store items\n· Grading eval: Polyvore\n· LoRA training: synthetic convs"]
@@ -136,7 +136,7 @@ flowchart LR
 
     T1TAG["Tầng 1 Gemini tagging\nprompt chứa enum list từ vocab.py\nvalidate output trước khi ghi KB"]
     T2TOOL["Tầng 2 Qwen3-VL\nsearch_outfits tool parameters\nenum: list(OCCASION) từ vocab.py"]
-    T3IDX["Tầng 3 Qdrant\npayload index field values\nphải match enum trong vocab.py"]
+    T3IDX["Tầng 3 Qdrant items\npayload index field values\nphải match enum trong vocab.py"]
 
     VOCAB --> T1TAG
     VOCAB --> T2TOOL

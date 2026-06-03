@@ -12,7 +12,7 @@ class ItemRecord:
     item_id: str
     category: str  # ITEM_CATEGORY enum value
     image_path: str  # local path under data/custom/catalog/images/
-    item_embedding: list[float]  # dim = OUTFIT_EMBED_DIM (verify from checkpoint)
+    item_embedding: list[float]  # dim = ITEM_EMBED_DIM (verify from checkpoint)
     store: dict  # {store_id, store_name, product_url, price_vnd, in_stock}
     gender: str = "unisex"  # GENDER enum value (men|women|unisex|kid)
     formality: str = "casual"  # FORMALITY enum value — used by outfit-coherence filter

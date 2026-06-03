@@ -9,6 +9,7 @@ def test_dress_before_top():
 
 def test_outerwear_before_top():
     assert categorize("Áo khoác blazer oversized") == "outerwear"
+    assert categorize("Áo Chống Nắng Nữ Dáng Dài Thoáng Khí") == "outerwear"
     assert categorize("Hoodie nỉ basic") == "outerwear"
     assert categorize("Cardigan len mỏng") == "outerwear"
 
@@ -16,6 +17,7 @@ def test_outerwear_before_top():
 def test_top_basic():
     assert categorize("Áo thun cotton trơn") == "top"
     assert categorize("Áo sơ mi linen") == "top"
+    assert categorize("Sơ Mi Dài Tay Nam Oxford Cổ Tàu") == "top"
     assert categorize("Crop top ribbed") == "top"
 
 

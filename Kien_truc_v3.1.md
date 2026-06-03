@@ -22,7 +22,7 @@ Hệ thống kết hợp **3 công nghệ AI cốt lõi** (giảm từ 4 so vớ
 |-----------|---------|----------------|
 | **OutfitTransformer-labse** | Knowledge Base Builder | Frozen — sinh KB; fine-tune Polyvore để đo metric |
 | **Qwen3-VL-8B + LoRA** | Conversational Stylist | Fine-tune LoRA nhẹ (3–5K hội thoại) |
-| **Qdrant + RAG** | Retrieval Engine | Metadata-filter + sort theo compatibility |
+| **Qdrant + Graph traversal** | Retrieval Engine | Filter seed item → ráp outfit động theo graph |
 | ~~GNN~~ | ~~Personalization~~ | **Hoãn sang Phụ lục A** — MVP dùng quiz re-rank |
 
 ### Thay đổi cốt lõi so với v3.0
@@ -31,7 +31,7 @@ Hệ thống kết hợp **3 công nghệ AI cốt lõi** (giảm từ 4 so vớ
 |---|---|---|---|
 | 1 — KB | OT+CLIP → **500K** outfit, 7 nguồn | OT-labse **frozen**, FITB+Beam → **5–20K** outfit, chỉ store VN | 3 dev/3 tháng không crawl nổi 255K+ item; chất lượng > số lượng |
 | 2 — Stylist | Fine-tune Qwen3-VL **100K** convs, 4×A100 | Qwen3-VL-8B + **LoRA nhẹ 3–5K** convs | Chấp nhận reasoning yếu hơn để kịp timeline; vẫn có "phần fine-tune" cho báo cáo |
-| 3 — RAG | Vector search (query vector chưa định nghĩa) | **Filter metadata trước → sort theo `compatibility_score`** | Xóa lỗ hổng "query text → outfit-embedding space" |
+| 3 — RAG | Vector search (query vector chưa định nghĩa) | **Qdrant filter seed item → graph clique traversal → re-rank** | Xóa lỗ hổng "query text → outfit-embedding space" và không cần materialize mọi outfit |
 | 4 — Personalization | GNN LightGCN, 10K user | **Quiz 5 câu → re-rank rule-based** | MVP không có user thật → GNN không học được gì |
 
 ### Điểm khác biệt cốt lõi (giữ nguyên từ v3.0)
@@ -48,8 +48,8 @@ Hệ thống kết hợp **3 công nghệ AI cốt lõi** (giảm từ 4 so vớ
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  TẦNG 1: OUTFIT KNOWLEDGE BASE (Offline — build 1 lần)         │
-│  OutfitTransformer-labse (frozen) + FITB/Beam → KB 5–20K outfit│
+│  TẦNG 1: OUTFIT GRAPH KB (Offline — build 1 lần)              │
+│  OT-labse (frozen) → item embedding → sparse compat graph     │
 └──────────────────────────────┬───────────────────────────────┘
                                ↓
 ┌──────────────────────────────────────────────────────────────┐
@@ -58,8 +58,8 @@ Hệ thống kết hợp **3 công nghệ AI cốt lõi** (giảm từ 4 so vớ
 └──────────────────────────────┬───────────────────────────────┘
                                ↓
 ┌──────────────────────────────────────────────────────────────┐
-│  TẦNG 3: RETRIEVAL ENGINE (RAG)                                │
-│  Qdrant: filter metadata → sort theo compatibility_score        │
+│  TẦNG 3: RETRIEVAL ENGINE (Graph traversal)                    │
+│  Qdrant `items`: filter seed → graph clique traversal          │
 └──────────────────────────────┬───────────────────────────────┘
                                ↓
 ┌──────────────────────────────────────────────────────────────┐
@@ -112,8 +112,15 @@ Hệ thống kết hợp **3 công nghệ AI cốt lõi** (giảm từ 4 so vớ
 
 ### 3.1 Mục tiêu
 Tạo KB outfit **chất lượng cao, gán nhãn metadata đầy đủ** để Tầng 3 retrieve.
-Quy mô MVP: **5–20K outfit** (không chốt cứng — phụ thuộc lượng item thu được ở Sprint 0;
-ưu tiên chất lượng hơn số lượng).
+
+> **Kiến trúc hiện tại (graph KB — PRIMARY).** Output chính của Tầng 1 là **item-compat
+> graph** (node = item, edge = "phối được"), lưu `data/custom/graph/item_edges.parquet` +
+> Qdrant `items`. Outfit được **ráp động khi retrieve** (Tầng 3, graph traversal) thay vì
+> materialize trước. Mô tả FITB/Beam + materialized outfit bên dưới (Bước 3–6) giữ lại
+> như **legacy** để so sánh; chi tiết graph xem `docs/superpowers/specs/`.
+
+Quy mô MVP catalog: **vài nghìn item** (không chốt cứng — phụ thuộc lượng item thu được
+ở Sprint 0; ưu tiên chất lượng hơn số lượng). Legacy materialized path nhắm **5–20K outfit**.
 
 ### 3.2 Schema 1 outfit
 
@@ -184,6 +191,16 @@ Pipeline thu thập store đã được mô tả chi tiết trong `docs/datasets
 (scrape JSON → normalize → CSV/Parquet → Qdrant payload) — v3.1-lite tái dùng nguyên.
 
 ### 3.4 Quy trình build KB
+
+> **Graph KB (PRIMARY path — sub-project 1).** Đường dẫn chính hiện tại: node = item,
+> edge = "phối được" khi đồng gender + coherent formality + co-wearable category
+> (`kb/graph.py`, weight bị chặn từ `kb/pair_scoring.py`). Graph sparsify top-K=15 theo
+> partner-category, lưu `data/custom/graph/item_edges.parquet` (`kb/graph_store.py`) và
+> mirror node filter vào Qdrant `items`. Outfit ráp động ở retrieval (sub-project 2,
+> `kb/traversal.py`); bổ sung giày/item chỉ cần `build_graph --incremental`. Bước 1–2
+> (ingestion + embedding) dùng chung; Bước 3–6 dưới đây là **legacy materialized path**.
+
+**Legacy materialized path (Bước 1–6 — giữ để so sánh).**
 
 **Bước 1 — Ingestion & Preprocessing.** Cào item từ store VN → normalize về schema chuẩn
 (`docs/datasets/STORE_CATALOG_VN.md`). Resize ảnh về kích thước Vision Encoder của OT;
@@ -348,39 +365,47 @@ def validate_response(response, valid_outfit_ids):
 
 ---
 
-## 🔍 Phần 5: Tầng 3 — Retrieval Engine (RAG)
+## 🔍 Phần 5: Tầng 3 — Retrieval Engine (Graph traversal)
 
-### 5.1 Qdrant
+### 5.1 Qdrant = seed filter cho item nodes
 
-Collection `outfits`. Payload index trên các trường filter nhanh:
-`occasion`, `style`, `body_shapes_fit`, `price_tier`, `season`, `has_vn_store`.
+Graph-KB dùng collection `items` để lọc **anchor item** (`top` / `dress`) trước khi ráp outfit.
+Payload index chính: `category`, `gender`, `formality`, `price_tier`, `has_vn_store`,
+`in_stock`, `store_id`.
 
 ```python
 qdrant.create_collection(
-    collection_name="outfits",
+    collection_name="items",
     vectors_config=models.VectorParams(
-        size=OUTFIT_EMBED_DIM,            # xác minh từ checkpoint — KHÔNG hardcode 768
+        size=ITEM_EMBED_DIM,              # xác minh từ checkpoint — KHÔNG hardcode 768
         distance=models.Distance.COSINE,
     ),
 )
-for field in ["occasion", "style", "body_shapes_fit", "price_tier", "season", "has_vn_store"]:
-    qdrant.create_payload_index("outfits", field, models.PayloadSchemaType.KEYWORD)
+for field in [
+    "category", "gender", "formality", "price_tier",
+    "has_vn_store", "in_stock", "store_id",
+]:
+    qdrant.create_payload_index("items", field, models.PayloadSchemaType.KEYWORD)
 ```
 
-### 5.2 Retrieval = Filter trước, Sort sau
+### 5.2 Retrieval = Filter seed trước, Traverse graph sau
 
 > v3.0 dùng `query_vector=user_embedding` nhưng **chưa định nghĩa** `user_embedding` map
-> vào không gian outfit-embedding thế nào. v3.1-lite bỏ lỗ hổng này:
+> vào không gian outfit-embedding thế nào. Graph path của v3.1-lite bỏ luôn lỗ hổng này:
 
 **Quy trình:**
 1. Qwen3-VL gọi `search_outfits(occasion, style, body_shape, price_max, exclude_colors)`.
-2. Qdrant **filter** theo metadata (occasion, style, body_shape, price_tier, `has_vn_store=true`,
-   loại `exclude_colors`).
-3. **Sort** kết quả theo `compatibility_score` precomputed (giảm dần) + diversity penalty.
-4. Trả Top ~30–50 outfit → Tầng 4 re-rank.
+2. Qdrant **filter seed item** trên collection `items`: chỉ lấy anchor `top` / `dress`,
+   `in_stock=true`, `has_vn_store=true`, gender phù hợp, và `formality` admit occasion
+   yêu cầu (`formality -> occasion` map trong `vocab.py`).
+3. `kb.traversal.assemble_outfits()` ráp outfit là **clique** trong graph: `top` phải có
+   `bottom`; `shoes / outerwear / bag / accessory` là optional; outfit shoeless hợp lệ.
+4. `kb.assemble_record.to_outfit_record()` dẫn xuất `occasion/style/color/price_tier`
+   để trả `OutfitRecord`; sau đó mới post-filter `style`, `price_max`, `exclude_colors`.
+5. Trả Top ~30–50 outfit → Tầng 4 re-rank.
 
-MVP **không cần vector search mơ hồ** — filter + sort theo điểm precomputed là đủ, trung
-thực và dễ debug. (Vector search outfit-outfit có thể bổ sung sau, xem Phụ lục A.)
+`body_shape` hiện **defer ở graph MVP** vì node item chưa có tag semantic body-fit; cần
+follow-up item-tagging để bật filter body và chạy body-conditioning ablation.
 
 ---
 
@@ -414,7 +439,7 @@ Step 2  Qwen3-VL parse → {height, weight, skin_tone, occasion, style, missing_
 Step 3  [Đủ info?] ──No──▶ Qwen hỏi lại (quay lại Step 1)
           │ Yes
           ↓
-Step 4  Qwen gọi tool search_outfits(filters)  →  Qdrant filter + sort  →  30–50 outfit
+Step 4  Qwen gọi tool search_outfits(filters)  →  Qdrant seed-filter (`items`) + graph traversal  →  30–50 outfit
           ↓
 Step 5  Tầng 4: re-rank theo preference từ quiz  →  Top 3–5
           ↓
@@ -431,15 +456,20 @@ Tham chiếu `docs/ARCHITECTURE.md §9`.
 
 | Metric (DoD) | v3.1-lite đo thế nào | Trạng thái |
 |---|---|---|
-| Recall@5 (retrieval) | encoder retrieval eval | ✅ Đo được |
+| Recall@5 (graph FITB) | `fitb_recall_at_k`: mask 1 item, traversal recover top-5 | ✅ Đo được (full-sweep hiện ~0.98) |
+| Catalog coverage (diversity) | `GraphReport.catalog_coverage` — % item dùng trong ≥1 outfit ráp | ✅ Đo được (full-sweep hiện ~0.71) |
+| Coherence violations | `GraphReport` — edge vi phạm category/gender/formality | ✅ Hard guard (=0) |
 | FITB accuracy ≥ 55% | OT-labse eval trên **Polyvore**; fine-tune nhẹ nếu chưa đạt | ✅ Có phương án cứu (Phần 3.6) |
 | Compatibility AUC ≥ 0.85 | OT-labse eval trên **Polyvore**; fine-tune nhẹ nếu chưa đạt | ✅ Có phương án cứu (Phần 3.6) |
-| Body-cond. Precision@5 +10% | Ablation bật/tắt filter `body_shape` ở Tầng 3 | ✅ Đo được |
+| Body-cond. Precision@5 +10% | Graph MVP đang defer `body_shape`; cần item-tagging semantic trước khi bật ablation | ⚠️ Follow-up |
 | E2E latency | **Đổi target:** chạy trên **GPU / cloud API**, cho phép nới nhẹ thời gian (mục tiêu ~<5–8s, ưu tiên streaming UX) | ⚠️ Cần xác nhận lại với giảng viên |
 | LLM-as-judge (Gemini) ≥ 3.5/5 | Gemini chấm output E2E | ✅ Đo được |
 
-**Ablations bắt buộc:** (1) encoder variants; (2) body conditioning on/off; (3) occasion
-conditioning on/off; (4) greedy vs beam decoding (đã có sẵn trong pipeline build KB Phần 3.4).
+**Ablations bắt buộc:**
+(1) encoder variants — OT zero-shot vs fine-tuned trên Polyvore (không đổi);
+(2) body conditioning on/off — **PENDING item semantic tagging**;
+(3) occasion conditioning on/off — seed-filter có/không `formalities_for_occasion`;
+(4) greedy vs beam — `AssemblyConfig(beam=1)` vs `beam=3` trong `eval_graph`.
 
 > **Lưu ý latency:** Qwen3-VL-8B **không thể** đạt <3s trên CPU (cỡ vài phút). Đã thống
 > nhất chuyển sang đo trên GPU/cloud và cho phép nới thời gian — cần chốt lại con số mục
@@ -456,8 +486,8 @@ Phân vai gợi ý: **Dev A** = Data/KB (Tầng 1), **Dev B** = Model/Stylist (T
 |---|---|---|---|
 | 0 | 1 | Setup; chốt `vocab.py`; **spike thu thập data** → chốt số item thực tế; xác nhận target latency với giảng viên | Repo chạy `make demo`; vocab.py merged |
 | 1–2 | 2–3 | Tầng 1: crawl store VN + normalize + trích item embedding; xác minh dim checkpoint | Catalog VN sạch; embedding lưu Parquet |
-| 3–4 | 4–5 | Tầng 1: sinh KB (FITB+Beam, random+score, **re-score**) + Gemini tagging; (song song) OT fine-tune Polyvore | KB 5–20K outfit có nhãn enum hợp lệ |
-| 5 | 6 | Tầng 3: index Qdrant + retrieval filter+sort; đo Recall@5 | `/search` hoạt động; Recall@5 đạt target |
+| 3–4 | 4–5 | Tầng 1: dựng graph item-compat (pair_scoring + graph + graph_store) + item formality/gender inference; _(legacy: FITB+Beam materialized)_; (song song) OT fine-tune Polyvore | `item_edges.parquet` + Qdrant `items`; coherence_violations=0 |
+| 5 | 6 | Tầng 3: index Qdrant `items` + graph traversal retrieval; đo Recall@5 | `/search` hoạt động; Recall@5 đạt target |
 | 6–7 | 7–8 | Tầng 2: sinh 3–5K convs + LoRA Qwen3-VL + tool-calling + validation layer | Qwen gọi tool đúng; 0 hallucination lọt validation |
 | 8 | 9 | Tầng 4: quiz + re-rank; ráp pipeline E2E; FastAPI + Gradio | `/recommend` E2E chạy; demo Gradio |
 | 9 | 10 | Eval (LLM-judge, 4 ablations); polish; báo cáo; demo cuối | Mọi metric đo xong; báo cáo nộp |
