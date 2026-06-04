@@ -14,7 +14,7 @@ Sprint 0 — scaffolding. Commit: `feat: add controlled vocabulary module (vocab
 
 ## kb-schema — Knowledge Base Data Types
 
-`src/outfitmatch/kb/schema.py` — `ItemRecord` (per-item catalog entry with VN store block) and `OutfitRecord` (full KB entry with `to_qdrant_payload()`). `schema_version="3.1"` for traceability. `occasion` + `style` as primary conditioning fields (enum-typed, ready for token conditioning in Phụ lục A). `gen_method` tracks FITB-beam vs random-scored origin.
+`src/outfitmatch/kb/schema.py` — `ItemRecord` (graph/item-node catalog entry with VN store block) and `OutfitRecord` (standard derived/legacy outfit shape used across retrieval, rerank, validation, and serialization). `schema_version="3.1"` for traceability. `occasion` + `style` remain primary conditioning fields; in the graph path they are derived when assembling outfits from item nodes. `gen_method` distinguishes `graph_traversal` from legacy materialized builders like FITB-beam / random-scored.
 
 Sprint 0 — scaffolding. Commit: `feat: add kb/ module scaffold (schema + stubs for Sprint 1-4)`
 
@@ -100,13 +100,15 @@ Sprint 1/3 — OT experiment scaffold. Commit: pending
 
 ---
 
-## qdrant-index — KB Outfit Indexing
+## qdrant-index — Legacy Outfit Collection Indexing
 
-`src/outfitmatch/kb/qdrant_index.py` creates the filter-first `outfits` collection with Cosine dense vectors and payload indexes for `occasion`, `style`, `body_shapes_fit`, `price_tier`, `season`, and `has_vn_store`. `index_outfits()` infers vector dimension from populated `OutfitRecord.outfit_embedding`, validates consistent embedding shape, creates the collection on demand, and batch-upserts one Qdrant point per outfit.
+`src/outfitmatch/kb/qdrant_index.py` creates the legacy `outfits` collection with Cosine dense vectors and payload indexes for `occasion`, `style`, `body_shapes_fit`, `price_tier`, `season`, and `has_vn_store`. `index_outfits()` infers vector dimension from populated `OutfitRecord.outfit_embedding`, validates consistent embedding shape, creates the collection on demand, and batch-upserts one Qdrant point per outfit.
+
+This module is **no longer the primary retrieval path**. Current graph retrieval uses `src/outfitmatch/kb/graph_store.py` to index **item nodes** into Qdrant `items`, then `src/outfitmatch/retrieval.py` performs seed filtering + graph traversal. Keep `qdrant_index.py` only for legacy comparison / migration support.
 
 Qdrant point IDs are deterministic UUID5 values derived from `outfit_id` because raw IDs like `OF_00001` are not valid Qdrant point IDs; the canonical ID remains in payload as `payload["outfit_id"]` for validation/retrieval display.
 
-Sprint 3/5 — Qdrant indexing implementation. Commit: pending
+Sprint 3/5 — legacy materialized indexing implementation. Commit: pending
 
 ---
 

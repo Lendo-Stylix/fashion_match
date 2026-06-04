@@ -68,7 +68,8 @@ sequenceDiagram
     actor U as Người dùng
     participant API as pipeline.py
     participant QW as Tầng 2 Qwen3-VL
-    participant QD as Tầng 3 Qdrant
+    participant QD as Qdrant `items`
+    participant GR as Graph traversal
     participant RR as Tầng 4 Re-rank
     participant VAL as Validation Layer
 
@@ -82,8 +83,9 @@ sequenceDiagram
 
     API->>QW: generate tool call search_outfits(filters)
     QW-->>API: search_outfits({occasion, style, body_shape, price_max})
-    API->>QD: filter seed items → graph traversal ráp clique
-    QD-->>API: 30-50 OutfitRecord candidates
+    API->>QD: filter seed items (top/dress, gender, formality, stock)
+    QD-->>GR: seed item ids
+    GR-->>API: 30-50 OutfitRecord candidates
 
     API->>RR: rerank_by_preference(outfits, profile, top_k=5)
     RR-->>API: Top 3-5 OutfitRecord
@@ -105,21 +107,40 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    SRC["VN Store Catalog\nYODY · Canifa · Format · The Blues\nUniqlo VN · Zara VN · H&M VN · Libé · HNOSS"]
+    SRC["VN Store Catalog
+YODY · Canifa · Format · The Blues
+Uniqlo VN · Zara VN · H&M VN · Libé · HNOSS"]
 
-    S1["Bước 1 — Ingestion & Preprocessing\nScrape → normalize schema → resize ảnh\nGhép title_vi + desc_vi cho text tower"]
-    S2["Bước 2 — Item Embedding Extraction (offline)\nOT-labse Vision+Text encoder → vector\nLưu Parquet · xác minh ITEM_EMBED_DIM từ checkpoint"]
-    S3["Bước 3 — Pair Scoring\npair_scoring.py → bounded edge weight\ngiữa item nodes co-wearable"]
-    S4["Bước 4 — Graph Build (gated)\ngraph.py: edge chỉ khi category/gender/formality hợp lệ\ntop-K=15 mỗi partner-category, canonical src<dst"]
-    S5["Bước 5 — Item formality + gender inference\n(suy từ title/store/garment prior)\nValidate vs vocab.py — reject invalid values"]
-    S6["Bước 6 — Persist + Index\nitem_edges.parquet + Qdrant items collection\npayload indexes (category/gender/formality/...)"]
+    S1["Bước 1 — Ingestion & Preprocessing
+Scrape → normalize schema → resize ảnh
+Ghép title_vi + desc_vi cho text tower"]
+    S2["Bước 2 — Item metadata inference
+gender + formality (từ title/store/garment prior)
+Validate vs vocab.py — reject invalid values"]
+    S3["Bước 3 — Item Embedding Extraction (offline)
+OT-labse Vision+Text encoder → vector
+Lưu Parquet · xác minh ITEM_EMBED_DIM từ checkpoint"]
+    S4["Bước 4 — Pair Scoring
+pair_scoring.py → bounded edge weight
+giữa item nodes co-wearable"]
+    S5["Bước 5 — Graph Build (gated)
+graph.py: edge chỉ khi category/gender/formality hợp lệ
+top-K mỗi partner-category, canonical src<dst"]
+    S6["Bước 6 — Persist + Index
+item_edges.parquet + Qdrant items collection
+payload indexes (category/gender/formality/...)"]
 
     SRC --> S1 --> S2 --> S3 --> S4 --> S5 --> S6
 
-    NOTE1["⚠️ Hard constraint tách khỏi weight:\ngraph.py quyết định edge tồn tại\npair_scoring chỉ cho weight bị chặn"]
-    S4 -.-> NOTE1
+    NOTE1["⚠️ Hard constraint tách khỏi weight:
+graph.py quyết định edge tồn tại
+pair_scoring chỉ cho weight bị chặn"]
+    S5 -.-> NOTE1
 
-    NOTE2["3 data stream độc lập:\n· KB: VN store items\n· Grading eval: Polyvore\n· LoRA training: synthetic convs"]
+    NOTE2["3 data stream độc lập:
+· KB: VN store items
+· Grading eval: Polyvore
+· LoRA training: synthetic convs"]
     S6 -.-> NOTE2
 
     classDef step fill:#fff3e0,stroke:#e67e22

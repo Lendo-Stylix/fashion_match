@@ -2,8 +2,8 @@
 
 > Đọc [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) và [`Kien_truc_v3.1.md`](../Kien_truc_v3.1.md) trước.
 
-Sprint 9 chạy 2 nhóm eval cho academic deliverable. Toàn bộ output đi vào
-`docs/experiments/` (mỗi metric một CSV) — file `RESULTS.md` tổng hợp cuối Sprint 9.
+Sprint 9 chạy 2 nhóm eval cho academic deliverable. **Primary retrieval baseline là graph KB** (`catalog -> item graph -> Qdrant items -> traversal`). Toàn bộ output đi vào
+`docs/experiments/` (mỗi metric một CSV), trừ `scripts.data.kb.eval_graph` hiện vẫn log thẳng ra stdout để sanity-check nhanh. File `RESULTS.md` tổng hợp cuối Sprint 9.
 
 ---
 
@@ -45,7 +45,7 @@ uv run python -m scripts.data.kb.eval_graph --seeds 300 --occasion office
 uv run python -m scripts.data.kb.eval_graph --seeds 0 --occasion office
 ```
 
-## Graph KB eval (v3.1 graph)
+## Graph KB eval (canonical retrieval path)
 
 Dùng `scripts.data.kb.eval_graph` để đọc trực tiếp graph hiện tại:
 

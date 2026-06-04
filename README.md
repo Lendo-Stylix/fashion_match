@@ -1,7 +1,7 @@
 # OutfitMatch — AI Stylist v3.1-lite
 
 AI Stylist cá nhân hoá phong cách châu Á cho thị trường Việt Nam.
-MVP 3 tháng / 3 dev — kiến trúc 4 tầng được mô tả đầy đủ trong [`Kien_truc_v3.1.md`](Kien_truc_v3.1.md).
+Kiến trúc canonical hiện tại là **v3.1-lite 4 tầng** và được mô tả đầy đủ trong [`Kien_truc_v3.1.md`](Kien_truc_v3.1.md).
 
 ```
 Tầng 1: Graph KB Builder  OutfitTransformer-labse (frozen) → item embedding → sparse compat graph
@@ -30,7 +30,7 @@ make demo
 | [`Kien_truc_v3.1.md`](Kien_truc_v3.1.md) | **Kiến trúc canonical v3.1-lite** — đọc trước khi code |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Module boundaries, schema, interfaces |
 | [`docs/EXPERIMENT_GUIDE.md`](docs/EXPERIMENT_GUIDE.md) | Workflow eval cho Sprint 9 (LLM-judge + 4 ablations) |
-| [`docs/datasets/STORE_CATALOG_VN.md`](docs/datasets/STORE_CATALOG_VN.md) | Schema catalog VN (scrape thủ công từ store local) |
+| [`docs/datasets/STORE_CATALOG_VN.md`](docs/datasets/STORE_CATALOG_VN.md) | Schema catalog VN + guide scrape/curation + graph inputs |
 | [`CLAUDE.md`](CLAUDE.md) | Hướng dẫn cho Claude Code |
 
 ## Cấu trúc source
@@ -48,7 +48,7 @@ src/outfitmatch/
   ui/               # Gradio demo (Sprint 8)
 ```
 
-## Team (Sprint 0-9, 10 tuần)
+## Team / ownership
 
 | Vai trò | Owner |
 |---|---|

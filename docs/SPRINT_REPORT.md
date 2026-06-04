@@ -1,9 +1,9 @@
 # OutfitMatch — Báo cáo Tiến độ Dự án (Scrum/XP)
-**DPL302m · Nhóm 3 dev · Timeline: 7 Sprint × 1 tuần**
+**DPL302m · Nhóm 3 dev · Timeline mục tiêu: 7 sprint × 1 tuần**
 
-> **Ghi chú timeline:** Kế hoạch ban đầu là 3 tháng (10 sprint). Sau khi đánh giá lại
-> phạm vi MVP và nguồn lực, nhóm rút gọn xuống **7 tuần (7 sprint)** bằng cách
-> gộp các sprint KB-build (Sprint 1–2 → 1 sprint) và song song hóa Qdrant với LoRA prep.
+> **Cập nhật kiến trúc:** Knowledge Base của project đã chuyển sang **graph KB**.
+> Primary path hiện nay là: **catalog item nodes -> sparse compatibility graph -> Qdrant `items` seed filter -> traversal ráp outfit động**.
+> Materialized `generated_outfits.parquet` / Qdrant `outfits` chỉ còn giữ cho legacy comparison.
 
 ---
 
@@ -13,283 +13,173 @@
 |---|---|
 | **Tên dự án** | OutfitMatch — AI Stylist Cá nhân hóa |
 | **Môn học** | DPL302m — Deep Learning Project |
-| **Nhóm** | 3 sinh viên (ML Lead + Retrieval Dev + Data/Eval Dev) |
-| **Timeline** | 7 tuần (Sprint 1–7), bắt đầu tuần 3 tháng 5/2026 |
-| **Branch** | `Model` (feature branch) → merge vào `dev` theo từng Sprint |
+| **Nhóm** | 3 sinh viên |
+| **Branch** | `Model` → merge vào `dev` theo từng sprint |
 | **Repo** | github.com/vominhnhatquang/fashion_match_project |
+| **Canonical docs** | `Kien_truc_v3.1.md`, `docs/ARCHITECTURE.md`, `docs/EXPERIMENT_GUIDE.md` |
 
 ---
 
 ## Kiến trúc Hệ thống (v3.1-lite, 4 tầng)
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  TẦNG 1 — Graph KB Builder (Offline)                     │
-│  OutfitTransformer-labse (frozen) → item embedding       │
-│  pair_scoring + graph → sparse item-compat graph         │
-└──────────────────────┬──────────────────────────────────┘
-                       ↓
-┌─────────────────────────────────────────────────────────┐
-│  TẦNG 2 — Conversational Stylist                         │
-│  Qwen3-VL-8B + LoRA (3–5K hội thoại synthetic)          │
-│  Parse intent · hỏi lại · tool-calling                  │
-└──────────────────────┬──────────────────────────────────┘
-                       ↓
-┌─────────────────────────────────────────────────────────┐
-│  TẦNG 3 — Retrieval Engine (Qdrant items + traversal)    │
-│  Filter seed item → graph traversal ráp clique outfit     │
-└──────────────────────┬──────────────────────────────────┘
-                       ↓
-┌─────────────────────────────────────────────────────────┐
-│  TẦNG 4 — Personalization (Quiz re-rank)                 │
-│  Quiz 5 câu → PreferenceProfile → re-rank rule-based     │
-└─────────────────────────────────────────────────────────┘
+```text
+Tầng 1  Graph KB Builder
+        catalog -> item embedding -> pair scoring -> sparse graph -> item_edges.parquet
+
+Tầng 2  Conversational Stylist
+        Qwen3-VL-8B + LoRA nhẹ, parse intent, hỏi lại, tool-calling
+
+Tầng 3  Retrieval Engine
+        Qdrant `items` seed filter -> graph traversal -> OutfitRecord derived -> Top 30-50
+
+Tầng 4  Personalization
+        Quiz 5 câu -> rerank rule-based -> Top 3-5
 ```
 
 **Stack:** Python 3.13 · uv · Qwen3-VL-8B · OutfitTransformer-labse · Qdrant · Gradio · pytest
 
 ---
 
-## Tổng quan 7 Sprint
+## Snapshot hiện tại
 
-| Sprint | Tuần | Tên | Deliverable chính | Trạng thái |
-|--------|------|-----|-------------------|------------|
-| 1 | W1 | Foundation & Scaffolding | vocab.py, schema, test suite 35/35 ✅ | **DONE** |
-| 2 | W2 | KB Builder — Embedding & Generation | OT-labse embedding, FITB+Beam, random+scored | Planned |
-| 3 | W3 | KB Builder — Scoring, Tagging & Qdrant | OT rescore, Gemini tagging, Qdrant index | Planned |
-| 4 | W4 | Stylist — LoRA Data & Base Inference | Synthetic convs (3–5K), base Qwen3-VL-8B test | Planned |
-| 5 | W5 | Stylist — LoRA Fine-tune & E2E Pipeline | LoRA adapter, pipeline.py E2E hoạt động | Planned |
-| 6 | W6 | UI, API & Integration | Gradio demo, /recommend endpoint, E2E smoke test | Planned |
-| 7 | W7 | Evaluation, Ablations & Final Report | 4 ablations, LLM-judge, metrics đạt target | Planned |
+### Đã hoàn thành
 
----
+| Sprint | Trọng tâm | Trạng thái |
+|---|---|---|
+| **S1** | Foundation: vocab, schema, quiz, stylist validation, metrics scaffold | ✅ Done |
+| **S2** | Catalog pipeline + graph KB construction (`pair_scoring`, `graph.py`, `graph_store.py`, `build_graph`) | ✅ Done |
+| **S3** | Graph retrieval + grading (`traversal`, `assemble_record`, `retrieval.py`, `eval_graph`) | ✅ Done |
 
-## Sprint 1 — Foundation & Scaffolding ✅ COMPLETED
+### Đang / sẽ làm tiếp
 
-**Thời gian:** Tuần 1 (W1, 19–24/05/2026)
-**Goal:** Xây dựng nền tảng kiến trúc v3.1-lite — controlled vocabulary, schema,
-module scaffolding, test suite xanh — để mọi sprint tiếp theo có base sạch.
-
-### User Stories
-
-| ID | Story | Story Points | Trạng thái |
-|----|-------|-------------|------------|
-| S1-1 | As a dev, I need a single vocab.py as source of truth cho tất cả enum | 3 | ✅ Done |
-| S1-2 | As a dev, I need OutfitRecord + ItemRecord schema với to_qdrant_payload() | 3 | ✅ Done |
-| S1-3 | As a dev, I need stylist/tools.py với SEARCH_OUTFITS_TOOL dùng vocab enum | 2 | ✅ Done |
-| S1-4 | As a dev, I need validation.py chống hallucinate outfit_id | 2 | ✅ Done |
-| S1-5 | As a dev, I need quiz/schema.py + rerank.py (QuizAnswers → PreferenceProfile → re-rank) | 3 | ✅ Done |
-| S1-6 | As a dev, I need metrics/outfit.py (fitb_accuracy, compatibility_auc) | 1 | ✅ Done |
-| S1-7 | As a dev, CI/CD GitHub Actions phải xanh trên mọi push | 2 | ✅ Done |
-
-**Total:** 16 SP · **Velocity Sprint 1:** 16 SP
-
-### Kết quả kỹ thuật
-
-```
-Tests:   35 passed / 35 total  (coverage target: ≥70% — đạt)
-CI:      GitHub Actions green
-Lint:    ruff check + ruff format + mypy — 0 error
-```
-
-**Modules fully implemented:**
-- `src/outfitmatch/vocab.py` — 7 enum tuples + frozensets + VI labels + `validate_enum_values()`
-- `src/outfitmatch/kb/schema.py` — `ItemRecord`, `OutfitRecord`, `to_qdrant_payload()`
-- `src/outfitmatch/stylist/tools.py` — `SEARCH_OUTFITS_TOOL` (enum-typed, vocab-synced)
-- `src/outfitmatch/stylist/validation.py` — `extract_outfit_ids()`, `validate_response()`
-- `src/outfitmatch/quiz/schema.py` — `QuizAnswers`, `PreferenceProfile`, `quiz_to_profile()`
-- `src/outfitmatch/quiz/rerank.py` — `score_outfit_for_preference()`, `rerank_by_preference()`
-- `src/outfitmatch/metrics/outfit.py` — `fitb_accuracy()`, `compatibility_auc()`
-
-**Modules stubbed (NotImplementedError + Sprint reference):**
-- `kb/embedding.py` → Sprint 2
-- `kb/generation.py`, `kb/scoring.py`, `kb/tagging.py` → Sprint 2–3
-- `kb/qdrant_index.py` → Sprint 3
-- `stylist/model.py`, `stylist/data.py` → Sprint 4–5
-- `pipeline.py` → Sprint 5
-
-### Retrospective Sprint 1
-
-**Went well:**
-- TDD workflow (test → fail → implement → green) giữ scope rõ ràng.
-- Codegraph index hoạt động ngay từ đầu, tăng tốc navigation.
-- Quyết định dùng `dataclass` thay Pydantic model cho schema — giảm overhead.
-
-**Improvements:**
-- Cần thống nhất convention đặt tên outfit_id sớm hơn (`OF_XXXXX` vs `outfit_XXXXX`).
-- Thiếu mock Qdrant client trong test setup — cần thêm vào conftest.py Sprint 3.
+| Sprint | Trọng tâm | Trạng thái |
+|---|---|---|
+| **S4** | Stylist data + Qwen3-VL base/LoRA prep | Planned |
+| **S5** | Pipeline E2E + tool-calling + hallucination guard | Planned |
+| **S6** | UI / API / demo integration | Planned |
+| **S7** | Evaluation, ablations, final report | Planned |
 
 ---
 
-## Sprint 2 — KB Builder: Embedding & Generation
+## Kết quả kỹ thuật nổi bật
 
-**Thời gian:** Tuần 2 (W2, 26–31/05/2026)
-**Goal:** Implement Tầng 1 phần đầu — trích xuất item embedding bằng OT-labse và
-sinh outfit candidates bằng FITB+Beam (70%) + random+scored (30%).
+### Catalog / Scrape
 
-### User Stories
+- `5618` catalog items
+- `5618` item-store links
+- `25/25` manifest batches passed
+- `0` hard errors từ catalog quality gate
 
-| ID | Story | SP |
-|----|-------|----|
-| S2-1 | As a dev, OT-labse model loads với `trust_remote_code=True`, encode 1 item batch | 5 |
-| S2-2 | As a dev, `extract_item_embeddings()` xử lý batch 32 items, trả về list[ItemRecord] với embedding | 5 |
-| S2-3 | As a dev, `generate_fitb_beam()` sinh ≥100 outfit candidates từ 50 item mẫu | 8 |
-| S2-4 | As a dev, `generate_random_scored()` sinh thêm 30% candidates với OT pre-filter | 5 |
-| S2-5 | As a dev, test FITB accuracy ≥ 55% trên Polyvore mini (30 items) | 3 |
+### Graph KB baseline
 
-**Total:** 26 SP · **Sprint Goal:** Item embedding + outfit generation chạy được trên GPU/CPU
+- `4694` adult item nodes (`men|women|unisex`)
+- `316103` canonical edges trong `data/custom/graph/item_edges.parquet`
+- build time ~`27.4s`
+- degree min / median / max = `60 / 76 / 2809`
 
-### Definition of Done Sprint 2
+### Retrieval / grading baseline
 
-- [ ] `kb/embedding.py`: `extract_item_embeddings()` implemented, test coverage ≥70%
-- [ ] `kb/generation.py`: cả hai functions implemented, test với 50 item mẫu
-- [ ] FITB accuracy ≥ 55% đo được trên tập test nhỏ
-- [ ] `uv run make test` xanh
-- [ ] PR merged vào `dev` với ≥1 peer review
+- `catalog_coverage = 0.7069`
+- `coherence_violations = 0`
+- `fitb_recall@5 = 0.9813`
+- `n_assembled = 7350`
+- `item_reuse_p95 = 27`
 
 ---
 
-## Sprint 3 — KB Builder: Scoring, Tagging & Qdrant
+## Sprint 1 — Foundation & Scaffolding ✅
 
-**Thời gian:** Tuần 3 (W3, 02–07/06/2026)
-**Goal:** Hoàn thiện Tầng 1 (OT re-scoring + Gemini tagging) và Tầng 3 (Qdrant indexing).
-Sau Sprint này KB VN đầu tiên (100–500 outfit) phải nằm trong Qdrant.
+**Goal:** Dựng nền tảng 4 tầng v3.1-lite và controlled vocabulary thống nhất.
 
-### User Stories
+### Deliverables chính
 
-| ID | Story | SP |
-|----|-------|----|
-| S3-1 | As a dev, `rescore_outfits()` cập nhật compatibility_score cho tất cả candidates | 5 |
-| S3-2 | As a dev, score threshold được xác định từ histogram distribution | 3 |
-| S3-3 | As a dev, `tag_outfits()` gọi Gemini Flash, validate enum bằng vocab.py, cache với diskcache | 8 |
-| S3-4 | As a dev, `create_outfits_collection()` tạo Qdrant collection với payload indexes | 5 |
-| S3-5 | As a dev, `upsert_outfits()` index 100+ outfit VN vào Qdrant | 5 |
-| S3-6 | As a dev, filter query: occasion=office + body_shape=pear trả về ≥5 kết quả | 3 |
+- `src/outfitmatch/vocab.py` — enum/source of truth
+- `src/outfitmatch/kb/schema.py` — `ItemRecord`, `OutfitRecord`
+- `src/outfitmatch/stylist/tools.py` — `SEARCH_OUTFITS_TOOL`
+- `src/outfitmatch/stylist/validation.py` — chống hallucinate `outfit_id`
+- `src/outfitmatch/quiz/schema.py`, `quiz/rerank.py`, `quiz/sizing.py`
+- `src/outfitmatch/metrics/outfit.py`
 
-**Total:** 29 SP · **Sprint Goal:** KB 100+ outfit VN có thể query được từ Qdrant
+### Kết quả
 
-### Milestone: Compatibility AUC ≥ 0.85 (đo lần đầu Sprint 3)
+- test/lint/typecheck xanh cho scaffold nền
+- vocabulary invariant được chốt ở `vocab.py`
+- quiz rerank thay thế GNN trong MVP
 
 ---
 
-## Sprint 4 — Stylist: LoRA Data & Base Inference
+## Sprint 2 — Catalog Pipeline & Graph KB Construction ✅
 
-**Thời gian:** Tuần 4 (W4, 09–14/06/2026)
-**Goal:** Sinh 3–5K hội thoại synthetic bằng Gemini, kiểm tra Qwen3-VL-8B base inference,
-chuẩn bị pipeline training.
+**Goal:** Chuyển KB từ materialized outfits sang **item-compatibility graph**.
 
-### User Stories
+### Deliverables chính
 
-| ID | Story | SP |
-|----|-------|----|
-| S4-1 | As a dev, Gemini sinh 3K hội thoại cover 7 conversation types | 8 |
-| S4-2 | As a dev, spot-check 5% hội thoại (150 samples) — human review pass | 3 |
-| S4-3 | As a dev, `load_conversation_dataset()` tokenize JSONL, trả về HF Dataset | 5 |
-| S4-4 | As a dev, Qwen3-VL-8B base model load được trên GPU 8GB (4-bit quantize) | 5 |
-| S4-5 | As a dev, base model gọi `search_outfits` tool đúng format trong ≥60% test cases | 5 |
+- `scripts/data/scrape/` pipeline hoạt động: scrape, manifest, quarantine, quality gate
+- `src/outfitmatch/kb/catalog.py` load catalog chuẩn hoá thành `ItemRecord`
+- `src/outfitmatch/kb/embedding.py` / `outfit_transformer.py` scaffold OT-labse item embedding
+- `src/outfitmatch/kb/pair_scoring.py` — pair scorer
+- `src/outfitmatch/kb/graph.py` — build sparse graph theo category/gender/formality
+- `src/outfitmatch/kb/graph_store.py` — persist `item_edges.parquet` + Qdrant `items`
+- `scripts/data/kb/build_graph.py` — full / incremental graph build CLI
 
-**Total:** 26 SP · **Sprint Goal:** Training data sẵn sàng, base model chạy được
+### Kết quả
 
-### XP Practice Sprint 4: Pair Programming
-
-Hai dev ngồi cùng nhau khi viết Gemini prompt engineering (S4-1) —
-output quality của synthetic data ảnh hưởng trực tiếp đến Sprint 5.
+- graph KB trở thành **primary artifact** của project
+- thêm item mới chỉ cần rebuild/incremental edges thay vì tái materialize toàn bộ outfit
+- Qdrant dùng cho **item node filtering**, không còn là nơi lưu KB outfit canonical
 
 ---
 
-## Sprint 5 — Stylist: LoRA Fine-tune & E2E Pipeline
+## Sprint 3 — Graph Retrieval & Grading ✅
 
-**Thời gian:** Tuần 5 (W5, 16–21/06/2026)
-**Goal:** Fine-tune LoRA adapter, wire pipeline.py E2E từ request đến Top-5 outfit
-với giải thích tiếng Việt.
+**Goal:** Biến graph KB thành Tầng 3 retrieval chạy được và có metric guard.
 
-### User Stories
+### Deliverables chính
 
-| ID | Story | SP |
-|----|-------|----|
-| S5-1 | As a dev, LoRA fine-tune chạy xong trên GPU, training loss giảm | 8 |
-| S5-2 | As a dev, LoRA model gọi `search_outfits` tool đúng ≥80% test cases | 5 |
-| S5-3 | As a dev, `pipeline.py` wire: RecommendRequest → Stylist → Qdrant → Quiz re-rank → RecommendResult | 8 |
-| S5-4 | As a dev, E2E latency < 8s (GPU) cho 1 request hoàn chỉnh | 5 |
-| S5-5 | As a dev, hallucination rate (outfit_id không tồn tại) < 5% | 3 |
+- `src/outfitmatch/kb/traversal.py` — clique-safe outfit assembly
+- `src/outfitmatch/kb/assemble_record.py` — assembled items -> `OutfitRecord`
+- `src/outfitmatch/retrieval.py` — seed filter (`items`) + traversal + post-filter
+- `src/outfitmatch/metrics/retrieval.py` — graph FITB recall
+- `src/outfitmatch/kb/graph_eval.py` + `scripts/data/kb/eval_graph.py`
 
-**Total:** 29 SP · **Sprint Goal:** E2E pipeline chạy được từ đầu đến cuối
+### Kết quả
 
-### Milestone: E2E demo lần đầu (internal)
-
----
-
-## Sprint 6 — UI, API & Integration
-
-**Thời gian:** Tuần 6 (W6, 23–28/06/2026)
-**Goal:** Gradio UI chạy được (`make demo`), FastAPI endpoint `/recommend`,
-integration testing smoke test toàn bộ luồng.
-
-### User Stories
-
-| ID | Story | SP |
-|----|-------|----|
-| S6-1 | As a user, tôi có thể nhập text + upload ảnh trên Gradio, thấy Top-3 outfit | 8 |
-| S6-2 | As a user, quiz 5 câu hiển thị trước lần recommend đầu tiên | 5 |
-| S6-3 | As a dev, `POST /recommend` nhận JSON, trả về RecommendResult trong < 8s | 5 |
-| S6-4 | As a dev, Gradio hiển thị giải thích tiếng Việt + link mua kèm theo mỗi outfit | 3 |
-| S6-5 | As a dev, smoke test E2E: 10 request ngẫu nhiên, 0 crash | 5 |
-
-**Total:** 26 SP · **Sprint Goal:** Demo được trước giảng viên
+- retrieval không còn phụ thuộc `outfits` collection materialized
+- `occasion` conditioning đo qua **formality-based seed filter**
+- diversity đo bằng `catalog_coverage` thay vì đếm outfit materialized
+- `coherence_violations = 0` trở thành hard regression guard
 
 ---
 
-## Sprint 7 — Evaluation, Ablations & Final Report
+## Sprint 4–7 — Roadmap còn lại
 
-**Thời gian:** Tuần 7 (W7, 30/06–05/07/2026)
-**Goal:** Chạy đủ 4 ablations bắt buộc, đo tất cả metrics grading, viết báo cáo cuối.
+| Sprint | Goal | Deliverable chính |
+|---|---|---|
+| **S4** | Stylist data + base inference | synthetic conversations, Qwen3-VL base test, LoRA dataset |
+| **S5** | Pipeline E2E | `RecommendRequest -> search_outfits -> rerank -> validation` |
+| **S6** | Demo / API | Gradio UI, `POST /recommend`, smoke test |
+| **S7** | Evaluation | LLM-judge + 4 ablations + final report |
 
-### User Stories
+### Ghi chú quan trọng cho roadmap
 
-| ID | Story | SP |
-|----|-------|----|
-| S7-1 | As a researcher, chạy ablation (1): OT-labse zero-shot vs fine-tuned Polyvore | 5 |
-| S7-2 | As a researcher, chạy ablation (2): body conditioning on/off (Qdrant filter) | 3 |
-| S7-3 | As a researcher, chạy ablation (3): occasion conditioning on/off | 3 |
-| S7-4 | As a researcher, chạy ablation (4): greedy vs beam decoding (KB build) | 3 |
-| S7-5 | As a researcher, LLM-as-judge (Gemini) chấm 30 conversation → Mean ≥ 3.5/5 | 5 |
-| S7-6 | As a team, viết final report PDF nộp giảng viên | 5 |
+- **Body conditioning ablation** vẫn **pending item semantic tagging**.
+- **Encoder ablation** và **Compatibility AUC / FITB accuracy** vẫn đo trên Polyvore, tách khỏi graph build path.
+- **Legacy materialized outfits** chỉ giữ để so sánh, không phải deliverable chính.
 
-**Total:** 24 SP · **Sprint Goal:** Tất cả metrics grading đạt target
+---
 
-### Evaluation Targets (Sprint 7)
+## Evaluation Targets
 
 | Metric | Target | Phương pháp đo |
-|--------|--------|----------------|
-| FITB Accuracy | ≥ 55% | OT-labse trên Polyvore mini |
-| Compatibility AUC | ≥ 0.85 | OT-labse trên Polyvore |
-| Recall@5 (graph FITB) | regression guard (≈ 0.98 full-sweep) | `fitb_recall_at_k` mask 1 item, traversal recover |
-| Catalog coverage (diversity) | ≥ 0.60 full-sweep | `GraphReport.catalog_coverage` |
-| Coherence violations | = 0 (hard) | `GraphReport` edge gate regression |
-| Body-cond. Precision@5 | PENDING item semantic tagging | (chưa đo cho graph MVP) |
-| E2E Latency | < 5–8s GPU | Đo trên GPU / cloud |
-| LLM-as-judge (Gemini) | Mean ≥ 3.5/5 | Gemini chấm 30 E2E outputs |
-
----
-
-## Burndown Chart (Kế hoạch)
-
-```
-Sprint:  |  1  |  2  |  3  |  4  |  5  |  6  |  7  |
-SP Done: | 16  | 26  | 29  | 26  | 29  | 26  | 24  |
-Cum SP:  | 16  | 42  | 71  | 97  | 126 | 152 | 176 |
-Status:  | ✅  |  ⬜  |  ⬜  |  ⬜  |  ⬜  |  ⬜  |  ⬜  |
-```
-
----
-
-## Phân công Nhóm
-
-| Thành viên | Vai trò | Sprint chủ đạo |
 |---|---|---|
-| Vo Minh Nhat Quang | ML Lead — Architecture, Stylist, Pipeline | S1, S4, S5, S7 |
-| [Dev 2] | Retrieval Dev — KB Builder, Qdrant, Scoring | S2, S3 |
-| [Dev 3] | Data/Eval Dev — Dataset, Synthetic convs, Eval | S3, S4, S7 |
+| Recall@5 (graph FITB) | regression guard (baseline full-sweep ≈ 0.98) | `fitb_recall_at_k` |
+| Catalog coverage | ≥ 0.60 full-sweep | `GraphReport.catalog_coverage` |
+| Coherence violations | = 0 | `GraphReport` |
+| FITB Accuracy | ≥ 55% | OT-labse trên Polyvore |
+| Compatibility AUC | ≥ 0.85 | OT-labse trên Polyvore |
+| Body-cond. Precision@5 | PENDING item semantic tagging | follow-up |
+| E2E Latency | < 5–8s GPU / cloud | runtime benchmark |
+| LLM-as-judge | Mean ≥ 3.5/5 | Gemini judge |
 
 ---
 
@@ -297,27 +187,25 @@ Status:  | ✅  |  ⬜  |  ⬜  |  ⬜  |  ⬜  |  ⬜  |  ⬜  |
 
 | Practice | Cách áp dụng |
 |---|---|
-| **Test-Driven Development** | Viết test trước (failing), implement đến khi pass — áp dụng mọi sprint |
-| **Continuous Integration** | GitHub Actions CI trên mọi push to `Model` branch |
-| **Pair Programming** | Sprint 4 (Gemini prompt engineering), Sprint 5 (pipeline wiring) |
-| **Small Releases** | Mỗi sprint có deliverable chạy được; không để tích lũy debt |
-| **Refactoring** | Sau mỗi sprint review code với `simplify` skill trước khi merge |
-| **Collective Ownership** | Mọi module có test — ai cũng có thể sửa nếu test vẫn xanh |
-| **Coding Standards** | `ruff` + `mypy` enforce tự động qua pre-commit hook |
+| **Test-Driven Development** | Viết test trước cho graph store / traversal / retrieval / eval harness |
+| **Continuous Integration** | GitHub Actions CI trên mọi push |
+| **Small Releases** | Tách graph build, retrieval, grading thành các increment độc lập |
+| **Refactoring** | Giữ materialized path ở trạng thái legacy, tránh xoá quá sớm trước khi graph ổn định |
+| **Collective Ownership** | Module nào cũng có test, artifact/CLI rõ ràng |
+| **Coding Standards** | `ruff` + `mypy` + `pytest` |
 
 ---
 
-## Rủi ro & Giảm thiểu
+## Rủi ro còn lại
 
 | Rủi ro | Mức độ | Giảm thiểu |
-|--------|--------|------------|
-| GPU không đủ cho Qwen3-VL-8B | Cao | 4-bit quantize (BnB), fallback Colab A100 free tier |
-| Gemini API rate-limit khi sinh 5K hội thoại | Trung bình | diskcache + batch 50 convs/call, retry với backoff |
-| Polyvore dataset không có công khai | Thấp | Dùng Polyvore-U (available on HuggingFace) |
-| Timeline quá gấp (7 tuần vs 3 tháng) | Cao | Scope MVP cứng: 5–20K outfit VN, 3–5K LoRA convs, no GNN |
-| Qdrant Docker không chạy được trên máy dev | Thấp | `docker-compose.yml` đã config, fallback Qdrant Cloud free |
+|---|---|---|
+| Qwen3-VL-8B latency/VRAM cao | Cao | 4-bit quantize, GPU/cloud, streaming |
+| Body-conditioning chưa bật được | Trung bình | item semantic tagging follow-up |
+| Catalog shoes ít -> traversal reuse cao | Trung bình | tiếp tục mở rộng catalog / incremental graph build |
+| Giá/stock stale | Trung bình | scrape quality + collected_date + re-run trước demo |
+| Legacy docs / thuyết trình lệch kiến trúc | Thấp | đồng bộ theo graph KB như file này |
 
 ---
 
-*Báo cáo được cập nhật cuối mỗi Sprint Review.*
-*Lần cập nhật gần nhất: 24/05/2026 — Sprint 1 COMPLETED.*
+*Lần cập nhật này phản ánh kiến trúc graph KB hiện tại của repo.*
