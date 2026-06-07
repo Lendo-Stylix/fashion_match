@@ -128,11 +128,13 @@ Sprint 1/3 — Graph KB construction + storage. Commit: pending
 
 `src/outfitmatch/retrieval.py` replaces materialized-outfit lookup with Tầng 3 graph retrieval: filter anchor `top` / `dress` items on Qdrant `items` by formality→occasion, stock, and store availability; fall back to a direct graph scan when Qdrant seeds are unavailable; then assemble clique-safe outfits via `src/outfitmatch/kb/traversal.py`.
 
-`src/outfitmatch/kb/assemble_record.py` converts assembled item sets back into standard `OutfitRecord`s by deriving `occasion` from formality, `style` from store `style_tags`, and `color_palette` from item colors. `body_shape` remains intentionally deferred (`body_shapes_fit=[]`) until item-level semantic tagging exists.
+`src/outfitmatch/kb/tagging.py` now implements Gemini item semantic tagging for the graph path: validate enum-constrained `body_shapes_fit` / `season`, cache responses with `diskcache`, and mutate `ItemRecord`s in place. Operational CLI: `uv run python -m scripts.data.kb.tag_items` writes validated tags back into `data/custom/catalog/catalog_metadata.parquet`.
+
+`src/outfitmatch/kb/assemble_record.py` converts assembled item sets back into standard `OutfitRecord`s by deriving `occasion` from formality, `style` from store `style_tags`, `color_palette` from item colors, and conservative `body_shapes_fit` / `season` via intersection across tagged items.
 
 Smoke E2E on the real graph: `uv run python -c "from outfitmatch.kb.catalog import load_catalog_items; from outfitmatch.kb.graph_store import load_graph; from outfitmatch.retrieval import search_outfits; from outfitmatch.pipeline import RecommendRequest; from scripts.data.scrape.base import CATALOG_DIR; items=load_catalog_items(CATALOG_DIR/'catalog_metadata.parquet', CATALOG_DIR/'item_store_links.parquet'); graph=load_graph(items=items); seeds=[it.item_id for it in items if it.category in ('top','dress')][:200]; recs=search_outfits(RecommendRequest(occasion='office'), graph=graph, seed_ids=seeds, top_n=10); print('outfits:', len(recs)); print('sample cats:', [[item.category for item in rec.items] for rec in recs[:3]])"`.
 
-Sprint 2/3 — Graph traversal retrieval + pipeline integration. Commit: pending
+Sprint 2/3 — Graph traversal retrieval + pipeline integration; item semantic tagging follow-up implemented for graph KB. Commit: pending
 
 ---
 

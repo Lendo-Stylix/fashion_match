@@ -19,6 +19,9 @@ def _write_catalog(tmp_path: Path) -> tuple[Path, Path]:
                 "title_vi": "Áo trắng",
                 "desc_vi": "Cotton",
                 "colors": '["Trắng"]',
+                "body_shapes_fit": '["pear", "rectangle"]',
+                "season": '["summer", "transitional"]',
+                "stylist_notes_vi": "Áo dáng suông dễ phối.",
                 "collected_date": "2026-05-30",
                 "collector": "unit",
                 "formality": "formal",
@@ -114,6 +117,14 @@ def test_load_catalog_items_includes_sizes(tmp_path):
     items = load_catalog_items(catalog_path, links_path)
     assert items[0].store["available_sizes"] == ["S", "M", "L"]
     assert items[0].store["sizes_in_stock"] == ["M", "L"]
+
+
+def test_load_catalog_items_reads_item_semantic_tags(tmp_path):
+    catalog_path, links_path = _write_catalog(tmp_path)
+    items = load_catalog_items(catalog_path, links_path)
+    assert items[0].body_shapes_fit == ["pear", "rectangle"]
+    assert items[0].season == ["summer", "transitional"]
+    assert items[0].stylist_notes_vi == "Áo dáng suông dễ phối."
 
 
 def test_group_items_by_category_respects_limit_per_category(tmp_path):

@@ -13,6 +13,8 @@ def _item(
     price: int = 300_000,
     store_id: str = "aristino_vn",
     colors: list[str] | None = None,
+    body_shapes_fit: list[str] | None = None,
+    season: list[str] | None = None,
 ) -> ItemRecord:
     return ItemRecord(
         item_id=item_id,
@@ -21,6 +23,8 @@ def _item(
         item_embedding=[0.1, 0.2],
         gender=gender,
         formality=formality,
+        body_shapes_fit=body_shapes_fit or [],
+        season=season or [],
         store={
             "store_id": store_id,
             "price_vnd": price,
@@ -48,3 +52,26 @@ def test_to_outfit_record_unisex_when_all_unisex():
     record = to_outfit_record(items, 0.5)
     assert record.gender == "unisex"
     assert record.body_shapes_fit == []
+
+
+def test_to_outfit_record_derives_item_semantic_tags_by_intersection():
+    items = [
+        _item(
+            "t",
+            "top",
+            body_shapes_fit=["pear", "rectangle"],
+            season=["summer", "transitional"],
+        ),
+        _item(
+            "b",
+            "bottom",
+            body_shapes_fit=["pear", "hourglass"],
+            season=["transitional"],
+        ),
+        _item("s", "shoes", body_shapes_fit=[], season=["transitional", "rainy"]),
+    ]
+
+    record = to_outfit_record(items, 0.9)
+
+    assert record.body_shapes_fit == ["pear"]
+    assert record.season == ["transitional"]

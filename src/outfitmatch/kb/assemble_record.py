@@ -10,6 +10,9 @@ from outfitmatch.kb.generation import _aggregate_embedding, _combo_gender, _pric
 from outfitmatch.kb.schema import OutfitRecord
 from outfitmatch.vocab import FORMALITY_RANK, FORMALITY_RELEVANT_CATEGORIES, occasions_for_formality
 
+_BODY_SHAPE_RELEVANT_CATEGORIES = frozenset({"top", "bottom", "dress", "outerwear"})
+_SEASON_RELEVANT_CATEGORIES = frozenset({"top", "bottom", "dress", "outerwear", "shoes"})
+
 if TYPE_CHECKING:
     from outfitmatch.kb.schema import ItemRecord
 
@@ -41,6 +44,25 @@ def _outfit_colors(items: list[ItemRecord]) -> list[str]:
     )
 
 
+def _shared_item_tags(
+    items: list[ItemRecord],
+    attr: str,
+    *,
+    categories: frozenset[str] | None = None,
+) -> list[str]:
+    """Conservative graph-path derivation: keep only tags shared across tagged items."""
+    tag_sets: list[set[str]] = []
+    for item in items:
+        if categories is not None and item.category not in categories:
+            continue
+        values = [str(v) for v in getattr(item, attr, []) if str(v)]
+        if values:
+            tag_sets.append(set(values))
+    if not tag_sets:
+        return []
+    return sorted(set.intersection(*tag_sets))
+
+
 def to_outfit_record(items: list[ItemRecord], score: float, *, index: int = 1) -> OutfitRecord:
     """Build an OutfitRecord from graph-assembled items."""
     price_total = sum(int(item.store.get("price_vnd") or 0) for item in items)
@@ -52,8 +74,12 @@ def to_outfit_record(items: list[ItemRecord], score: float, *, index: int = 1) -
         compatibility_score=round(float(score), 6),
         occasion=_outfit_occasions(items),
         style=_outfit_styles(items),
-        body_shapes_fit=[],
-        season=[],
+        body_shapes_fit=_shared_item_tags(
+            items,
+            "body_shapes_fit",
+            categories=_BODY_SHAPE_RELEVANT_CATEGORIES,
+        ),
+        season=_shared_item_tags(items, "season", categories=_SEASON_RELEVANT_CATEGORIES),
         color_palette=_outfit_colors(items),
         price_total_vnd=price_total,
         price_tier=_price_tier(price_total),

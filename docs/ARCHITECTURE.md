@@ -53,7 +53,7 @@
 | `src/outfitmatch/kb/graph_eval.py` | `GraphReport` (coverage/coherence/reuse) | Build graph |
 | `src/outfitmatch/kb/generation.py` | _(legacy materialized)_ FITB+Beam + random+score | Score / tag outfit |
 | `src/outfitmatch/kb/scoring.py` | _(legacy materialized)_ re-score outfit | Generate / tag outfit |
-| `src/outfitmatch/kb/tagging.py` | _(legacy materialized)_ Gemini metadata tagging | Score outfit, gọi encoder |
+| `src/outfitmatch/kb/tagging.py` | Gemini item semantic tagging for graph KB | Score outfit, gọi encoder |
 | `src/outfitmatch/kb/qdrant_index.py` | _(legacy materialized)_ index `outfits` collection | Generate / score outfit |
 | `src/outfitmatch/retrieval.py` | Tầng 3: seed filter + traversal + post-filter | Training, model loading |
 | `src/outfitmatch/stylist/tools.py` | `search_outfits` tool definition (enum từ vocab) | Model loading, inference |
@@ -99,6 +99,9 @@ Graph KB lưu **item node** (`ItemRecord`) + **canonical edge** (`item_edges.par
   "item_embedding": [/* OT-labse dim — xác minh từ checkpoint */],
   "gender": "women",                        // GENDER enum (men|women|unisex|kid)
   "formality": "smart_casual",              // FORMALITY enum
+  "body_shapes_fit": ["pear", "rectangle"], // Gemini item semantic tags
+  "season": ["summer", "transitional"],     // Gemini item semantic tags
+  "stylist_notes_vi": "Áo dáng suông dễ phối.",
   "store": {
     "store_id": "canifa_vn",
     "store_name": "Canifa",
@@ -117,8 +120,8 @@ Graph KB lưu **item node** (`ItemRecord`) + **canonical edge** (`item_edges.par
   "compatibility_score": 0.0,               // mean pairwise edge weight
   "occasion": ["office", "cafe_hangout"],   // derive từ formality (FORMALITY_OCCASIONS)
   "style": ["minimalist", "korean"],        // derive từ store style_tags
-  "body_shapes_fit": [],                    // DEFERRED — chờ item semantic tagging
-  "season": [],                             // DEFERRED
+  "body_shapes_fit": ["pear"],             // intersect từ item semantic tags
+  "season": ["transitional"],              // intersect từ item semantic tags
   "color_palette": ["beige", "navy"],
   "price_total_vnd": 850000,
   "price_tier": "mid",
@@ -129,8 +132,9 @@ Graph KB lưu **item node** (`ItemRecord`) + **canonical edge** (`item_edges.par
 
 > **`occasion` + `style` vẫn là 2 trường conditioning hạng nhất** nhưng **derived**:
 > `occasion` từ `formality` band (`FORMALITY_OCCASIONS` trong `vocab.py`), `style` từ
-> store `style_tags`. `body_shapes_fit` / `season` defer tới khi có item semantic tagging.
-> `schema_version="3.1"` để trace.
+> store `style_tags`. `body_shapes_fit` / `season` được Gemini tag ở **item node** rồi
+> `assemble_record.py` lấy **intersection bảo thủ** trên các item đã tag. `schema_version="3.1"`
+> để trace.
 
 ---
 
@@ -143,8 +147,8 @@ v3.1-lite **không dùng query vector** cho Qdrant. Graph traversal thay vì mat
    `gender`, `formality` (→ occasion qua `formalities_for_occasion`), `in_stock`,
    `has_vn_store`. Fallback: scan graph trực tiếp khi Qdrant không sẵn sàng.
 3. **Graph traversal** (`traversal.py`) ráp clique-safe outfit từ seed; `assemble_record.py`
-   dẫn xuất `OutfitRecord` (occasion/style/color/price). Post-filter `style`, `price_max`,
-   `exclude_colors` trên record đã dẫn.
+   dẫn xuất `OutfitRecord` (occasion/style/body_shapes_fit/season/color/price). Post-filter
+   `style`, `price_max`, `exclude_colors` trên record đã dẫn.
 4. Rank theo mean pairwise edge weight + dedup → Top 30–50 outfit → Tầng 4.
 
 Cách này tránh lỗ hổng "user query → outfit embedding space" của v3.0 và giữ invariant

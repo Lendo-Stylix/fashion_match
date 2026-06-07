@@ -15,7 +15,7 @@ src/outfitmatch/             # Importable application/library code
     graph_eval.py            # Coverage/coherence/reuse report
     generation.py            # Legacy materialized generation helpers
     scoring.py               # Legacy materialized scoring helpers
-    tagging.py               # Legacy Gemini outfit tagging
+    tagging.py               # Gemini item semantic tagging for graph KB
     qdrant_index.py          # Legacy Qdrant `outfits` collection
   retrieval.py               # Tầng 3: seed filter + traversal + post-filter
   stylist/                   # Tầng 2: Qwen tool schema + validation + model/data
@@ -28,6 +28,7 @@ scripts/                     # Operational commands, not core library APIs
     scrape/                  # VN store scraping + raw cache + quality gate
     kb/
       build_graph.py         # Primary graph KB build CLI
+      tag_items.py           # Gemini item semantic tagging -> catalog_metadata.parquet
       eval_graph.py          # Graph grading / ablation CLI
       generate_outfits.py    # Legacy materialized outfit builder
   setup_databases.py         # Local DB / Qdrant setup helpers

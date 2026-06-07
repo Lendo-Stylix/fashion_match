@@ -14,7 +14,7 @@ from outfitmatch.kb.schema import ItemRecord
 from outfitmatch.vocab import FORMALITY_SET, GENDER_SET, ITEM_CATEGORY_SET
 
 
-def _parse_colors(raw: Any) -> list[str]:
+def _parse_json_list(raw: Any) -> list[str]:
     if isinstance(raw, list):
         return [str(v) for v in raw if str(v)]
     if not isinstance(raw, str) or not raw.strip():
@@ -84,10 +84,13 @@ def load_catalog_items(
                     "in_stock": bool(row.get("in_stock")),
                     "title_vi": str(row.get("title_vi") or ""),
                     "desc_vi": str(row.get("desc_vi") or ""),
-                    "colors": _parse_colors(row.get("colors")),
-                    "available_sizes": _parse_colors(row.get("available_sizes")),
-                    "sizes_in_stock": _parse_colors(row.get("sizes_in_stock")),
+                    "colors": _parse_json_list(row.get("colors")),
+                    "available_sizes": _parse_json_list(row.get("available_sizes")),
+                    "sizes_in_stock": _parse_json_list(row.get("sizes_in_stock")),
                 },
+                body_shapes_fit=_parse_json_list(row.get("body_shapes_fit")),
+                season=_parse_json_list(row.get("season")),
+                stylist_notes_vi=str(row.get("stylist_notes_vi") or ""),
             )
         )
     return out

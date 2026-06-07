@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -16,6 +16,9 @@ class ItemRecord:
     store: dict  # {store_id, store_name, product_url, price_vnd, in_stock}
     gender: str = "unisex"  # GENDER enum value (men|women|unisex|kid)
     formality: str = "casual"  # FORMALITY enum value — used by outfit-coherence filter
+    body_shapes_fit: list[str] = field(default_factory=list)  # BODY_SHAPE enum values
+    season: list[str] = field(default_factory=list)  # SEASON enum values
+    stylist_notes_vi: str = ""  # Short VN note from Gemini item semantic tagging
 
 
 @dataclass
