@@ -117,6 +117,53 @@ def test_build_semantic_flags_catches_expected_rules():
     }
 
 
+def test_build_semantic_flags_avoids_broad_keyword_false_positives():
+    normalized = pd.DataFrame(
+        [
+            {
+                "item_id": "item_uv_jacket",
+                "category": "outerwear",
+                "gender": "women",
+                "formality": "casual",
+                "store_id": "store_a",
+                "title_vi": "Áo khoác chống nắng nữ",
+                "desc_vi": "Thoáng mát cho mùa hè",
+                "image_path": "a.jpg",
+                "body_shapes_fit_list": [],
+                "season_list": ["summer"],
+                "stylist_notes_vi": "Áo khoác chống nắng mỏng nhẹ cho ngày nắng.",
+                "is_fallback_note": False,
+                "body_shapes_count": 0,
+                "season_count": 1,
+                "note_len": 44,
+            },
+            {
+                "item_id": "item_winter_dress",
+                "category": "dress",
+                "gender": "women",
+                "formality": "casual",
+                "store_id": "store_a",
+                "title_vi": "Đầm Đông Nữ Tay Dài Cổ Vuông",
+                "desc_vi": "Dễ phối với giày sandal, túi xách",
+                "image_path": "b.jpg",
+                "body_shapes_fit_list": [],
+                "season_list": ["winter"],
+                "stylist_notes_vi": "Đầm tay dài phù hợp thời tiết lạnh.",
+                "is_fallback_note": False,
+                "body_shapes_count": 0,
+                "season_count": 1,
+                "note_len": 35,
+            },
+        ]
+    )
+
+    flags = audit._build_semantic_flags(normalized)
+    rule_ids = set(flags["rule_id"]) if not flags.empty else set()
+
+    assert "winter_outerwear_summer_only" not in rule_ids
+    assert "summer_item_winter_only" not in rule_ids
+
+
 def test_main_writes_report_files(tmp_path):
     catalog = tmp_path / "catalog.parquet"
     links = tmp_path / "links.parquet"

@@ -41,14 +41,13 @@ _BACKEND_ERROR_MARKERS = (
 
 _WINTER_KEYWORDS = (
     "áo khoác dạ",
-    "áo len",
-    "vải dạ",
+    "áo phao",
+    "phao",
     "măng tô",
+    "vải dạ",
     "puffer",
     "coat",
-    "hoodie",
-    "sweater",
-    "cardigan",
+    "len cổ lọ",
 )
 
 _SUMMER_KEYWORDS = (
@@ -274,7 +273,6 @@ def _build_semantic_flags(
 
     for row in df.to_dict(orient="records"):
         title = str(row.get("title_vi", "") or "").lower()
-        desc = str(row.get("desc_vi", "") or "").lower()
         note = str(row.get("stylist_notes_vi", "") or "")
         note_lower = note.lower()
         category = str(row.get("category", "") or "")
@@ -309,11 +307,11 @@ def _build_semantic_flags(
         if category in {"accessory", "bag", "shoes"} and row["body_shapes_count"] > 0:
             flag(f"{category}_has_body_shape", "medium", ", ".join(row["body_shapes_fit_list"]))
 
-        text = f"{title} {desc}"
-        if any(keyword in text for keyword in _WINTER_KEYWORDS) and seasons == ["summer"]:
+        title_text = title
+        if any(keyword in title_text for keyword in _WINTER_KEYWORDS) and seasons == ["summer"]:
             flag("winter_outerwear_summer_only", "high", str(row.get("season_list", [])))
 
-        if any(keyword in text for keyword in _SUMMER_KEYWORDS) and seasons == ["winter"]:
+        if any(keyword in title_text for keyword in _SUMMER_KEYWORDS) and seasons == ["winter"]:
             flag("summer_item_winter_only", "high", str(row.get("season_list", [])))
 
         if row["is_fallback_note"]:

@@ -1,0 +1,18 @@
+{
+  "total_outfits": 824,
+  "valid_core_outfit_count": 824,
+  "complete_outfit_count": 816,
+  "shoeless_valid_core_count": 8,
+  "completion_rate": 0.990291,
+  "invalid_row_count": 0,
+  "invalid_reason_counts": {},
+  "semantic_flag_count": 8,
+  "high_severity_flag_count": 0,
+  "outlier_count": 496,
+  "manual_review_sample_count": 28,
+  "core_shape_counts": {
+    "dress+shoes": 38,
+    "top+bottom": 8,
+    "top+bottom+shoes": 778
+  }
+}

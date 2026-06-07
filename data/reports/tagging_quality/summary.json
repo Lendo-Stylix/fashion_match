@@ -6,8 +6,8 @@
   "invalid_reason_counts": {},
   "fallback_note_count": 2,
   "fallback_note_ratio": 0.000355998576005696,
-  "semantic_flag_count": 213,
-  "high_severity_flag_count": 14,
+  "semantic_flag_count": 196,
+  "high_severity_flag_count": 0,
   "outlier_count": 221,
-  "manual_review_sample_count": 51
+  "manual_review_sample_count": 37
 }

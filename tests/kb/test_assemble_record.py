@@ -75,3 +75,46 @@ def test_to_outfit_record_derives_item_semantic_tags_by_intersection():
 
     assert record.body_shapes_fit == ["pear"]
     assert record.season == ["transitional"]
+
+
+def test_to_outfit_record_dress_body_shapes_ignore_accessory_and_shoes():
+    items = [
+        _item(
+            "d",
+            "dress",
+            body_shapes_fit=["hourglass", "pear"],
+            season=["summer", "transitional"],
+        ),
+        _item("s", "shoes", body_shapes_fit=["rectangle"], season=["summer"]),
+        _item("a", "accessory", body_shapes_fit=["apple"], season=["winter"]),
+    ]
+
+    record = to_outfit_record(items, 0.9)
+
+    assert record.body_shapes_fit == ["pear", "hourglass"]
+    assert record.season == ["summer", "transitional"]
+
+
+def test_to_outfit_record_body_shapes_fall_back_to_union_for_main_garments():
+    items = [
+        _item("t", "top", body_shapes_fit=["rectangle"], season=["summer"]),
+        _item("b", "bottom", body_shapes_fit=["pear"], season=["transitional"]),
+        _item("a", "accessory", body_shapes_fit=["apple"], season=["winter"]),
+    ]
+
+    record = to_outfit_record(items, 0.75)
+
+    assert record.body_shapes_fit == ["pear", "rectangle"]
+
+
+def test_to_outfit_record_season_falls_back_to_union_for_main_garments_only():
+    items = [
+        _item("t", "top", season=["summer"]),
+        _item("b", "bottom", season=["transitional"]),
+        _item("s", "shoes", season=["winter"]),
+        _item("a", "accessory", season=["rainy"]),
+    ]
+
+    record = to_outfit_record(items, 0.88)
+
+    assert record.season == ["summer", "transitional"]

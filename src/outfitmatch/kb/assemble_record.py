@@ -8,10 +8,18 @@ from scripts.data.scrape.config import STORES_BY_ID
 
 from outfitmatch.kb.generation import _aggregate_embedding, _combo_gender, _price_tier
 from outfitmatch.kb.schema import OutfitRecord
-from outfitmatch.vocab import FORMALITY_RANK, FORMALITY_RELEVANT_CATEGORIES, occasions_for_formality
+from outfitmatch.vocab import (
+    BODY_SHAPE,
+    FORMALITY_RANK,
+    FORMALITY_RELEVANT_CATEGORIES,
+    SEASON,
+    occasions_for_formality,
+)
 
 _BODY_SHAPE_RELEVANT_CATEGORIES = frozenset({"top", "bottom", "dress", "outerwear"})
-_SEASON_RELEVANT_CATEGORIES = frozenset({"top", "bottom", "dress", "outerwear", "shoes"})
+_SEASON_RELEVANT_CATEGORIES = frozenset({"top", "bottom", "dress", "outerwear"})
+_PRIMARY_BODY_SHAPE_CATEGORIES = ("dress", "top", "bottom", "outerwear")
+_PRIMARY_SEASON_CATEGORIES = ("dress", "top", "bottom", "outerwear")
 
 if TYPE_CHECKING:
     from outfitmatch.kb.schema import ItemRecord
@@ -44,23 +52,66 @@ def _outfit_colors(items: list[ItemRecord]) -> list[str]:
     )
 
 
-def _shared_item_tags(
+def _ordered_vocab_values(values: set[str], vocab: tuple[str, ...]) -> list[str]:
+    """Return values in canonical vocab order, dropping unknowns."""
+    return [value for value in vocab if value in values]
+
+
+def _tag_sets(
     items: list[ItemRecord],
     attr: str,
     *,
-    categories: frozenset[str] | None = None,
-) -> list[str]:
-    """Conservative graph-path derivation: keep only tags shared across tagged items."""
+    categories: frozenset[str],
+) -> list[set[str]]:
+    """Collect non-empty tag sets from items in relevant categories."""
     tag_sets: list[set[str]] = []
     for item in items:
-        if categories is not None and item.category not in categories:
+        if item.category not in categories:
             continue
-        values = [str(v) for v in getattr(item, attr, []) if str(v)]
+        values = {str(v) for v in getattr(item, attr, []) if str(v)}
         if values:
-            tag_sets.append(set(values))
+            tag_sets.append(values)
+    return tag_sets
+
+
+def _derive_outfit_body_shapes(items: list[ItemRecord]) -> list[str]:
+    """Derive body-shape tags from primary garments, ignoring accessories/shoes."""
+    dress_tag_sets = _tag_sets(
+        [item for item in items if item.category == "dress"],
+        "body_shapes_fit",
+        categories=frozenset({"dress"}),
+    )
+    if dress_tag_sets:
+        return _ordered_vocab_values(set.union(*dress_tag_sets), BODY_SHAPE)
+
+    tag_sets = _tag_sets(items, "body_shapes_fit", categories=_BODY_SHAPE_RELEVANT_CATEGORIES)
     if not tag_sets:
         return []
-    return sorted(set.intersection(*tag_sets))
+
+    shared = set.intersection(*tag_sets)
+    if shared:
+        return _ordered_vocab_values(shared, BODY_SHAPE)
+    return _ordered_vocab_values(set.union(*tag_sets), BODY_SHAPE)
+
+
+def _derive_outfit_seasons(items: list[ItemRecord]) -> list[str]:
+    """Prefer shared seasons for main garments, then fall back to their union."""
+    dress_tag_sets = _tag_sets(
+        [item for item in items if item.category == "dress"],
+        "season",
+        categories=frozenset({"dress"}),
+    )
+    if dress_tag_sets:
+        return _ordered_vocab_values(set.union(*dress_tag_sets), SEASON)
+
+    tag_sets = _tag_sets(items, "season", categories=_SEASON_RELEVANT_CATEGORIES)
+    if not tag_sets:
+        return []
+
+    shared = set.intersection(*tag_sets)
+    if shared:
+        return _ordered_vocab_values(shared, SEASON)
+    return _ordered_vocab_values(set.union(*tag_sets), SEASON)
 
 
 def to_outfit_record(items: list[ItemRecord], score: float, *, index: int = 1) -> OutfitRecord:
@@ -74,12 +125,8 @@ def to_outfit_record(items: list[ItemRecord], score: float, *, index: int = 1) -
         compatibility_score=round(float(score), 6),
         occasion=_outfit_occasions(items),
         style=_outfit_styles(items),
-        body_shapes_fit=_shared_item_tags(
-            items,
-            "body_shapes_fit",
-            categories=_BODY_SHAPE_RELEVANT_CATEGORIES,
-        ),
-        season=_shared_item_tags(items, "season", categories=_SEASON_RELEVANT_CATEGORIES),
+        body_shapes_fit=_derive_outfit_body_shapes(items),
+        season=_derive_outfit_seasons(items),
         color_palette=_outfit_colors(items),
         price_total_vnd=price_total,
         price_tier=_price_tier(price_total),
