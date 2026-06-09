@@ -3,6 +3,7 @@
 Read-only report generator for graph-KB item semantic tags:
 - body_shapes_fit
 - season
+- colors
 - stylist_notes_vi
 """
 
@@ -135,6 +136,7 @@ def _normalize_catalog(
     for row in df.to_dict(orient="records"):
         body_values, body_error = _parse_tag_list(row.get("body_shapes_fit"))
         season_values, season_error = _parse_tag_list(row.get("season"))
+        color_values, color_error = _parse_tag_list(row.get("colors"))
         valid_body, invalid_body = validate_enum_values(body_values, BODY_SHAPE_SET)
         valid_season, invalid_season = validate_enum_values(season_values, SEASON_SET)
         note = _clean_note(row.get("stylist_notes_vi"))
@@ -152,6 +154,13 @@ def _normalize_catalog(
                 "field": "season",
                 "reason": season_error,
                 "evidence": row.get("season", ""),
+            })
+        if color_error is not None:
+            invalid_rows.append({
+                "item_id": row.get("item_id", ""),
+                "field": "colors",
+                "reason": color_error,
+                "evidence": row.get("colors", ""),
             })
         for invalid_value in invalid_body:
             invalid_rows.append({
@@ -187,9 +196,11 @@ def _normalize_catalog(
             "store_id": row.get("store_id", "unknown") or "unknown",
             "body_shapes_fit_list": valid_body,
             "season_list": valid_season,
+            "colors_list": color_values,
             "stylist_notes_vi": note,
             "body_shapes_count": len(valid_body),
             "season_count": len(valid_season),
+            "colors_count": len(color_values),
             "note_len": len(note),
             "is_fallback_note": _is_fallback_note(str(row.get("category", "")), note),
             "has_backend_error_leak": _contains_backend_error(note),
@@ -220,6 +231,7 @@ def _group_distribution(df: pd.DataFrame, group_col: str) -> pd.DataFrame:
             "total": int(len(group)),
             "empty_body_ratio": float((group["body_shapes_count"] == 0).mean()),
             "empty_season_ratio": float((group["season_count"] == 0).mean()),
+            "empty_color_ratio": float((group["colors_count"] == 0).mean()),
             "empty_note_ratio": float((group["stylist_notes_vi"] == "").mean()),
             "fallback_note_ratio": float(group["is_fallback_note"].mean()),
             "note_len_p50": float(group["note_len"].quantile(0.5)),
@@ -227,6 +239,7 @@ def _group_distribution(df: pd.DataFrame, group_col: str) -> pd.DataFrame:
             "note_len_max": int(group["note_len"].max()),
             "top_body_shape": _series_top_tag(group["body_shapes_fit_list"]),
             "top_season": _series_top_tag(group["season_list"]),
+            "top_color": _series_top_tag(group["colors_list"]),
         })
 
     return pd.DataFrame(rows).sort_values(["total", group_col], ascending=[False, True])
@@ -250,6 +263,14 @@ def _build_outliers(df: pd.DataFrame) -> pd.DataFrame:
                     "item_id": row["item_id"],
                     "outlier_type": "many_seasons",
                     "evidence": ", ".join(row["season_list"]),
+                }
+            )
+        if row["colors_count"] > 5:
+            rows.append(
+                {
+                    "item_id": row["item_id"],
+                    "outlier_type": "many_colors",
+                    "evidence": ", ".join(row["colors_list"]),
                 }
             )
         if row["note_len"] > 140:
@@ -306,6 +327,12 @@ def _build_semantic_flags(
 
         if category in {"accessory", "bag", "shoes"} and row["body_shapes_count"] > 0:
             flag(f"{category}_has_body_shape", "medium", ", ".join(row["body_shapes_fit_list"]))
+
+        if category in {"top", "bottom", "dress", "outerwear"}:
+            if row["body_shapes_count"] == 0:
+                flag("main_garment_missing_body_shape", "medium", "body_shapes_fit=[]")
+            if row["colors_count"] == 0:
+                flag("main_garment_missing_color", "medium", "colors=[]")
 
         title_text = title
         if any(keyword in title_text for keyword in _WINTER_KEYWORDS) and seasons == ["summer"]:
@@ -390,6 +417,9 @@ def _manual_review_sample(
                 "season": sample["season_list"].apply(
                     lambda values: json.dumps(values, ensure_ascii=False)
                 ),
+                "colors": sample["colors_list"].apply(
+                    lambda values: json.dumps(values, ensure_ascii=False)
+                ),
                 "stylist_notes_vi": sample["stylist_notes_vi"],
                 "flags": sample["item_id"].map(flag_map).fillna(""),
                 "review_status": "",
@@ -405,6 +435,7 @@ def _tagged_nonempty_count(df: pd.DataFrame) -> int:
     mask = (
         (df["body_shapes_count"] > 0)
         | (df["season_count"] > 0)
+        | (df["colors_count"] > 0)
         | (df["stylist_notes_vi"].astype(str).str.strip() != "")
     )
     return int(mask.sum())
@@ -460,11 +491,34 @@ def main(argv: list[str] | None = None) -> int:
     high_severity_flags = int((flags_df["severity"] == "high").sum()) if not flags_df.empty else 0
     fallback_note_count = int(normalized["is_fallback_note"].sum())
     tagged_nonempty = _tagged_nonempty_count(normalized)
+    main_mask = normalized["category"].isin(["top", "bottom", "dress", "outerwear"])
+    main_count = int(main_mask.sum())
+    main_complete_mask = (
+        main_mask
+        & (normalized["body_shapes_count"] > 0)
+        & (normalized["season_count"] > 0)
+        & (normalized["colors_count"] > 0)
+    )
+    main_missing_body_count = int((main_mask & (normalized["body_shapes_count"] == 0)).sum())
+    main_missing_season_count = int((main_mask & (normalized["season_count"] == 0)).sum())
+    main_missing_color_count = int((main_mask & (normalized["colors_count"] == 0)).sum())
 
     summary = {
         "total_items": int(len(normalized)),
         "tagged_nonempty": tagged_nonempty,
         "pending_empty": int(len(normalized) - tagged_nonempty),
+        "color_nonempty_count": int((normalized["colors_count"] > 0).sum()),
+        "color_nonempty_ratio": (
+            float((normalized["colors_count"] > 0).mean()) if len(normalized) else 0.0
+        ),
+        "main_garment_count": main_count,
+        "main_garment_complete_count": int(main_complete_mask.sum()),
+        "main_garment_complete_ratio": (
+            float(main_complete_mask.sum() / main_count) if main_count else 0.0
+        ),
+        "main_garment_missing_body_count": main_missing_body_count,
+        "main_garment_missing_season_count": main_missing_season_count,
+        "main_garment_missing_color_count": main_missing_color_count,
         "invalid_row_count": int(len(invalid_rows)),
         "invalid_reason_counts": invalid_reason_counts,
         "fallback_note_count": fallback_note_count,

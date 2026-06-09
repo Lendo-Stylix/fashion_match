@@ -63,6 +63,55 @@ _HTML_TAG_RE = re.compile(r"<[^>]+>")
 _WS_RE = re.compile(r"\s+")
 _SIZE_LIKE_RE = re.compile(r"[XSMLxsml0-9.\-/ ]{1,8}")
 
+# Longest aliases first so "xanh navy" is not truncated to plain "xanh".
+_TITLE_COLOR_ALIASES: tuple[tuple[str, str], ...] = (
+    ("xanh tím than", "xanh navy"),
+    ("xanh tim than", "xanh navy"),
+    ("xanh than", "xanh navy"),
+    ("xanh navy", "xanh navy"),
+    ("xanh dương", "xanh dương"),
+    ("xanh duong", "xanh dương"),
+    ("xanh biển", "xanh dương"),
+    ("xanh bien", "xanh dương"),
+    ("xanh lá", "xanh lá"),
+    ("xanh la", "xanh lá"),
+    ("xanh rêu", "xanh rêu"),
+    ("xanh reu", "xanh rêu"),
+    ("xám nhạt", "xám nhạt"),
+    ("xam nhat", "xám nhạt"),
+    ("xám đậm", "xám đậm"),
+    ("xam dam", "xám đậm"),
+    ("ghi sáng", "ghi"),
+    ("ghi sang", "ghi"),
+    ("ghi đậm", "ghi"),
+    ("ghi dam", "ghi"),
+    ("đen", "đen"),
+    ("den", "đen"),
+    ("trắng", "trắng"),
+    ("trang", "trắng"),
+    ("xám", "xám"),
+    ("xam", "xám"),
+    ("ghi", "ghi"),
+    ("navy", "xanh navy"),
+    ("beige", "be"),
+    ("be", "be"),
+    ("kem", "kem"),
+    ("nâu", "nâu"),
+    ("nau", "nâu"),
+    ("đỏ", "đỏ"),
+    ("do", "đỏ"),
+    ("hồng", "hồng"),
+    ("hong", "hồng"),
+    ("tím", "tím"),
+    ("tim", "tím"),
+    ("vàng", "vàng"),
+    ("vang", "vàng"),
+    ("cam", "cam"),
+    ("bạc", "bạc"),
+    ("bac", "bạc"),
+    ("xanh", "xanh"),
+)
+
 
 def _strip_html(html: str, max_len: int = 600) -> str:
     if not html:
@@ -90,8 +139,25 @@ def _looks_like_size(val: str) -> bool:
     return bool(_SIZE_LIKE_RE.fullmatch(v))
 
 
-def _infer_colors(variants: list[dict]) -> list[str]:
-    """Best-effort: pull color names from variant option fields."""
+def _infer_colors_from_text(*texts: object) -> list[str]:
+    """Infer coarse Vietnamese color labels from titles/tags when variants omit color."""
+    haystack = " ".join(str(text or "").lower() for text in texts if str(text or "").strip())
+    if not haystack:
+        return []
+
+    colors: list[str] = []
+    seen: set[str] = set()
+    for alias, canonical in _TITLE_COLOR_ALIASES:
+        if canonical in seen:
+            continue
+        if re.search(rf"(?<!\w){re.escape(alias)}(?!\w)", haystack, re.IGNORECASE):
+            seen.add(canonical)
+            colors.append(canonical)
+    return colors[:8]
+
+
+def _infer_colors(variants: list[dict], *, text_sources: Iterable[object] = ()) -> list[str]:
+    """Best-effort: pull color names from variants, then title/product text."""
     colors: list[str] = []
     seen: set[str] = set()
     for v in variants:
@@ -106,6 +172,13 @@ def _infer_colors(variants: list[dict]) -> list[str]:
                 continue
             seen.add(low)
             colors.append(val)
+
+    for color in _infer_colors_from_text(*text_sources):
+        low = color.lower()
+        if low in seen:
+            continue
+        seen.add(low)
+        colors.append(color)
     return colors[:8]
 
 
@@ -254,7 +327,10 @@ def normalize_products(
                 image_url=image_url,
                 title_vi=raw.title,
                 desc_vi=_strip_html(raw.description_html),
-                colors=_infer_colors(raw.variants),
+                colors=_infer_colors(
+                    raw.variants,
+                    text_sources=(raw.title, raw.product_type, *raw.tags),
+                ),
                 collected_date=today,
                 collector=collector,
                 store_id=store.store_id,

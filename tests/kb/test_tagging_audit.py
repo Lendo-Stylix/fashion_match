@@ -29,6 +29,7 @@ def test_normalize_catalog_flags_invalid_enum_empty_note_and_error_leak():
                 "image_path": "a.jpg",
                 "body_shapes_fit": '["pear"]',
                 "season": '["summer"]',
+                "colors": '["trắng"]',
                 "stylist_notes_vi": "Áo cơ bản dễ phối.",
             },
             {
@@ -41,6 +42,7 @@ def test_normalize_catalog_flags_invalid_enum_empty_note_and_error_leak():
                 "image_path": "b.jpg",
                 "body_shapes_fit": '["alien"]',
                 "season": "not-json",
+                "colors": "not-json",
                 "stylist_notes_vi": "WinError 10061 while tagging",
             },
             {
@@ -53,6 +55,7 @@ def test_normalize_catalog_flags_invalid_enum_empty_note_and_error_leak():
                 "image_path": "c.jpg",
                 "body_shapes_fit": "[]",
                 "season": '["summer"]',
+                "colors": "[]",
                 "stylist_notes_vi": "",
             },
         ]
@@ -61,6 +64,7 @@ def test_normalize_catalog_flags_invalid_enum_empty_note_and_error_leak():
     normalized, invalid_rows = audit._normalize_catalog(catalog, links_df=None)
 
     assert normalized.loc[normalized.item_id == "item_ok", "body_shapes_count"].item() == 1
+    assert normalized.loc[normalized.item_id == "item_ok", "colors_count"].item() == 1
     reasons = set(invalid_rows["reason"])
     assert "invalid_body_shape" in reasons
     assert "invalid_json_list" in reasons
@@ -87,6 +91,8 @@ def test_build_semantic_flags_catches_expected_rules():
                 "body_shapes_count": 1,
                 "season_count": 0,
                 "note_len": 58,
+                "colors_list": ["đen"],
+                "colors_count": 1,
             },
             {
                 "item_id": "item_winter_summer",
@@ -104,6 +110,8 @@ def test_build_semantic_flags_catches_expected_rules():
                 "body_shapes_count": 0,
                 "season_count": 1,
                 "note_len": 34,
+                "colors_list": [],
+                "colors_count": 0,
             },
         ]
     )
@@ -136,6 +144,8 @@ def test_build_semantic_flags_avoids_broad_keyword_false_positives():
                 "body_shapes_count": 0,
                 "season_count": 1,
                 "note_len": 44,
+                "colors_list": ["xanh"],
+                "colors_count": 1,
             },
             {
                 "item_id": "item_winter_dress",
@@ -153,6 +163,8 @@ def test_build_semantic_flags_avoids_broad_keyword_false_positives():
                 "body_shapes_count": 0,
                 "season_count": 1,
                 "note_len": 35,
+                "colors_list": ["đen"],
+                "colors_count": 1,
             },
         ]
     )
@@ -181,6 +193,7 @@ def test_main_writes_report_files(tmp_path):
                 "image_path": "a.jpg",
                 "body_shapes_fit": '["pear"]',
                 "season": '["summer"]',
+                "colors": '["trắng"]',
                 "stylist_notes_vi": "Áo cơ bản dễ phối.",
             },
             {
@@ -193,6 +206,7 @@ def test_main_writes_report_files(tmp_path):
                 "image_path": "b.jpg",
                 "body_shapes_fit": "[]",
                 "season": "[]",
+                "colors": '["đen"]',
                 "stylist_notes_vi": "Phụ kiện tạo điểm nhấn và hoàn thiện tổng thể outfit.",
             },
         ]
@@ -231,3 +245,5 @@ def test_main_writes_report_files(tmp_path):
     summary = json.loads((out_dir / "summary.json").read_text(encoding="utf-8"))
     assert summary["total_items"] == 2
     assert summary["tagged_nonempty"] == 2
+    assert summary["color_nonempty_count"] == 2
+    assert summary["main_garment_complete_count"] == 1

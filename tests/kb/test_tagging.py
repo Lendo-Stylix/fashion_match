@@ -35,13 +35,31 @@ def test_sanitize_tag_payload_filters_unknown_enum_values():
         {
             "body_shapes_fit": ["pear", "alien"],
             "season": ["summer", "monsoon"],
+            "colors": ["trắng"],
             "stylist_notes_vi": "Mặc mát mùa nóng.",
         }
     )
 
     assert clean.body_shapes_fit == ["pear"]
     assert clean.season == ["summer"]
+    assert clean.colors == ["trắng"]
     assert clean.stylist_notes_vi == "Mặc mát mùa nóng."
+
+
+def test_sanitize_tag_payload_accepts_common_local_model_aliases():
+    clean = sanitize_tag_payload(
+        {
+            "body_shapes": ["rectangle"],
+            "seasons": ["transitional"],
+            "color_palette": ["đen", "đen"],
+            "explanation_vi": "Dễ phối.",
+        }
+    )
+
+    assert clean.body_shapes_fit == ["rectangle"]
+    assert clean.season == ["transitional"]
+    assert clean.colors == ["đen"]
+    assert clean.stylist_notes_vi == "Dễ phối."
 
 
 def test_apply_item_tags_mutates_item_record():
@@ -184,6 +202,7 @@ def test_tag_items_supports_openai_compatible_backend(monkeypatch, tmp_path):
         return {
             "body_shapes_fit": ["rectangle"],
             "season": ["summer"],
+            "colors": ["trắng"],
             "stylist_notes_vi": "TurboQuant ok.",
         }
 
@@ -197,7 +216,40 @@ def test_tag_items_supports_openai_compatible_backend(monkeypatch, tmp_path):
     )
 
     assert seen == {"item_id": "item_1", "model": "gemma4-turboquant"}
+    assert tagged[0].store["colors"] == ["trắng"]
     assert tagged[0].stylist_notes_vi == "TurboQuant ok."
+
+
+def test_tag_items_rejects_incomplete_main_garment_payload_and_tries_fallback(tmp_path):
+    item = _item()
+    backends = [
+        tagging_mod.TaggingBackend(provider="openai", model="collapsed"),
+        tagging_mod.TaggingBackend(provider="openai", model="healthy"),
+    ]
+    calls: list[str] = []
+
+    def transport(record: ItemRecord, backend: tagging_mod.TaggingBackend):
+        calls.append(backend.model)
+        if backend.model == "collapsed":
+            return {"body_shapes_fit": [], "season": [], "stylist_notes_vi": "note only"}
+        return {
+            "body_shapes_fit": ["rectangle"],
+            "season": ["summer"],
+            "colors": ["trắng"],
+            "stylist_notes_vi": "Healthy payload.",
+        }
+
+    tagged = tag_items(
+        [item],
+        backends=backends,
+        backend_transport=transport,
+        cache_dir=str(tmp_path / "cache"),
+        force=True,
+    )
+
+    assert calls == ["collapsed", "healthy"]
+    assert tagged[0].body_shapes_fit == ["rectangle"]
+    assert tagged[0].season == ["summer"]
 
 
 def test_tag_items_adds_conservative_note_when_backend_returns_empty_payload(tmp_path):
@@ -253,6 +305,7 @@ def test_tag_items_writes_progress_log_for_success_and_failure(tmp_path):
         "ok": True,
         "body_shapes_fit": ["pear"],
         "season": ["summer"],
+        "colors": ["trắng"],
         "stylist_notes_vi": "Logged ok.",
         "errors": [],
     }

@@ -32,3 +32,6 @@ You are implementing code for: **OutfitMatch** — Body & Occasion-Aware Fashion
 - Branch policy: `main` (protected) → `dev` → `feature/<name>`. Current dev branch: `Model`.
 
 For everything else, follow global coder instructions.
+
+# Datasets 
+- Always update to hf repo Nhat-Quang/VN_Fashion_data after making changes in @data folder.

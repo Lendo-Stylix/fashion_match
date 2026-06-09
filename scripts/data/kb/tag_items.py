@@ -110,11 +110,27 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+_MAIN_SEMANTIC_TAG_CATEGORIES = frozenset({"top", "bottom", "dress", "outerwear"})
+
+
+def _item_colors(item: object) -> list[str]:
+    store = getattr(item, "store", {}) or {}
+    if isinstance(store, dict):
+        return [str(color) for color in store.get("colors", []) if str(color)]
+    return []
+
+
 def _is_tagged(item: object) -> bool:
     body_shapes = getattr(item, "body_shapes_fit", []) or []
     seasons = getattr(item, "season", []) or []
+    colors = _item_colors(item)
     notes = str(getattr(item, "stylist_notes_vi", "") or "").strip()
-    return bool(body_shapes or seasons or notes)
+    if not hasattr(item, "category"):
+        return bool(body_shapes or seasons or notes)
+    category = str(getattr(item, "category", "") or "")
+    if category in _MAIN_SEMANTIC_TAG_CATEGORIES:
+        return bool(body_shapes and seasons and notes and colors)
+    return bool((seasons or notes) and colors)
 
 
 def _selection_counts(items: list) -> dict[str, int]:
@@ -165,6 +181,7 @@ def _write_back(catalog_path: Path, tagged_items: list) -> int:
         item.item_id: {
             "body_shapes_fit": json.dumps(item.body_shapes_fit, ensure_ascii=False),
             "season": json.dumps(item.season, ensure_ascii=False),
+            "colors": json.dumps(_item_colors(item), ensure_ascii=False),
             "stylist_notes_vi": item.stylist_notes_vi,
         }
         for item in tagged_items
@@ -173,7 +190,7 @@ def _write_back(catalog_path: Path, tagged_items: list) -> int:
     if not updates:
         return 0
 
-    for column in ("body_shapes_fit", "season", "stylist_notes_vi"):
+    for column in ("body_shapes_fit", "season", "colors", "stylist_notes_vi"):
         if column not in catalog.columns:
             catalog[column] = "[]" if column != "stylist_notes_vi" else ""
 

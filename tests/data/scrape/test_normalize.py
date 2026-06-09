@@ -75,6 +75,18 @@ def test_happy_path():
     assert it.in_stock is True  # any variant available
 
 
+def test_infers_color_from_title_when_variant_options_only_contain_sizes():
+    raw = _raw(
+        title="Đầm đen dáng suông",
+        product_type="Đầm",
+        variants=[{"sku": "S", "price": "299000", "available": True, "option1": "S"}],
+    )
+
+    items = normalize_products([raw], _store(), start_index=1, existing_link_map={})
+
+    assert items[0].colors == ["đen"]
+
+
 def test_drops_when_no_image():
     items = normalize_products([_raw(images=[])], _store(), start_index=1, existing_link_map={})
     assert items == []

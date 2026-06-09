@@ -8,6 +8,7 @@ outfit-level metadata.
 Current item tags:
   - `body_shapes_fit` (BODY_SHAPE enum values)
   - `season` (SEASON enum values)
+  - `colors` (free-form Vietnamese color names stored in ItemRecord.store)
   - `stylist_notes_vi` (short Vietnamese note for future explanation use)
 
 All enum outputs are validated against `vocab.py`; stray values are logged and
@@ -46,7 +47,7 @@ logger = logging.getLogger(__name__)
 
 type BackendStatus = Literal["ok", "rate_limited", "auth_error", "unsupported", "error"]
 
-_PROMPT_VERSION = "graph-item-tag-v1"
+_PROMPT_VERSION = "graph-item-tag-v2"
 _JSON_BLOCK_RE = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL | re.IGNORECASE)
 _QUOTA_LIMIT_RE = re.compile(r"limit:\s*(\d+)", re.IGNORECASE)
 _RETRY_AFTER_RE = re.compile(r"Please retry in ([0-9.]+)s", re.IGNORECASE)
@@ -58,6 +59,7 @@ class ItemTagPayload:
 
     body_shapes_fit: list[str] = field(default_factory=list)
     season: list[str] = field(default_factory=list)
+    colors: list[str] = field(default_factory=list)
     stylist_notes_vi: str = ""
 
 
@@ -117,6 +119,7 @@ def _extract_json_payload(raw: object) -> dict[str, object]:
         return {
             "body_shapes_fit": raw.body_shapes_fit,
             "season": raw.season,
+            "colors": raw.colors,
             "stylist_notes_vi": raw.stylist_notes_vi,
         }
     if not isinstance(raw, str):
@@ -142,16 +145,25 @@ def sanitize_tag_payload(raw: object) -> ItemTagPayload:
         logger.warning("dropping invalid body_shapes_fit tags: %s", invalid_body)
 
     seasons, invalid_seasons = validate_enum_values(
-        _dedupe(_coerce_list(payload.get("season"))),
+        _dedupe(_coerce_list(payload.get("season") or payload.get("seasons"))),
         SEASON_SET,
     )
     if invalid_seasons:
         logger.warning("dropping invalid season tags: %s", invalid_seasons)
 
+    colors = _dedupe(
+        _coerce_list(
+            payload.get("colors")
+            or payload.get("color")
+            or payload.get("color_palette")
+            or payload.get("colours")
+        )
+    )
     notes = str(payload.get("stylist_notes_vi") or payload.get("explanation_vi") or "").strip()
     return ItemTagPayload(
         body_shapes_fit=body_shapes,
         season=seasons,
+        colors=colors,
         stylist_notes_vi=notes,
     )
 
@@ -160,6 +172,8 @@ def apply_item_tags(item: ItemRecord, tagged: ItemTagPayload) -> ItemRecord:
     """Mutate one ItemRecord with validated semantic tags."""
     item.body_shapes_fit = list(tagged.body_shapes_fit)
     item.season = list(tagged.season)
+    if tagged.colors:
+        item.store["colors"] = list(tagged.colors)
     item.stylist_notes_vi = tagged.stylist_notes_vi
     return item
 
@@ -182,7 +196,28 @@ def _ensure_minimal_item_note(item: ItemRecord, tagged: ItemTagPayload) -> ItemT
     return ItemTagPayload(
         body_shapes_fit=list(tagged.body_shapes_fit),
         season=list(tagged.season),
+        colors=list(tagged.colors),
         stylist_notes_vi=note,
+    )
+
+
+_MAIN_SEMANTIC_TAG_CATEGORIES = frozenset({"top", "bottom", "dress", "outerwear"})
+
+
+def _effective_colors(item: ItemRecord, tagged: ItemTagPayload) -> list[str]:
+    """Return payload colors, falling back to existing scraper colors."""
+    if tagged.colors:
+        return list(tagged.colors)
+    return [str(color) for color in item.store.get("colors", []) if str(color)]
+
+
+def _is_stage_complete(item: ItemRecord, tagged: ItemTagPayload) -> bool:
+    """Return whether a sanitized payload has enough signal to accept for this item."""
+    colors = _effective_colors(item, tagged)
+    if item.category in _MAIN_SEMANTIC_TAG_CATEGORIES:
+        return bool(tagged.body_shapes_fit and tagged.season and colors)
+    return bool(
+        colors and (tagged.body_shapes_fit or tagged.season or tagged.stylist_notes_vi.strip())
     )
 
 
@@ -216,8 +251,10 @@ Chỉ dùng đúng enum sau:
 - season: {list(SEASON)}
 
 Nguyên tắc:
-- Chỉ điền tag khi có tín hiệu khá rõ từ item + mô tả + ảnh.
-- Nếu không chắc, trả [] thay vì đoán.
+- Với top/bottom/dress/outerwear: chọn ít nhất 1 body_shapes_fit và ít nhất 1 season.
+- Với bag/shoes/accessory: body_shapes_fit thường là []; chỉ điền nếu thật sự liên quan.
+- `colors`: 1-3 màu chủ đạo nhìn thấy trên ảnh hoặc có trong metadata;
+  dùng tên màu tiếng Việt ngắn như "đen", "trắng", "be", "xanh navy".
 - `stylist_notes_vi` dài tối đa 1 câu ngắn, tiếng Việt tự nhiên.
 
 Item metadata:
@@ -233,6 +270,7 @@ Trả JSON đúng schema:
 {{
   "body_shapes_fit": ["pear"],
   "season": ["summer"],
+  "colors": ["trắng"],
   "stylist_notes_vi": "Áo dáng suông, hợp mặc mùa nóng và dễ cân bằng phần hông."
 }}
 """.strip()
@@ -541,7 +579,13 @@ def probe_backends(
                 if transport is not None
                 else _call_backend(item, backend=backend, api_key=api_key)
             )
-            sanitize_tag_payload(raw)
+            tagged = _ensure_minimal_item_note(item, sanitize_tag_payload(raw))
+            if not _is_stage_complete(item, tagged):
+                raise ValueError(
+                    "tagging payload incomplete for "
+                    f"category={item.category}: body_shapes_fit={tagged.body_shapes_fit} "
+                    f"season={tagged.season} colors={tagged.colors}"
+                )
         except Exception as exc:
             status, limit_rpm, retry_after_s = _classify_backend_error(exc)
             results.append(
@@ -734,6 +778,12 @@ def tag_items(
                         continue
                 try:
                     tagged = _ensure_minimal_item_note(item, sanitize_tag_payload(raw))
+                    if not _is_stage_complete(item, tagged):
+                        raise ValueError(
+                            "tagging payload incomplete for "
+                            f"category={item.category}: body_shapes_fit={tagged.body_shapes_fit} "
+                            f"season={tagged.season} colors={tagged.colors}"
+                        )
                     apply_item_tags(item, tagged)
                     _append_progress_record(
                         progress_log,
@@ -744,6 +794,7 @@ def tag_items(
                             "ok": True,
                             "body_shapes_fit": tagged.body_shapes_fit,
                             "season": tagged.season,
+                            "colors": _effective_colors(item, tagged),
                             "stylist_notes_vi": tagged.stylist_notes_vi,
                             "errors": errors,
                         },
@@ -776,6 +827,7 @@ def tag_items(
                         "ok": False,
                         "body_shapes_fit": [],
                         "season": [],
+                        "colors": [],
                         "stylist_notes_vi": "",
                         "errors": errors,
                     },

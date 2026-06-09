@@ -125,6 +125,31 @@ def test_select_items_skips_already_tagged_items_when_requested():
     assert [item.item_id for item in selected] == ["item_3"]
 
 
+def test_is_tagged_requires_complete_main_garment_semantics_and_colors():
+    complete = _Item("complete")
+    complete.category = "top"
+    complete.store = {"colors": ["đen"]}
+    complete.body_shapes_fit = ["rectangle"]
+    complete.season = ["summer"]
+    complete.stylist_notes_vi = "ok"
+
+    note_only = _Item("note_only")
+    note_only.category = "top"
+    note_only.store = {"colors": ["đen"]}
+    note_only.stylist_notes_vi = "only note"
+
+    colorless = _Item("colorless")
+    colorless.category = "top"
+    colorless.store = {"colors": []}
+    colorless.body_shapes_fit = ["rectangle"]
+    colorless.season = ["summer"]
+    colorless.stylist_notes_vi = "ok"
+
+    assert cli._is_tagged(complete) is True
+    assert cli._is_tagged(note_only) is False
+    assert cli._is_tagged(colorless) is False
+
+
 def test_write_back_updates_only_items_with_semantic_signal(tmp_path):
     catalog = tmp_path / "catalog.parquet"
     pd.DataFrame(
