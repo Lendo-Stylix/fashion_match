@@ -118,7 +118,7 @@ Sprint 3/5 — legacy materialized indexing implementation. Commit: pending
 
 `src/outfitmatch/kb/graph_store.py` persists `data/custom/graph/item_edges.parquet`, loads an in-memory `OutfitGraph` adjacency (`neighbors()` / `edge_weight()` / `item()`), and indexes item nodes into Qdrant `items` with filterable payload fields for future seed-node retrieval. Operational CLI: `uv run python -m scripts.data.kb.build_graph` (`--incremental`, `--no-qdrant`, `--limit-per-category`).
 
-Current adult-catalog graph build (`men|women|unisex`): `4694` item nodes, `316103` canonical edges, build time `27.4s`, degree min/median/max `60 / 76 / 2809`, and no forbidden `top-top` / `top-dress` edges in the output parquet.
+Current adult-catalog graph artifact (`men|women|unisex`): `4694` item nodes loaded from catalog and `316559` canonical edges in `data/custom/graph/item_edges.parquet`. Historical full graph grading baseline remains `catalog_coverage=0.7069`, `coherence_violations=0`, `fitb_recall@5=0.9813`, `n_assembled=7350`, `item_reuse_p95=27`.
 
 Sprint 1/3 — Graph KB construction + storage. Commit: pending
 
@@ -132,7 +132,7 @@ Sprint 1/3 — Graph KB construction + storage. Commit: pending
 
 `src/outfitmatch/kb/assemble_record.py` converts assembled item sets back into standard `OutfitRecord`s by deriving `occasion` from formality, `style` from store `style_tags`, and `color_palette` from item colors. Outfit `body_shapes_fit` / `season` now derive deterministically from primary garments (`dress`, `top`, `bottom`, `outerwear`): prefer shared tags, fall back to the union when needed, preserve canonical vocab order, and ignore accessory-driven body-shape pollution.
 `src/outfitmatch/kb/traversal.py` treats `dress` and `top+bottom` as valid clothing cores; `shoes` remain an optional-but-preferred completion item so the graph can return usable outfits even while shoe coverage is sparse.
-`scripts/data/kb/audit_outfit_tags.py` audits derived `OutfitRecord` metadata read-only from graph traversal outputs, validates enum/core-shape integrity, distinguishes invalid cores from shoeless-but-valid outfits (`missing_recommended_shoes`), and writes CSV/JSON reports under `data/reports/outfit_tagging_quality/`.
+`scripts/data/kb/audit_outfit_tags.py` audits derived `OutfitRecord` metadata read-only from graph traversal outputs, validates enum/core-shape integrity, distinguishes invalid cores from shoeless-but-valid outfits (`missing_recommended_shoes`), and writes CSV/JSON reports under `data/reports/outfit_tagging_quality/`. Current audits: item tagging quality has `5618/5618` non-empty tagged items, `0` pending empty, `0` invalid rows; outfit tagging quality has `824/824` valid core outfits, `816` complete-with-shoes, `8` shoeless valid cores, `0` invalid rows, `0` high-severity flags.
 
 Smoke E2E on the real graph: `uv run python -c "from outfitmatch.kb.catalog import load_catalog_items; from outfitmatch.kb.graph_store import load_graph; from outfitmatch.retrieval import search_outfits; from outfitmatch.pipeline import RecommendRequest; from scripts.data.scrape.base import CATALOG_DIR; items=load_catalog_items(CATALOG_DIR/'catalog_metadata.parquet', CATALOG_DIR/'item_store_links.parquet'); graph=load_graph(items=items); seeds=[it.item_id for it in items if it.category in ('top','dress')][:200]; recs=search_outfits(RecommendRequest(occasion='office'), graph=graph, seed_ids=seeds, top_n=10); print('outfits:', len(recs)); print('sample cats:', [[item.category for item in rec.items] for rec in recs[:3]])"`.
 
@@ -144,7 +144,7 @@ Sprint 2/3 — Graph traversal retrieval + pipeline integration; item semantic t
 
 `src/outfitmatch/metrics/retrieval.py` adds generic `recall_at_k()` plus graph-native `fitb_recall_at_k()`: mask one item from an assembled outfit, rank clique-valid completions by mean edge weight, and measure top-K recovery. `src/outfitmatch/kb/graph_eval.py` replaces materialized-KB diversity grading with `GraphReport` (`catalog_coverage`, `coherence_violations`, degree stats, reuse p95).
 
-Operational CLI: `uv run python -m scripts.data.kb.eval_graph --seeds 0 --occasion office` for full-sweep grading, or `--seeds 300` for a quick sanity sweep. Current full-sweep baseline on the adult graph: `4694` nodes, `316103` edges, `catalog_coverage=0.7069`, `coherence_violations=0`, `fitb_recall@5=0.9813`, `n_assembled=7350`, `item_reuse_p95=27`. Occasion ablation (`office`) drops coverage to `0.3613`; greedy traversal (`beam=1`) drops coverage to `0.6451`.
+Operational CLI: `uv run python -m scripts.data.kb.eval_graph --seeds 0 --occasion office` for full-sweep grading, or `--seeds 300` for a quick sanity sweep. Current graph artifact has `4694` adult nodes and `316559` edges; historical full-sweep grading baseline is `catalog_coverage=0.7069`, `coherence_violations=0`, `fitb_recall@5=0.9813`, `n_assembled=7350`, `item_reuse_p95=27`. Occasion ablation (`office`) drops coverage to `0.3613`; greedy traversal (`beam=1`) drops coverage to `0.6451`.
 
 Sprint 3/3 — Graph-native grading + ablation harness. Commit: pending
 

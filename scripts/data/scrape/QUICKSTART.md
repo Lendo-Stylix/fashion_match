@@ -63,7 +63,9 @@ uv run pytest tests/data/scrape -v
 - `data/custom/catalog/item_store_links.parquet` — item ↔ store mapping, including `available_sizes` and `sizes_in_stock`.
 - `data/custom/catalog/images/item_custom_*.jpg|png|webp` — image files.
 
-Next step is **Tầng 1 KB pipeline** (`src/outfitmatch/kb/`) which consumes
-these parquets to compute item embeddings (`embedding.py`), generate
-outfits (`generation.py`), score them (`scoring.py`), and tag metadata
-with Gemini Flash (`tagging.py`).
+Next step is **Tầng 1 graph KB pipeline** (`src/outfitmatch/kb/`): load these
+parquets as `ItemRecord`s (`catalog.py`), write semantic item tags with
+`tagging.py` / `scripts.data.kb.tag_items`, build the sparse compatibility graph
+with `graph.py` / `scripts.data.kb.build_graph`, then serve retrieval through
+`src/outfitmatch/retrieval.py`. Materialized outfit generation remains only a
+legacy comparison path.

@@ -150,9 +150,10 @@ It re-classifies every row (store tag first, title fallback), drops rows that
 no longer map to a valid category, and prunes orphan rows from
 `item_store_links.parquet`. Idempotent.
 
-Style + occasion + body-fit tagging is **not** done here — that's the Gemini
-Flash tagging step in `src/outfitmatch/kb/tagging.py` (Sprint 3–4). This
-scraper only produces clean items with valid `category` and a working image.
+Style/season/body-fit/color semantic tagging is **not** done here — that is the
+item semantic tagging step in `src/outfitmatch/kb/tagging.py` and
+`scripts/data/kb/tag_items.py`. This scraper only produces clean items with
+valid `category`, store metadata, sizes, and working images.
 
 ## Polite-scraping policy
 

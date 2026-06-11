@@ -53,22 +53,22 @@ Category distribution:
 
 | Category | Items |
 |---|---:|
-| `top` | 2796 |
-| `bottom` | 1456 |
-| `outerwear` | 375 |
+| `top` | 2800 |
+| `bottom` | 1457 |
+| `outerwear` | 383 |
 | `dress` | 364 |
-| `accessory` | 351 |
-| `bag` | 143 |
-| `shoes` | 133 |
+| `accessory` | 348 |
+| `bag` | 136 |
+| `shoes` | 130 |
 
 ### Graph KB (primary)
 
 Adult graph build (`men|women|unisex`) hiện hành:
 
 - `4694` item nodes
-- `316103` canonical edges trong `item_edges.parquet`
-- Build time ~`27.4s`
-- Degree min / median / max = `60 / 76 / 2809`
+- `316559` canonical edges trong `item_edges.parquet`
+- Historical build time baseline ~`27.4s`
+- Historical degree min / median / max = `60 / 76 / 2809`
 - `catalog_coverage = 0.7069`
 - `coherence_violations = 0`
 - `fitb_recall@5 = 0.9813`
