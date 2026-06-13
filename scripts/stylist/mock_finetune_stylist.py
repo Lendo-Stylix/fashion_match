@@ -1,11 +1,11 @@
-"""Create a dry-run manifest for the next Stylist fine-tuning task.
+"""Create a QLoRA dry-run manifest for the next Stylist fine-tuning task.
 
 This script does not train a model. It validates the local mock layout, checks that
 Kaggle token *names* exist in .env.local, and writes a redacted manifest for three
 candidate GGUF deployments driven by Llama Turbo Quant / llama.cpp.
 
-Important: GGUF is treated as the inference artifact. Real LoRA/SFT should train
-against the corresponding trainable base weights, then export/quantize for GGUF.
+Important: GGUF is treated as the inference artifact. Real QLoRA SFT should train
+against the corresponding trainable base weights, then merge/export/quantize for GGUF.
 """
 
 from __future__ import annotations
@@ -78,7 +78,8 @@ def _build_dataset_manifest(
     stylist_knowledge_dir = Path(str(dataset["stylist_knowledge_dir"]))
     users_query_response_dir = Path(str(dataset["users_query_response_dir"]))
     runs_dir = Path(str(config.get("outputs", {}).get("mock_manifest", ""))).parent
-    dirs = [stylist_knowledge_dir, users_query_response_dir, runs_dir]
+    training_root = Path(str(config.get("training", {}).get("output_root", runs_dir)))
+    dirs = [stylist_knowledge_dir, users_query_response_dir, runs_dir, training_root]
 
     accepted_extensions = {
         str(ext).lower() for ext in dataset.get("accepted_extensions", [])
@@ -118,19 +119,32 @@ def _build_device_manifest(config: dict[str, Any], env_keys: set[str]) -> dict[s
     }
 
 
+def _build_training_manifest(config: dict[str, Any]) -> dict[str, Any]:
+    training = config.get("training")
+    if not isinstance(training, dict):
+        raise ValueError("Missing `training` mapping in config")
+    return training
+
+
 def _build_model_manifest(config: dict[str, Any], env_keys: set[str]) -> list[dict[str, Any]]:
     models = config.get("models")
     if not isinstance(models, list) or not models:
         raise ValueError("Config must define a non-empty `models` list")
+
+    training = _build_training_manifest(config)
+    output_root = Path(
+        str(training.get("output_root", "data/stylist/fine_tune/runs/qlora_outputs"))
+    )
 
     rows: list[dict[str, Any]] = []
     for model in models:
         if not isinstance(model, dict):
             raise ValueError("Each model entry must be a mapping")
         token_env = str(model.get("kaggle_token_env", ""))
+        run_id = str(model.get("run_id", "unknown_run"))
         rows.append(
             {
-                "run_id": model.get("run_id"),
+                "run_id": run_id,
                 "kaggle_token_env": token_env,
                 "kaggle_token_present": token_env in env_keys,
                 "gguf_repo": model.get("gguf_repo"),
@@ -138,8 +152,10 @@ def _build_model_manifest(config: dict[str, Any], env_keys: set[str]) -> list[di
                 "trainable_base_model": model.get("trainable_base_model"),
                 "modality": model.get("modality"),
                 "role": model.get("role"),
+                "qlora_recipe": model.get("qlora_recipe", {}),
                 "request_overrides": model.get("request_overrides", {}),
                 "llama_server_flags": model.get("llama_server_flags", []),
+                "expected_adapter_output_dir": str(output_root / run_id),
                 "status": "mock_ready" if token_env in env_keys else "missing_kaggle_token",
             }
         )
@@ -161,14 +177,15 @@ def build_manifest(config_path: Path, *, create_dirs: bool) -> dict[str, Any]:
         "mode": config.get("mode"),
         "driver": config.get("driver", {}),
         "device": _build_device_manifest(config, env_keys),
+        "training": _build_training_manifest(config),
         "dataset": dataset_manifest,
         "models": _build_model_manifest(config, env_keys),
         "mock_pipeline": config.get("mock_pipeline", {}),
         "outputs": config.get("outputs", {}),
         "notes": [
             "No Kaggle token values are included in this manifest.",
-            "GGUF rows are inference targets; train LoRA on trainable_base_model weights.",
-            "Use the same benchmark pack before and after SFT for a fair comparison.",
+            "GGUF rows are inference targets; train QLoRA on trainable_base_model weights.",
+            "Use the same benchmark pack before and after QLoRA for a fair comparison.",
         ],
     }
 

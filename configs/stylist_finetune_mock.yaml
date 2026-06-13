@@ -7,7 +7,7 @@ mode: mock_only
 created_for: OutfitMatch v3.1-lite Conversational Stylist
 
 # Llama Turbo Quant / llama.cpp is the inference + evaluation driver for GGUF.
-# Actual LoRA/SFT should use trainable HF/Unsloth weights, then export/quantize to GGUF.
+# Actual QLoRA SFT should use trainable HF/Unsloth weights in 4-bit, then export/quantize to GGUF.
 driver:
   name: llama_turbo_quant
   api_style: openai_compatible_chat_completions
@@ -26,6 +26,35 @@ device:
     - KAGGLE_API_TOKEN_1
     - KAGGLE_API_TOKEN_2
     - KAGGLE_API_TOKEN_3
+
+training:
+  strategy: qlora_sft
+  library_stack:
+    - transformers
+    - peft
+    - bitsandbytes
+    - accelerate
+  load_in_4bit: true
+  bnb_4bit_quant_type: nf4
+  bnb_4bit_use_double_quant: true
+  bnb_4bit_compute_dtype: bfloat16
+  gradient_checkpointing: true
+  packing: false
+  max_seq_length: 4096
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 16
+  learning_rate: 0.0002
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.03
+  num_train_epochs: 2
+  lora:
+    r: 16
+    alpha: 32
+    dropout: 0.05
+    bias: none
+    target_modules_strategy: auto_find_linear_layers_excluding_lm_head
+  output_root: data/stylist/fine_tune/runs/qlora_outputs
 
 # User-provided dataset folders. The mock script can create/check these directories.
 dataset:
@@ -52,6 +81,18 @@ models:
     trainable_base_model: Qwen/Qwen3-VL-8B-Instruct
     modality: image_text_to_text
     role: current_architecture_baseline
+    qlora_recipe:
+      adapter_scope: multimodal_chat
+      tune_vision_tower: false
+      tune_projector: true
+      target_modules_hint:
+        - q_proj
+        - k_proj
+        - v_proj
+        - o_proj
+        - gate_proj
+        - up_proj
+        - down_proj
     notes:
       - Baseline aligned with existing OutfitMatch architecture.
       - Keep image understanding enabled for user outfit/body/occasion image prompts.
@@ -63,6 +104,18 @@ models:
     trainable_base_model: Qwen/Qwen3.5-9B
     modality: image_text_to_text
     role: strongest_small_qwen35_candidate
+    qlora_recipe:
+      adapter_scope: multimodal_chat
+      tune_vision_tower: false
+      tune_projector: true
+      target_modules_hint:
+        - q_proj
+        - k_proj
+        - v_proj
+        - o_proj
+        - gate_proj
+        - up_proj
+        - down_proj
     request_overrides:
       chat_template_kwargs:
         enable_thinking: false
@@ -77,6 +130,18 @@ models:
     trainable_base_model: google/gemma-4-12B-it
     modality: image_audio_text_to_text
     role: non_qwen_comparison
+    qlora_recipe:
+      adapter_scope: multimodal_chat
+      tune_vision_tower: false
+      tune_projector: true
+      target_modules_hint:
+        - q_proj
+        - k_proj
+        - v_proj
+        - o_proj
+        - gate_proj
+        - up_proj
+        - down_proj
     request_overrides:
       chat_template_kwargs:
         enable_thinking: false
@@ -91,7 +156,8 @@ mock_pipeline:
     - validate_dataset_folders
     - normalize_to_chatml_jsonl
     - base_model_turboquant_benchmark
-    - lora_sft_smoke_on_trainable_base_weights
+    - qlora_sft_on_trainable_base_weights
+    - merge_adapter_or_export_checkpoint
     - export_or_select_gguf_quant
     - post_tune_turboquant_benchmark
     - compare_three_models

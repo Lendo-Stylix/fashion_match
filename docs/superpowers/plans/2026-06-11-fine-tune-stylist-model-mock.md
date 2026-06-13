@@ -1,12 +1,12 @@
-# Fine-Tune Stylist Model — Mock Plan
+# Fine-Tune Stylist Model — QLoRA Mock Plan
 
 Date: 2026-06-11
 
 ## Goal
 
-Prepare a reproducible dry-run scaffold for the next task: compare/fine-tune three local
-Stylist candidates for OutfitMatch using the same data, Kaggle GPU execution, and Llama
-Turbo Quant / llama.cpp GGUF inference driver.
+Prepare a reproducible dry-run scaffold for the next task: compare and **QLoRA fine-tune**
+three local Stylist candidates for OutfitMatch using the same data, Kaggle GPU execution,
+and Llama Turbo Quant / llama.cpp GGUF inference driver.
 
 Target candidates:
 
@@ -16,32 +16,59 @@ Target candidates:
 
 ## Important training assumption
 
-GGUF is the deployment/inference artifact, not the normal LoRA training source. The mock
+GGUF is the deployment/inference artifact, not the normal fine-tuning source. The mock
 therefore separates:
 
 - **Inference/eval target:** Unsloth GGUF repo served by Llama Turbo Quant / llama.cpp via
   OpenAI-compatible `/v1/chat/completions`.
-- **Trainable base:** corresponding HF/Unsloth trainable weights:
+- **QLoRA trainable base:** corresponding HF/Unsloth trainable weights loaded in 4-bit:
   - `Qwen/Qwen3-VL-8B-Instruct`
   - `Qwen/Qwen3.5-9B`
   - `google/gemma-4-12B-it`
-- **After SFT:** merge/export/select GGUF quant, then re-run the exact same TurboQuant
-  benchmark pack.
+- **After QLoRA:** merge adapter or export checkpoint, quantize/select GGUF, then re-run the
+  exact same TurboQuant benchmark pack.
 
 This avoids pretending that production GGUF files are directly fine-tuned in-place.
 
 ## Created mock artifacts
 
 ```text
-configs/stylist_finetune_mock.yaml          # model/run/dataset/Kaggle mock config
+configs/stylist_finetune_mock.yaml          # QLoRA model/run/dataset/Kaggle mock config
 scripts/stylist/mock_finetune_stylist.py    # dry-run manifest generator, no training
-data/stylist/fine_tune/                    # local ignored dataset workspace
-  stylist_knowledge/                       # user-provided knowledge set
+data/stylist/fine_tune/                     # local ignored dataset workspace
+  stylist_knowledge/                        # user-provided knowledge set
   users_query_and_response/                 # user query/response set
   runs/                                     # generated local mock manifests/reports
 ```
 
 `data/stylist/` is intentionally ignored by git, so real datasets and run outputs stay local.
+
+## QLoRA recipe in the mock
+
+Default shared mock settings:
+
+- 4-bit loading: `nf4`
+- double quant: enabled
+- compute dtype: `bfloat16`
+- gradient checkpointing: enabled
+- max sequence length: `4096`
+- train/eval batch size per device: `1`
+- gradient accumulation steps: `16`
+- learning rate: `2e-4`
+- scheduler: `cosine`
+- warmup ratio: `0.03`
+- epochs: `2`
+- LoRA: `r=16`, `alpha=32`, `dropout=0.05`, `bias=none`
+- target module strategy: `auto_find_linear_layers_excluding_lm_head`
+
+Per-model mock adapter scope:
+
+- `tune_vision_tower: false`
+- `tune_projector: true`
+- `target_modules_hint`: `q_proj`, `k_proj`, `v_proj`, `o_proj`, `gate_proj`, `up_proj`, `down_proj`
+
+These values are mock defaults for the next implementation task; exact module names still need
+runtime inspection on the loaded trainable checkpoints.
 
 ## Dataset contract for the next implementation
 
@@ -99,6 +126,8 @@ The generated manifest is redacted and reports:
 - dataset directory existence
 - count of source files in both data folders
 - whether required Kaggle env variable names exist
+- shared QLoRA training defaults
+- per-model QLoRA recipe hints and adapter output directories
 - the GGUF inference repo and trainable base model for each run
 - hard gates for later benchmark comparison
 
@@ -114,8 +143,8 @@ The generated manifest is redacted and reports:
   - outfit ID hallucination guard
   - image fashion perception when image input is present
 - [ ] Run base GGUF benchmark through Llama Turbo Quant for all three candidates.
-- [ ] Run LoRA/SFT smoke on trainable base weights in Kaggle.
-- [ ] Export/quantize/select GGUF artifacts.
+- [ ] Run QLoRA fine-tune on trainable base weights in Kaggle.
+- [ ] Merge/export checkpoint and quantize/select GGUF artifacts.
 - [ ] Re-run the exact same TurboQuant benchmark and compare deltas.
 
 ## Browser-verified source notes used for this mock

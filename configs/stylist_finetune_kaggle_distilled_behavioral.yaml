@@ -1,0 +1,140 @@
+task: fine_tune_stylist_model_kaggle
+mode: kaggle_qlora
+created_for: OutfitMatch v3.1-lite Conversational Stylist
+kaggle:
+  owner: nhatquangvominh
+  dataset_slug: om-stylist-qlora-distilled-data
+  kernel_slug_prefix: om-sty-distilled
+  machine_shape: NvidiaTeslaT4x2
+  enable_gpu: true
+  enable_internet: true
+  is_private: true
+secrets:
+  allowed_hf_token_env_vars:
+  - HF_API_TOKEN_2
+  - HF_API_TOKEN_3
+  forbidden_hf_token_env_vars:
+  - HF_API_TOKEN_1
+  - HF_TOKEN
+  - HUGGINGFACE_TOKEN
+dataset:
+  source_mode: distilled_behavioral_bundle
+  root: data/stylist/fine_tune
+  stylist_knowledge_dir: data/stylist/fine_tune/runs/stylist_distilled_behavioral
+  users_query_response_dir: data/stylist/fine_tune/users_query_and_response
+  accepted_extensions:
+  - .csv
+  - .jsonl
+  - .json
+  - .md
+  - .txt
+  prefer_translated_columns: true
+  eval_fraction: 0.03
+  max_eval_records: 512
+  seed: 42
+  system_prompt: 'Bạn là AI stylist tiếng Việt của OutfitMatch cho thị trường Việt
+    Nam. Trả lời tự nhiên, thực tế, ưu tiên store/khí hậu Việt Nam, dùng controlled
+    vocabulary nội bộ bằng English snake_case khi cần gọi tool: occasion, style, body_shape,
+    season, price_tier. Không bịa outfit_id, sản phẩm, giá hoặc size; nếu thiếu thông
+    tin quan trọng thì hỏi lại ngắn gọn.'
+training:
+  framework: unsloth
+  strategy: qlora_sft
+  install_packages:
+  - unsloth
+  - trl
+  - peft
+  - accelerate
+  - bitsandbytes
+  - datasets
+  - huggingface_hub
+  - wandb
+  load_in_4bit: true
+  bnb_4bit_quant_type: nf4
+  bnb_4bit_use_double_quant: true
+  compute_dtype: float16
+  max_seq_length: 2048
+  packing: true
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 8
+  learning_rate: 0.0002
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.03
+  num_train_epochs: 1
+  optim: adamw_8bit
+  weight_decay: 0.01
+  logging_steps: 10
+  eval_steps: 100
+  save_steps: 250
+  save_total_limit: 2
+  ddp:
+    enabled: true
+    backend: torchrun
+    ddp_find_unused_parameters: false
+    effective_batch_size_note: per_device_train_batch_size * visible_gpus * gradient_accumulation_steps
+  lora:
+    r: 16
+    alpha: 32
+    dropout: 0.05
+    bias: none
+    target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  output_root: /kaggle/working/outfitmatch_stylist_qlora
+  report_to:
+  - wandb
+  max_session_steps: 1000
+  wandb:
+    project: outfitmatch-stylist
+    entity: null
+    kaggle_secret_name: WANDB_API_KEY
+    checkpoint_artifact_name: outfitmatch-{run_id}-checkpoint
+models:
+- run_id: qwen3vl8b_instruct
+  hf_token_env: HF_API_TOKEN_2
+  base_model: Qwen/Qwen3-VL-8B-Instruct
+  preferred_unsloth_4bit_model: unsloth/Qwen3-VL-8B-Instruct-bnb-4bit
+  gguf_repo: unsloth/Qwen3-VL-8B-Instruct-GGUF
+  modality: image_text_to_text
+  role: current_architecture_baseline
+  notes:
+  - User HF token constraint maps this run to HF_API_TOKEN_2.
+  - Fine-tune language/projector adapter only; keep vision tower frozen.
+- run_id: qwen35_9b
+  hf_token_env: HF_API_TOKEN_2
+  base_model: Qwen/Qwen3.5-9B
+  preferred_unsloth_4bit_model: unsloth/Qwen3.5-9B-bnb-4bit
+  gguf_repo: unsloth/Qwen3.5-9B-GGUF
+  modality: image_text_to_text
+  role: strongest_small_qwen35_candidate
+  request_overrides:
+    chat_template_kwargs:
+      enable_thinking: false
+  notes:
+  - Shares HF_API_TOKEN_2 because token 1 is forbidden.
+  - Disable thinking during downstream strict JSON/tool extraction.
+- run_id: gemma4_12b_it
+  hf_token_env: HF_API_TOKEN_3
+  base_model: google/gemma-4-12B-it
+  preferred_unsloth_4bit_model: unsloth/gemma-4-12b-it-bnb-4bit
+  gguf_repo: unsloth/gemma-4-12b-it-GGUF
+  modality: image_audio_text_to_text
+  role: non_qwen_comparison
+  request_overrides:
+    chat_template_kwargs:
+      enable_thinking: false
+  llama_server_flags:
+  - --jinja
+  notes:
+  - User HF token constraint maps this gated/non-Qwen comparison to HF_API_TOKEN_3.
+outputs:
+  package_root: data/stylist/fine_tune/runs/kaggle_qlora_distilled_behavioral
+  normalized_train_jsonl: data/stylist/fine_tune/runs/kaggle_qlora_distilled_behavioral/kaggle_dataset/train.jsonl
+  normalized_eval_jsonl: data/stylist/fine_tune/runs/kaggle_qlora_distilled_behavioral/kaggle_dataset/eval.jsonl
+  manifest: data/stylist/fine_tune/runs/kaggle_qlora_distilled_behavioral/manifest.json
