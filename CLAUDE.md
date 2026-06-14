@@ -209,16 +209,21 @@ git push origin Model
 
 **Mỗi lần thay đổi dataset trong thư mục `data/`, cần push lên HF repo `Nhat-Quang/VN_Fashion_data`:**
 
-```bash
-# Clone HF repo nếu chưa có
-huggingface-cli download Nhat-Quang/VN_Fashion_data --repo-type dataset --local-dir data/hf_sync/
+> **Lưu ý:** CLI đã đổi từ `huggingface-cli` → `hf`. Dùng `hf` cho mọi thao tác.
 
-# Copy data mới vào folder HF
+```bash
+# 1. Login nếu chưa đăng nhập
+hf auth login
+
+# 2. Download dataset hiện tại từ HF (để sync)
+hf download Nhat-Quang/VN_Fashion_data --repo-type dataset --local-dir data/hf_sync/
+
+# 3. Copy data mới vào folder HF sync
 cp data/custom/catalog/*.parquet data/hf_sync/catalog/
 cp data/custom/outfits/*.parquet data/hf_sync/outfits/ 2>/dev/null || true
 
-# Push lên HF
-huggingface-cli upload Nhat-Quang/VN_Fashion_data data/hf_sync --repo-type dataset --commit-message "$(date +%Y-%m-%d): mô tả thay đổi"
+# 4. Upload lên HF
+hf upload Nhat-Quang/VN_Fashion_data data/hf_sync --repo-type dataset --commit-message "$(date +%Y-%m-%d): mô tả thay đổi"
 ```
 
 **Khi code trong `src/` hoặc `scripts/` thay đổi:** không cần push HF dataset (chỉ push HF dataset khi data thay đổi).
