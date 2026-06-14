@@ -179,16 +179,62 @@ Ba luồng data **độc lập** (`Kien_truc_v3.1.md` §3.3):
 
 Mỗi lần thay đổi dataset trong folder `@data`, cần cập nhật lại hf repo Nhat-Quang/VN_Fashion_data
 
+## Git Workflow — COMMIT & PUSH SAU MỖI THAY ĐỔI
+
+**SAU MỖI LẦN SỬA FILE, PHẢI THỰC HIỆN ĐẦY ĐỦ CÁC BƯỚC SAU:**
+
+```bash
+# 1. Kiểm tra trạng thái
+git status
+
+# 2. Stage tất cả thay đổi (code + docs + data)
+git add -A
+
+# 3. Commit với message tiếng Việt ngắn gọn (≤72 ký tự)
+git commit -m "feat: mô tả ngắn gọn thay đổi"
+# hoặc: git commit -m "fix: sửa lỗi X"
+# hoặc: git commit -m "docs: cập nhật document Y"
+
+# 4. Push lên GitHub remote
+git push origin Model
+```
+
+**Quy tắc commit:**
+- Prefix: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`
+- Message tiếng Việt, ngắn gọn, mô tả đúng thay đổi
+- Mỗi task hoàn thành = 1 commit riêng
+- Push ngay sau commit để tránh mất code
+
+## Hugging Face Dataset Sync
+
+**Mỗi lần thay đổi dataset trong thư mục `data/`, cần push lên HF repo `Nhat-Quang/VN_Fashion_data`:**
+
+```bash
+# Clone HF repo nếu chưa có
+huggingface-cli download Nhat-Quang/VN_Fashion_data --repo-type dataset --local-dir data/hf_sync/
+
+# Copy data mới vào folder HF
+cp data/custom/catalog/*.parquet data/hf_sync/catalog/
+cp data/custom/outfits/*.parquet data/hf_sync/outfits/ 2>/dev/null || true
+
+# Push lên HF
+huggingface-cli upload Nhat-Quang/VN_Fashion_data data/hf_sync --repo-type dataset --commit-message "$(date +%Y-%m-%d): mô tả thay đổi"
+```
+
+**Khi code trong `src/` hoặc `scripts/` thay đổi:** không cần push HF dataset (chỉ push HF dataset khi data thay đổi).
+
 ## Branch & Definition of Done
 
 Branch hiện tại: `Model` (đang phát triển v3.1-lite).
 Branch policy: `main` (protected) → `dev` → `feature/<name>`.
 
 Feature **done** khi:
-1. PR merged to `dev` với ≥ 1 peer review.
-2. `pytest` coverage ≥ 70% cho module đụng tới, CI (GitHub Actions) xanh.
-3. Có docstring trên public functions + entry trong `docs/feature.md`.
-4. Reproducible E2E qua `make demo`.
+1. `git add -A && git commit -m "..." && git push origin Model` đã chạy.
+2. PR merged to `dev` với ≥ 1 peer review.
+3. `pytest` coverage ≥ 70% cho module đụng tới, CI (GitHub Actions) xanh.
+4. Có docstring trên public functions + entry trong `docs/feature.md`.
+5. Reproducible E2E qua `make demo`.
+6. Nếu data thay đổi: đã push lên HF repo `Nhat-Quang/VN_Fashion_data`.
 
 ## Evaluation Targets (Sprint 9 grading)
 

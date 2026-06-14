@@ -33,8 +33,6 @@ def test_build_default_upload_plan_targets_expected_hf_repos() -> None:
     }
 
 
-
-
 def test_upload_dataset_item_uses_file_or_folder_api(tmp_path: Path) -> None:
     module = _load_module(
         "upload_stylist_artifacts_to_hf_for_api_test",
@@ -70,6 +68,7 @@ def test_upload_dataset_item_uses_file_or_folder_api(tmp_path: Path) -> None:
         ("file", str(csv_path)),
         ("folder", str(folder_path)),
     ]
+
 
 def test_stage_model_artifact_keeps_peft_root_files(tmp_path: Path) -> None:
     module = _load_module(
@@ -110,7 +109,7 @@ def test_qwen35_experiment_defaults_and_messages() -> None:
     )
 
     parser = module.build_parser()
-    args = parser.parse_args(["--prompt", "Gợi ý outfit đi làm"]) 
+    args = parser.parse_args(["--prompt", "Gợi ý outfit đi làm"])
     messages = module.build_messages(args.system_prompt, args.prompt)
 
     assert args.adapter_repo == "Nhat-Quang/outfitmatch-stylist-qwen35-9b-lora"

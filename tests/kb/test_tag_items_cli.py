@@ -38,12 +38,14 @@ def test_candidate_backends_defaults_to_three_google_models():
 
 
 def test_candidate_backends_prepends_ollama_models_when_requested():
-    args = cli._parse_args([
-        "--ollama-model",
-        "qwen3-vl:8b",
-        "--ollama-model",
-        "gemma3:4b",
-    ])
+    args = cli._parse_args(
+        [
+            "--ollama-model",
+            "qwen3-vl:8b",
+            "--ollama-model",
+            "gemma3:4b",
+        ]
+    )
 
     assert cli._candidate_backends(args)[:2] == [
         TaggingBackend(provider="ollama", model="qwen3-vl:8b"),

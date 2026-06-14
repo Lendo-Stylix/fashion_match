@@ -98,9 +98,7 @@ def test_normalize_outfits_allows_shoeless_core_but_rejects_invalid_core_shape()
     normalized, invalid_rows = audit._normalize_outfits([shoeless_valid, invalid])
 
     assert len(normalized) == 2
-    core_shape = normalized.loc[
-        normalized["outfit_id"] == "OF_00001", "core_shape"
-    ].iloc[0]
+    core_shape = normalized.loc[normalized["outfit_id"] == "OF_00001", "core_shape"].iloc[0]
     assert core_shape == "top+bottom"
     reasons = set(invalid_rows["reason"])
     assert {

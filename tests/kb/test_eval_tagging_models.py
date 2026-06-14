@@ -57,15 +57,30 @@ def test_summarize_progress_scores_valid_json_quality(tmp_path):
 
 def test_choose_best_model_prefers_quality_then_latency():
     slow = eval_mod.ModelQualitySummary(
-        model="slow", total=10, ok=10, with_body_shape=10, with_season=10, with_note=10,
+        model="slow",
+        total=10,
+        ok=10,
+        with_body_shape=10,
+        with_season=10,
+        with_note=10,
         avg_latency_s=20.0,
     )
     fast = eval_mod.ModelQualitySummary(
-        model="fast", total=10, ok=10, with_body_shape=10, with_season=10, with_note=10,
+        model="fast",
+        total=10,
+        ok=10,
+        with_body_shape=10,
+        with_season=10,
+        with_note=10,
         avg_latency_s=5.0,
     )
     weak = eval_mod.ModelQualitySummary(
-        model="weak", total=10, ok=8, with_body_shape=8, with_season=8, with_note=8,
+        model="weak",
+        total=10,
+        ok=8,
+        with_body_shape=8,
+        with_season=8,
+        with_note=8,
         avg_latency_s=1.0,
     )
 

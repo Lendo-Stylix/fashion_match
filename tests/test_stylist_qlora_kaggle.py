@@ -111,11 +111,7 @@ def test_build_package_normalizes_only_stylist_knowledge(tmp_path: Path) -> None
     assert "resume_from_checkpoint=" in kernel_text
     assert "_restore_checkpoint_from_dataset" in kernel_text
     assert "_wait_for_restored_checkpoint" in kernel_text
-    expected_marker = (
-        b'marker.write_text(label + "'
-        + bytes([92, 110])
-        + b'", encoding="utf-8")'
-    )
+    expected_marker = b'marker.write_text(label + "' + bytes([92, 110]) + b'", encoding="utf-8")'
     assert expected_marker in kernel_bytes
     assert "_restore_checkpoint_from_wandb" in kernel_text
     assert "WANDB_API_KEY" in kernel_text
