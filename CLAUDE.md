@@ -230,7 +230,7 @@ hf upload Nhat-Quang/VN_Fashion_data data/hf_sync --repo-type dataset --commit-m
 
 ## Branch & Definition of Done
 
-Branch hiện tại: `Model` (đang phát triển v3.1-lite).
+Branch hiện tại: `main` (đang phát triển v3.1-lite).
 Branch policy: `main` (protected) → `dev` → `feature/<name>`.
 
 Feature **done** khi:
