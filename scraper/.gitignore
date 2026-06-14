@@ -1,0 +1,46 @@
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Chrome User Profiles (contains user data, secrets, large caches)
+**/chrome_profile/
+
+# Scraped output directories
+**/output/
+harvest/result/
+harvest/result.zip
+
+# Raw data logs, HTML/JSON dumps (large files)
+*.html
+harvest/aristino/sample_product_ax.json
+harvest/aristino/ld_json.json
+discovery/aristino/docs_and_logs/*.json
+
+# Operating system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# IDE and Editor settings
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Temporary scratch space
+scratch/
+
+# Temporary tool input files
+**/tools/input.txt
+

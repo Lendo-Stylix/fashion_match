@@ -30,6 +30,7 @@ mlruns/
 models/
 data/raw/
 data/processed/
+data/scraped/
 *.pt
 *.pth
 *.safetensors
@@ -46,3 +47,11 @@ data/processed/
 # OS
 .DS_Store
 Thumbs.db
+
+# IDE
+.vscode/
+
+# Translation datasets (large files)
+traslate/*.parquet
+traslate/*.jsonl
+

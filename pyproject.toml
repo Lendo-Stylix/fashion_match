@@ -51,6 +51,7 @@ dependencies = [
     "python-multipart>=0.0.20",
     # Demo
     "gradio>=5.9",
+    "playwright>=1.60.0",
 ]
 
 [dependency-groups]

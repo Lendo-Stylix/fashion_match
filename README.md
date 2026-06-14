@@ -15,6 +15,31 @@ make qdrant-up
 make demo
 ```
 
+## Repository Structure
+
+To help beginners and developers easily navigate the codebase, the project is structured as follows:
+
+```text
+fashion_match/
+├── 📂 data/                   # [DATA] Raw and processed datasets (managed by DVC)
+├── 📂 scraper/                # [DATA COLLECTION] Scrapers for fashion websites
+│   ├── 📂 discovery/          - Scripts to discover product URLs
+│   ├── 📂 experience/         - Site-specific crawler logs and code
+│   └── 📂 harvest/            - Harvesters to extract detailed product details
+├── 📂 traslate/               # [PREPROCESSING] Scripts to translate data to Vietnamese
+├── 📂 scripts/                # [UTILITIES] Scripts to merge, clean, and validate data
+├── 📂 src/outfitmatch/        # [BACKEND & MODEL] Core ML model & recommendation logic
+│   ├── 📂 train/              - Model training pipelines (contrastive, preference)
+│   ├── 📂 encoders/           - Image and text encoders (CLIP, etc.)
+│   ├── 📂 eval/               - Recommendation engine evaluation
+│   └── 📂 ui/                 - App interfaces (CLI and Gradio)
+├── 📂 configs/                # [CONFIGS] Configuration YAMLs for training and running models
+├── 📂 docs/                   # [DOCUMENTATION] Architecture guides and experiment results
+├── 📂 tests/                  # [TESTS] Automated unit and integration tests
+└── 📄 pyproject.toml          # [METADATA] Project dependencies and build configurations
+```
+
+
 ## Run Experiments
 
 ```bash
