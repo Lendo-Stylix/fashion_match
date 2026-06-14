@@ -98,5 +98,5 @@ tests/              # Mirrors src/scripts domains
 | Vai trò | Owner |
 |---|---|
 | Dev A — Data/KB (Tầng 1) | Nhật Quang |
-| Dev B — Model/Stylist (Tầng 2) | TBD |
-| Dev C — Retrieval / Quiz / UI / API (Tầng 3-4) | TBD |
+| Dev B — Model/Stylist (Tầng 2) | Đình Lộc |
+| Dev C — Retrieval / Quiz / UI / API (Tầng 3-4) | Hữu Hoàng |
