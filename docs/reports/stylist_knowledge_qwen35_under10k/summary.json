@@ -1,0 +1,287 @@
+{
+  "source_dir": "data\\stylist\\fine_tune\\stylist_knowledge",
+  "output_dir": "data\\stylist\\fine_tune\\runs\\stylist_distilled_qwen35_under10k",
+  "seed": 42,
+  "knowledge_target": 7200,
+  "max_per_family": 3,
+  "max_answer_words": 280,
+  "echo_threshold": 0.65,
+  "knowledge_examples": 7200,
+  "behavioral_examples": 1600,
+  "combined_examples": 8800,
+  "behavioral_task_counts": {
+    "ask_missing_info": 250,
+    "body_analysis": 200,
+    "edge_case": 150,
+    "multi_turn": 200,
+    "polite_decline": 150,
+    "recommend_explain": 300,
+    "tool_calling": 350
+  },
+  "selection_topic_targets": {
+    "body_fit": 842,
+    "care_maintenance": 21,
+    "color_analysis": 2723,
+    "fabric_material": 1458,
+    "general_styling": 71,
+    "layering_season": 11,
+    "occasion_styling": 134,
+    "shoes_accessories": 58,
+    "wardrobe_capsule": 1882
+  },
+  "quality_gate": {
+    "clean_pool_examples": 35994,
+    "dropped_examples": 4308,
+    "clean_pool_flag_counts": {
+      "clean": 35994
+    },
+    "dropped_flag_counts": {
+      "mixed_script": 1788,
+      "question_echo": 167,
+      "too_long": 2593
+    }
+  },
+  "raw_summary": {
+    "task_counts": {
+      "stylist_knowledge": 40302
+    },
+    "topic_counts": {
+      "body_fit": 1727,
+      "care_maintenance": 26,
+      "color_analysis": 20100,
+      "fabric_material": 5102,
+      "general_styling": 132,
+      "layering_season": 21,
+      "occasion_styling": 203,
+      "shoes_accessories": 122,
+      "wardrobe_capsule": 12869
+    },
+    "prompt_style_counts": {
+      "definition": 2539,
+      "first_person": 26850,
+      "how_to": 3816,
+      "other": 6614,
+      "request": 483
+    },
+    "answer_length_counts": {
+      "long": 4245,
+      "medium": 30230,
+      "short": 5827
+    },
+    "word_stats": {
+      "prompt_words": {
+        "mean": 28.4,
+        "median": 28.0,
+        "p90": 38.0,
+        "max": 65
+      },
+      "assistant_words": {
+        "mean": 136.69,
+        "median": 120.0,
+        "p90": 185.0,
+        "max": 705
+      },
+      "combined_words_total": 6653773,
+      "approx_qwen_tokens": 8317216
+    },
+    "quality_flags": {
+      "clean": 35994,
+      "mixed_script": 1788,
+      "question_echo": 167,
+      "too_long": 2593
+    }
+  },
+  "clean_pool_summary": {
+    "task_counts": {
+      "stylist_knowledge": 35994
+    },
+    "topic_counts": {
+      "body_fit": 1616,
+      "care_maintenance": 26,
+      "color_analysis": 18863,
+      "fabric_material": 4729,
+      "general_styling": 112,
+      "layering_season": 20,
+      "occasion_styling": 194,
+      "shoes_accessories": 109,
+      "wardrobe_capsule": 10325
+    },
+    "prompt_style_counts": {
+      "definition": 2332,
+      "first_person": 24130,
+      "how_to": 3151,
+      "other": 5976,
+      "request": 405
+    },
+    "answer_length_counts": {
+      "long": 1512,
+      "medium": 28769,
+      "short": 5713
+    },
+    "word_stats": {
+      "prompt_words": {
+        "mean": 27.8,
+        "median": 28.0,
+        "p90": 37.0,
+        "max": 65
+      },
+      "assistant_words": {
+        "mean": 117.5,
+        "median": 116.0,
+        "p90": 159.0,
+        "max": 280
+      },
+      "combined_words_total": 5230074,
+      "approx_qwen_tokens": 6537592
+    },
+    "quality_flags": {
+      "clean": 35994
+    }
+  },
+  "knowledge_summary": {
+    "task_counts": {
+      "stylist_knowledge": 7200
+    },
+    "topic_counts": {
+      "body_fit": 842,
+      "care_maintenance": 21,
+      "color_analysis": 2723,
+      "fabric_material": 1458,
+      "general_styling": 71,
+      "layering_season": 11,
+      "occasion_styling": 134,
+      "shoes_accessories": 58,
+      "wardrobe_capsule": 1882
+    },
+    "prompt_style_counts": {
+      "definition": 1406,
+      "first_person": 2163,
+      "how_to": 1492,
+      "other": 1989,
+      "request": 150
+    },
+    "answer_length_counts": {
+      "long": 555,
+      "medium": 3836,
+      "short": 2809
+    },
+    "word_stats": {
+      "prompt_words": {
+        "mean": 24.1,
+        "median": 23.0,
+        "p90": 35.0,
+        "max": 59
+      },
+      "assistant_words": {
+        "mean": 104.61,
+        "median": 96.0,
+        "p90": 162.0,
+        "max": 280
+      },
+      "combined_words_total": 926711,
+      "approx_qwen_tokens": 1158389
+    },
+    "quality_flags": {
+      "clean": 7200
+    }
+  },
+  "behavioral_summary": {
+    "task_counts": {
+      "ask_missing_info": 250,
+      "body_analysis": 200,
+      "edge_case": 150,
+      "multi_turn": 200,
+      "polite_decline": 150,
+      "recommend_explain": 300,
+      "tool_calling": 350
+    },
+    "topic_counts": {
+      "body_fit": 555,
+      "color_analysis": 706,
+      "fabric_material": 137,
+      "general_styling": 175,
+      "occasion_styling": 8,
+      "wardrobe_capsule": 19
+    },
+    "prompt_style_counts": {
+      "other": 1600
+    },
+    "answer_length_counts": {
+      "medium": 61,
+      "short": 1539
+    },
+    "word_stats": {
+      "prompt_words": {
+        "mean": 17.94,
+        "median": 20.0,
+        "p90": 24.0,
+        "max": 24
+      },
+      "assistant_words": {
+        "mean": 51.61,
+        "median": 50.0,
+        "p90": 74.0,
+        "max": 95
+      },
+      "combined_words_total": 111276,
+      "approx_qwen_tokens": 139095
+    },
+    "quality_flags": {
+      "clean": 1600
+    }
+  },
+  "combined_summary": {
+    "task_counts": {
+      "ask_missing_info": 250,
+      "body_analysis": 200,
+      "edge_case": 150,
+      "multi_turn": 200,
+      "polite_decline": 150,
+      "recommend_explain": 300,
+      "stylist_knowledge": 7200,
+      "tool_calling": 350
+    },
+    "topic_counts": {
+      "body_fit": 1397,
+      "care_maintenance": 21,
+      "color_analysis": 3429,
+      "fabric_material": 1595,
+      "general_styling": 246,
+      "layering_season": 11,
+      "occasion_styling": 142,
+      "shoes_accessories": 58,
+      "wardrobe_capsule": 1901
+    },
+    "prompt_style_counts": {
+      "definition": 1406,
+      "first_person": 2163,
+      "how_to": 1492,
+      "other": 3589,
+      "request": 150
+    },
+    "answer_length_counts": {
+      "long": 555,
+      "medium": 3897,
+      "short": 4348
+    },
+    "word_stats": {
+      "prompt_words": {
+        "mean": 22.98,
+        "median": 21.0,
+        "p90": 34.0,
+        "max": 59
+      },
+      "assistant_words": {
+        "mean": 94.98,
+        "median": 81.0,
+        "p90": 151.0,
+        "max": 280
+      },
+      "combined_words_total": 1037987,
+      "approx_qwen_tokens": 1297484
+    },
+    "quality_flags": {
+      "clean": 8800
+    }
+  }
+}

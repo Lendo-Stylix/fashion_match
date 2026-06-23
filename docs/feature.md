@@ -4,6 +4,16 @@ Each merged feature gets one entry here. Format: `## feature-name` → brief des
 
 ---
 
+## stylist-knowledge-distill — Qwen3.5 Under-10k Dataset Bundle
+
+`scripts/stylist/distill_stylist_dataset.py` now applies a quality gate before sampling: drop mixed-script translation artifacts, prompt-echo rows, and overlong essay answers; cap near-duplicate prompt families; then select a topic-balanced knowledge core with richer manifest diagnostics (`quality_gate`, word stats, answer-length mix, topic targets). A new CLI preset `--preset qwen35-under10k` builds the recommended 7.2k knowledge + 1.6k behavioral bundle for QLoRA on `Qwen/Qwen3.5-9B`.
+
+`scripts/stylist/analyze_stylist_knowledge.py` generates a reproducible report with PNG charts under `docs/reports/stylist_knowledge_qwen35_under10k/` and writes the distilled artifact to `data/stylist/fine_tune/runs/stylist_distilled_qwen35_under10k/`.
+
+Sprint 6/7 — stylist SFT dataset cleanup and distillation refresh. Commit: pending
+
+---
+
 ## vocab — Controlled Vocabulary
 
 `src/outfitmatch/vocab.py` — single source of truth for all enum values (OCCASION, STYLE, BODY_SHAPE, SEASON, PRICE_TIER, ITEM_CATEGORY, SKIN_TONE). Frozen sets for O(1) membership checks. Vietnamese labels in `*_LABELS_VI` dicts (display-only). `validate_enum_values()` helper used by Gemini LLM-tagging pipeline to reject stray values before writing to KB.

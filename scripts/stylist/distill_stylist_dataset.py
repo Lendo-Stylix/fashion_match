@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import random
 import re
 import shutil
@@ -16,6 +17,7 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
+from statistics import mean
 from typing import Any
 
 import yaml
@@ -46,6 +48,15 @@ BEHAVIORAL_TASKS: tuple[str, ...] = (
     "edge_case",
     "tool_calling",
 )
+RECOMMENDED_QWEN35_TASK_COUNTS: dict[str, int] = {
+    "ask_missing_info": 250,
+    "body_analysis": 200,
+    "recommend_explain": 300,
+    "polite_decline": 150,
+    "multi_turn": 200,
+    "edge_case": 150,
+    "tool_calling": 350,
+}
 TOPIC_PATTERNS: dict[str, re.Pattern[str]] = {
     "wardrobe_capsule": re.compile(r"tủ quần áo|capsule", re.IGNORECASE),
     "color_analysis": re.compile(r"màu|tông da|undertone|tông màu", re.IGNORECASE),
@@ -105,6 +116,14 @@ STOPWORDS = {
     "cái",
     "làm",
 }
+TOKEN_PATTERN = re.compile(r"[\wÀ-ỹ]+")
+MIXED_SCRIPT_PATTERNS: dict[str, re.Pattern[str]] = {
+    "cjk": re.compile(r"[\u3400-\u9fff\uf900-\ufaff]"),
+    "cyrillic": re.compile(r"[\u0400-\u04FF]"),
+    "arabic": re.compile(r"[\u0600-\u06FF]"),
+    "devanagari": re.compile(r"[\u0900-\u097F]"),
+}
+WEIRD_CHAR_PATTERN = re.compile(r"[“”‘’•]|�")
 
 
 @dataclass(frozen=True)
@@ -115,6 +134,28 @@ class ChatExample:
     task_type: str
     source_set: str
     source_file: str
+
+
+@dataclass(frozen=True)
+class ExampleQuality:
+    """Derived quality signals used for filtering and ranking distillation candidates."""
+
+    output_words: int
+    prompt_words: int
+    echo_overlap: float
+    lexical_diversity: float
+    flags: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class DistillSelection:
+    """Selection outputs and diagnostics for downstream reporting."""
+
+    selected: list[ChatExample]
+    clean_pool: list[ChatExample]
+    clean_pool_flag_counts: dict[str, int]
+    dropped_flag_counts: dict[str, int]
+    topic_targets: dict[str, int]
 
 
 def _clean_text(value: Any) -> str:
@@ -143,11 +184,37 @@ def _user_text(example: ChatExample) -> str:
 
 
 def _tokenize(text: str) -> list[str]:
-    return re.findall(r"[\wÀ-ỹ]+", text.lower())
+    return TOKEN_PATTERN.findall(text.lower())
 
 
 def _content_tokens(text: str) -> list[str]:
     return [token for token in _tokenize(text) if len(token) >= 3 and token not in STOPWORDS]
+
+
+def _token_set(text: str) -> set[str]:
+    return set(_content_tokens(text))
+
+
+def _word_count(text: str) -> int:
+    return len(_clean_text(text).split())
+
+
+def _first_sentence(text: str, *, max_chars: int = 180) -> str:
+    cleaned = _clean_text(text)
+    if not cleaned:
+        return ""
+    parts = re.split(r"(?<=[.!?])\s+", cleaned)
+    sentence = parts[0]
+    if len(sentence) > max_chars:
+        return sentence[: max_chars - 1].rstrip() + "…"
+    return sentence
+
+
+def _mixed_script_flags(text: str) -> list[str]:
+    flags = [name for name, pattern in MIXED_SCRIPT_PATTERNS.items() if pattern.search(text)]
+    if WEIRD_CHAR_PATTERN.search(text):
+        flags.append("weird_char")
+    return sorted(set(flags))
 
 
 def classify_topic(example: ChatExample) -> str:
@@ -172,7 +239,7 @@ def classify_prompt_style(example: ChatExample) -> str:
 
 
 def classify_answer_length(example: ChatExample) -> str:
-    words = len(_assistant_text(example).split())
+    words = _word_count(_assistant_text(example))
     if words <= 80:
         return "short"
     if words <= 180:
@@ -180,11 +247,88 @@ def classify_answer_length(example: ChatExample) -> str:
     return "long"
 
 
-def near_duplicate_family_key(example: ChatExample) -> str:
+def prompt_answer_echo_overlap(example: ChatExample) -> float:
+    prompt_tokens = _token_set(_user_text(example))
+    answer_tokens = _token_set(_first_sentence(_assistant_text(example), max_chars=500))
+    if not prompt_tokens or not answer_tokens:
+        return 0.0
+    return len(prompt_tokens & answer_tokens) / len(prompt_tokens | answer_tokens)
+
+
+def inspect_example_quality(
+    example: ChatExample, *, max_answer_words: int = 280, echo_threshold: float = 0.65
+) -> ExampleQuality:
+    """Return lightweight quality signals for filtering and ranking examples."""
+    assistant_text = _assistant_text(example)
+    user_text = _user_text(example)
+    output_words = _word_count(assistant_text)
+    prompt_words = _word_count(user_text)
+    answer_tokens = _content_tokens(assistant_text)
+    lexical_diversity = len(set(answer_tokens)) / max(len(answer_tokens), 1)
+    echo_overlap = prompt_answer_echo_overlap(example)
+
+    flags: list[str] = []
+    mixed_flags = _mixed_script_flags(f"{user_text} {assistant_text}")
+    if mixed_flags:
+        flags.append("mixed_script")
+    if output_words > max_answer_words:
+        flags.append("too_long")
+    if echo_overlap >= echo_threshold:
+        flags.append("question_echo")
+    return ExampleQuality(
+        output_words=output_words,
+        prompt_words=prompt_words,
+        echo_overlap=echo_overlap,
+        lexical_diversity=lexical_diversity,
+        flags=tuple(flags),
+    )
+
+
+def build_prompt_document_frequency(examples: list[ChatExample]) -> Counter[str]:
+    """Count prompt-token document frequency for near-duplicate family keys."""
+    document_frequency: Counter[str] = Counter()
+    for example in examples:
+        document_frequency.update(set(_content_tokens(_user_text(example))))
+    return document_frequency
+
+
+def near_duplicate_family_key(
+    example: ChatExample, *, prompt_document_frequency: Counter[str] | None = None
+) -> str:
+    """Build a stable family key that keeps obvious paraphrase templates together."""
+    del prompt_document_frequency
     tokens = _content_tokens(_user_text(example))
     if not tokens:
         return _user_text(example).lower()
     return " ".join(tokens[:3])
+
+
+def quality_score(
+    example: ChatExample,
+    *,
+    prompt_document_frequency: Counter[str] | None = None,
+    max_answer_words: int = 280,
+    echo_threshold: float = 0.65,
+) -> float:
+    """Rank higher-quality rows ahead of weaker variants within a near-duplicate family."""
+    quality = inspect_example_quality(
+        example,
+        max_answer_words=max_answer_words,
+        echo_threshold=echo_threshold,
+    )
+    score = 0.0
+    if not quality.flags:
+        score += 4.0
+    score += min(quality.lexical_diversity, 1.0) * 2.0
+    score += 1.5 if 45 <= quality.output_words <= 190 else 0.0
+    score -= max(0, quality.output_words - 220) / 60.0
+    score -= quality.echo_overlap * 2.0
+    if prompt_document_frequency:
+        tokens = set(_content_tokens(_user_text(example)))
+        if tokens:
+            mean_doc_frequency = mean(prompt_document_frequency.get(token, 0) for token in tokens)
+            score -= mean_doc_frequency / max(len(prompt_document_frequency), 1) * 2.0
+    return score
 
 
 def load_dataset_config(path: Path) -> dict[str, Any]:
@@ -235,38 +379,156 @@ def collect_source_examples(
     return examples
 
 
-def distill_knowledge_examples(
-    examples: list[ChatExample], *, target_size: int, seed: int, max_per_family: int = 2
-) -> list[ChatExample]:
-    """Reduce redundancy while keeping topic/style/length coverage."""
+def _quality_flag_counts(
+    examples: list[ChatExample], *, max_answer_words: int, echo_threshold: float
+) -> dict[str, int]:
+    counts: Counter[str] = Counter()
+    for example in examples:
+        quality = inspect_example_quality(
+            example,
+            max_answer_words=max_answer_words,
+            echo_threshold=echo_threshold,
+        )
+        if quality.flags:
+            counts.update(quality.flags)
+        else:
+            counts["clean"] += 1
+    return dict(sorted(counts.items()))
+
+
+def filter_quality_examples(
+    examples: list[ChatExample], *, max_answer_words: int = 280, echo_threshold: float = 0.65
+) -> tuple[list[ChatExample], dict[str, int], dict[str, int]]:
+    """Drop rows with strong corruption / verbosity / prompt-echo signals."""
+    clean_examples: list[ChatExample] = []
+    clean_counts: Counter[str] = Counter()
+    dropped_counts: Counter[str] = Counter()
+    for example in examples:
+        quality = inspect_example_quality(
+            example,
+            max_answer_words=max_answer_words,
+            echo_threshold=echo_threshold,
+        )
+        if quality.flags:
+            dropped_counts.update(quality.flags)
+            continue
+        clean_examples.append(example)
+        clean_counts["clean"] += 1
+    return clean_examples, dict(sorted(clean_counts.items())), dict(sorted(dropped_counts.items()))
+
+
+def _largest_remainder_allocation(weights: dict[str, float], total: int) -> dict[str, int]:
+    if total <= 0 or not weights:
+        return {key: 0 for key in weights}
+    weight_sum = sum(weights.values())
+    if weight_sum <= 0:
+        return {key: 0 for key in weights}
+    raw = {key: total * value / weight_sum for key, value in weights.items()}
+    base = {key: int(math.floor(value)) for key, value in raw.items()}
+    remainder = total - sum(base.values())
+    if remainder > 0:
+        order = sorted(raw, key=lambda key: (raw[key] - base[key], key), reverse=True)
+        for key in order[:remainder]:
+            base[key] += 1
+    return base
+
+
+def _topic_targets(examples: list[ChatExample], *, target_size: int) -> dict[str, int]:
+    counts = Counter(classify_topic(example) for example in examples)
+    if not counts:
+        return {}
+
+    topic_order = sorted(counts)
+    available = dict(counts)
+    saturated = {topic: 0 for topic in topic_order}
+    remaining_target = target_size
+    active = {topic for topic in topic_order if available[topic] > 0}
+
+    while remaining_target > 0 and active:
+        weights = {topic: math.sqrt(available[topic]) for topic in active}
+        quotas = _largest_remainder_allocation(weights, remaining_target)
+        newly_saturated = False
+        for topic in list(active):
+            quota = quotas.get(topic, 0)
+            if quota >= available[topic]:
+                saturated[topic] += available[topic]
+                remaining_target -= available[topic]
+                active.remove(topic)
+                newly_saturated = True
+        if not newly_saturated:
+            for topic in active:
+                saturated[topic] += quotas.get(topic, 0)
+            break
+
+    return {topic: saturated[topic] for topic in topic_order}
+
+
+def select_distilled_knowledge(
+    examples: list[ChatExample],
+    *,
+    target_size: int,
+    seed: int,
+    max_per_family: int = 2,
+    max_answer_words: int = 280,
+    echo_threshold: float = 0.65,
+) -> DistillSelection:
+    """Reduce redundancy while keeping topic/style/length coverage and filtering noisy rows."""
     if target_size <= 0:
         raise ValueError("target_size must be positive")
     if max_per_family <= 0:
         raise ValueError("max_per_family must be positive")
-    if len(examples) <= target_size:
-        return list(examples)
 
     shuffled = list(examples)
     random.Random(seed).shuffle(shuffled)
+    prompt_document_frequency = build_prompt_document_frequency(shuffled)
+    clean_examples, clean_flag_counts, dropped_flag_counts = filter_quality_examples(
+        shuffled,
+        max_answer_words=max_answer_words,
+        echo_threshold=echo_threshold,
+    )
+    if len(clean_examples) <= target_size:
+        return DistillSelection(
+            selected=clean_examples,
+            clean_pool=clean_examples,
+            clean_pool_flag_counts=clean_flag_counts,
+            dropped_flag_counts=dropped_flag_counts,
+            topic_targets=_topic_targets(clean_examples, target_size=len(clean_examples)),
+        )
 
     family_groups: dict[str, list[ChatExample]] = defaultdict(list)
-    for example in shuffled:
-        family_groups[near_duplicate_family_key(example)].append(example)
+    for example in clean_examples:
+        family_groups[
+            near_duplicate_family_key(
+                example,
+                prompt_document_frequency=prompt_document_frequency,
+            )
+        ].append(example)
 
     capped: list[ChatExample] = []
     for family in sorted(family_groups):
         members = sorted(
             family_groups[family],
             key=lambda example: (
-                -len(_assistant_text(example).split()),
-                -len(_user_text(example).split()),
+                -quality_score(
+                    example,
+                    prompt_document_frequency=prompt_document_frequency,
+                    max_answer_words=max_answer_words,
+                    echo_threshold=echo_threshold,
+                ),
+                abs(_word_count(_assistant_text(example)) - 120),
                 _example_signature(example),
             ),
         )
         capped.extend(members[:max_per_family])
 
     if len(capped) <= target_size:
-        return capped
+        return DistillSelection(
+            selected=capped,
+            clean_pool=clean_examples,
+            clean_pool_flag_counts=clean_flag_counts,
+            dropped_flag_counts=dropped_flag_counts,
+            topic_targets=_topic_targets(capped, target_size=len(capped)),
+        )
 
     strata: dict[tuple[str, str, str], list[ChatExample]] = defaultdict(list)
     for example in capped:
@@ -278,34 +540,93 @@ def distill_knowledge_examples(
         strata[key].append(example)
 
     for key, members in strata.items():
-        strata[key] = sorted(members, key=_example_signature)
+        strata[key] = sorted(
+            members,
+            key=lambda example: (
+                -quality_score(
+                    example,
+                    prompt_document_frequency=prompt_document_frequency,
+                    max_answer_words=max_answer_words,
+                    echo_threshold=echo_threshold,
+                ),
+                _example_signature(example),
+            ),
+        )
 
     selected: list[ChatExample] = []
+    selected_signatures: set[str] = set()
+    ordered_keys = sorted(
+        strata,
+        key=lambda key: (
+            len(strata[key]),
+            key,
+        ),
+    )
+    topic_targets = _topic_targets(capped, target_size=target_size)
+    remaining_by_topic = dict(topic_targets)
 
-    ordered_keys = sorted(strata, key=lambda key: (len(strata[key]), key))
+    def take_one(key: tuple[str, str, str]) -> bool:
+        while strata[key]:
+            candidate = strata[key].pop(0)
+            signature = _example_signature(candidate)
+            if signature in selected_signatures:
+                continue
+            selected.append(candidate)
+            selected_signatures.add(signature)
+            return True
+        return False
+
+    while len(selected) < target_size and any(value > 0 for value in remaining_by_topic.values()):
+        progressed = False
+        for key in ordered_keys:
+            topic = key[0]
+            if remaining_by_topic.get(topic, 0) <= 0:
+                continue
+            if take_one(key):
+                remaining_by_topic[topic] -= 1
+                progressed = True
+                if len(selected) >= target_size:
+                    break
+        if not progressed:
+            break
+
     while len(selected) < target_size:
         progressed = False
         for key in ordered_keys:
-            if not strata[key]:
-                continue
-            selected.append(strata[key].pop(0))
-            progressed = True
-            if len(selected) >= target_size:
-                break
+            if take_one(key):
+                progressed = True
+                if len(selected) >= target_size:
+                    break
         if not progressed:
             break
-    return selected
+
+    return DistillSelection(
+        selected=selected,
+        clean_pool=clean_examples,
+        clean_pool_flag_counts=clean_flag_counts,
+        dropped_flag_counts=dropped_flag_counts,
+        topic_targets=topic_targets,
+    )
 
 
-def _first_sentence(text: str, *, max_chars: int = 180) -> str:
-    cleaned = _clean_text(text)
-    if not cleaned:
-        return ""
-    parts = re.split(r"(?<=[.!?])\s+", cleaned)
-    sentence = parts[0]
-    if len(sentence) > max_chars:
-        return sentence[: max_chars - 1].rstrip() + "…"
-    return sentence
+def distill_knowledge_examples(
+    examples: list[ChatExample],
+    *,
+    target_size: int,
+    seed: int,
+    max_per_family: int = 2,
+    max_answer_words: int = 280,
+    echo_threshold: float = 0.65,
+) -> list[ChatExample]:
+    """Public compatibility wrapper that returns only the selected examples."""
+    return select_distilled_knowledge(
+        examples,
+        target_size=target_size,
+        seed=seed,
+        max_per_family=max_per_family,
+        max_answer_words=max_answer_words,
+        echo_threshold=echo_threshold,
+    ).selected
 
 
 def _seed_hint(example: ChatExample) -> str:
@@ -535,14 +856,60 @@ def write_jsonl(path: Path, examples: Iterable[ChatExample]) -> int:
     return count
 
 
-def _summarize(examples: list[ChatExample]) -> dict[str, Any]:
+def _word_stats(examples: list[ChatExample]) -> dict[str, Any]:
+    if not examples:
+        return {
+            "prompt_words": {"mean": 0.0, "median": 0.0, "p90": 0.0, "max": 0},
+            "assistant_words": {"mean": 0.0, "median": 0.0, "p90": 0.0, "max": 0},
+            "combined_words_total": 0,
+            "approx_qwen_tokens": 0,
+        }
+    prompt_words = sorted(_word_count(_user_text(example)) for example in examples)
+    assistant_words = sorted(_word_count(_assistant_text(example)) for example in examples)
+
+    def percentile(values: list[int], q: float) -> float:
+        if not values:
+            return 0.0
+        index = min(len(values) - 1, max(0, int(round((len(values) - 1) * q))))
+        return float(values[index])
+
+    combined_words_total = sum(prompt_words) + sum(assistant_words)
+    return {
+        "prompt_words": {
+            "mean": round(mean(prompt_words), 2),
+            "median": float(percentile(prompt_words, 0.5)),
+            "p90": float(percentile(prompt_words, 0.9)),
+            "max": int(prompt_words[-1]),
+        },
+        "assistant_words": {
+            "mean": round(mean(assistant_words), 2),
+            "median": float(percentile(assistant_words, 0.5)),
+            "p90": float(percentile(assistant_words, 0.9)),
+            "max": int(assistant_words[-1]),
+        },
+        "combined_words_total": combined_words_total,
+        "approx_qwen_tokens": int(round(combined_words_total * 1.25)),
+    }
+
+
+def _summarize(
+    examples: list[ChatExample], *, max_answer_words: int = 280, echo_threshold: float = 0.65
+) -> dict[str, Any]:
     task_counts = Counter(example.task_type for example in examples)
     topic_counts = Counter(classify_topic(example) for example in examples)
     style_counts = Counter(classify_prompt_style(example) for example in examples)
+    length_counts = Counter(classify_answer_length(example) for example in examples)
     return {
         "task_counts": dict(sorted(task_counts.items())),
         "topic_counts": dict(sorted(topic_counts.items())),
         "prompt_style_counts": dict(sorted(style_counts.items())),
+        "answer_length_counts": dict(sorted(length_counts.items())),
+        "word_stats": _word_stats(examples),
+        "quality_flags": _quality_flag_counts(
+            examples,
+            max_answer_words=max_answer_words,
+            echo_threshold=echo_threshold,
+        ),
     }
 
 
@@ -557,6 +924,8 @@ def build_distilled_bundle(
     counts_by_task: dict[str, int] | None = None,
     prefer_translated: bool = True,
     clean: bool = False,
+    max_answer_words: int = 280,
+    echo_threshold: float = 0.65,
 ) -> dict[str, Any]:
     """Build distilled knowledge JSONL, behavioral JSONL, and a combined train file."""
     if counts_by_task is None:
@@ -569,12 +938,15 @@ def build_distilled_bundle(
         system_prompt=system_prompt,
         prefer_translated=prefer_translated,
     )
-    knowledge_examples = distill_knowledge_examples(
+    selection = select_distilled_knowledge(
         raw_examples,
         target_size=min(knowledge_target, len(raw_examples)),
         seed=seed,
         max_per_family=max_per_family,
+        max_answer_words=max_answer_words,
+        echo_threshold=echo_threshold,
     )
+    knowledge_examples = selection.selected
     behavioral_examples = synthesize_behavioral_examples(
         knowledge_examples,
         system_prompt=system_prompt,
@@ -596,13 +968,44 @@ def build_distilled_bundle(
         "seed": seed,
         "knowledge_target": knowledge_target,
         "max_per_family": max_per_family,
+        "max_answer_words": max_answer_words,
+        "echo_threshold": echo_threshold,
         "knowledge_examples": len(knowledge_examples),
         "behavioral_examples": len(behavioral_examples),
         "combined_examples": len(combined_examples),
         "behavioral_task_counts": dict(sorted(counts_by_task.items())),
-        "raw_summary": _summarize(raw_examples),
-        "knowledge_summary": _summarize(knowledge_examples),
-        "behavioral_summary": _summarize(behavioral_examples),
+        "selection_topic_targets": selection.topic_targets,
+        "quality_gate": {
+            "clean_pool_examples": len(selection.clean_pool),
+            "dropped_examples": len(raw_examples) - len(selection.clean_pool),
+            "clean_pool_flag_counts": selection.clean_pool_flag_counts,
+            "dropped_flag_counts": selection.dropped_flag_counts,
+        },
+        "raw_summary": _summarize(
+            raw_examples,
+            max_answer_words=max_answer_words,
+            echo_threshold=echo_threshold,
+        ),
+        "clean_pool_summary": _summarize(
+            selection.clean_pool,
+            max_answer_words=max_answer_words,
+            echo_threshold=echo_threshold,
+        ),
+        "knowledge_summary": _summarize(
+            knowledge_examples,
+            max_answer_words=max_answer_words,
+            echo_threshold=echo_threshold,
+        ),
+        "behavioral_summary": _summarize(
+            behavioral_examples,
+            max_answer_words=max_answer_words,
+            echo_threshold=echo_threshold,
+        ),
+        "combined_summary": _summarize(
+            combined_examples,
+            max_answer_words=max_answer_words,
+            echo_threshold=echo_threshold,
+        ),
     }
     manifest_path = output_dir / "manifest.json"
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -632,6 +1035,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--knowledge-target", type=int, default=5000)
     parser.add_argument("--max-per-family", type=int, default=2)
     parser.add_argument("--behavior-per-task", type=int, default=100)
+    parser.add_argument("--max-answer-words", type=int, default=280)
+    parser.add_argument("--echo-threshold", type=float, default=0.65)
+    parser.add_argument(
+        "--preset",
+        choices=["default", "qwen35-under10k"],
+        default="default",
+        help="Apply a recommended distillation profile.",
+    )
     parser.add_argument(
         "--task-count",
         action="append",
@@ -648,17 +1059,36 @@ def main() -> None:
     source_dir = args.input_dir or Path(str(dataset["stylist_knowledge_dir"]))
     system_prompt = str(dataset["system_prompt"])
     prefer_translated = bool(dataset.get("prefer_translated_columns", True))
-    counts_by_task = _parse_task_counts(args.task_count, default_per_task=args.behavior_per_task)
+
+    knowledge_target = args.knowledge_target
+    max_per_family = args.max_per_family
+    max_answer_words = args.max_answer_words
+    if args.preset == "qwen35-under10k":
+        knowledge_target = 7200
+        max_per_family = 3
+        max_answer_words = min(max_answer_words, 280)
+        counts_by_task = (
+            _parse_task_counts(args.task_count, default_per_task=args.behavior_per_task)
+            if args.task_count
+            else dict(RECOMMENDED_QWEN35_TASK_COUNTS)
+        )
+    else:
+        counts_by_task = _parse_task_counts(
+            args.task_count, default_per_task=args.behavior_per_task
+        )
+
     manifest = build_distilled_bundle(
         source_dir=source_dir,
         output_dir=args.output_dir,
         system_prompt=system_prompt,
-        knowledge_target=args.knowledge_target,
+        knowledge_target=knowledge_target,
         seed=args.seed,
-        max_per_family=args.max_per_family,
+        max_per_family=max_per_family,
         counts_by_task=counts_by_task,
         prefer_translated=prefer_translated,
         clean=args.clean,
+        max_answer_words=max_answer_words,
+        echo_threshold=args.echo_threshold,
     )
     print(json.dumps(manifest, ensure_ascii=False, indent=2))
 

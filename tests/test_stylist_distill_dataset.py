@@ -8,6 +8,7 @@ from scripts.stylist.distill_stylist_dataset import (
     ChatExample,
     build_distilled_bundle,
     distill_knowledge_examples,
+    inspect_example_quality,
     synthesize_behavioral_examples,
 )
 
@@ -164,3 +165,20 @@ def test_build_distilled_bundle_writes_expected_artifacts(tmp_path: Path) -> Non
         "ask_missing_info",
         "tool_calling",
     }
+
+
+def test_inspect_example_quality_flags_mixed_script_and_overlong_rows() -> None:
+    weird = _example(
+        "Làm thế nào để phối cardigan cho công sở?",
+        "Bạn có thể mặc cardigan поверх áo sơ mi để trông gọn gàng và chuyên nghiệp.",
+    )
+    long_answer = _example(
+        "Tôi nên xây tủ đồ cơ bản thế nào?",
+        " ".join(["chi tiết"] * 281),
+    )
+
+    weird_quality = inspect_example_quality(weird, max_answer_words=280, echo_threshold=0.65)
+    long_quality = inspect_example_quality(long_answer, max_answer_words=280, echo_threshold=0.65)
+
+    assert "mixed_script" in weird_quality.flags
+    assert "too_long" in long_quality.flags
