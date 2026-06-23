@@ -24,10 +24,11 @@ if not API_KEYS:
     print("❌ LỖI: Không tìm thấy GEMINI_API_KEY hoặc GEMINI_API_KEYS trong file .env!")
     exit()
 
-# Tên file dữ liệu gốc
-FILE_INPUT = "train-00000-of-00001-9b0ae8e510f95a07.parquet"
-FILE_CHECKPOINT = "train_checkpoint.parquet"
-FILE_OUTPUT = "train_translated.jsonl" # Đổi thành file JSONL cho mục đích finetune
+# Tên file dữ liệu gốc và checkpoint
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+FILE_INPUT = os.path.join(SCRIPT_DIR, "processed", "train-00000-of-00001-9b0ae8e510f95a07.parquet")
+FILE_CHECKPOINT = os.path.join(SCRIPT_DIR, "translated", "train_checkpoint.parquet")
+FILE_OUTPUT = os.path.join(SCRIPT_DIR, "translated", "train_translated.jsonl") # Đổi thành file JSONL cho mục đích finetune
 
 # Số luồng chạy song song (Nếu dùng nhiều keys, mỗi key sẽ gánh khoảng 3 luồng song song để tối ưu và an toàn)
 MAX_WORKERS = len(API_KEYS) * 3 if len(API_KEYS) > 1 else 4

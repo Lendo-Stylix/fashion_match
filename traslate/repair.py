@@ -20,9 +20,10 @@ if not API_KEYS:
     print("❌ LỖI: Không tìm thấy GEMINI_API_KEY hoặc GEMINI_API_KEYS trong file .env!")
     exit(1)
 
-FILE_INPUT = "train-00000-of-00001-9b0ae8e510f95a07.parquet"
-FILE_OUTPUT = "train_translated.jsonl"
-FILE_CHECKPOINT = "train_checkpoint.parquet"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+FILE_INPUT = os.path.join(SCRIPT_DIR, "processed", "train-00000-of-00001-9b0ae8e510f95a07.parquet")
+FILE_OUTPUT = os.path.join(SCRIPT_DIR, "translated", "train_translated.jsonl")
+FILE_CHECKPOINT = os.path.join(SCRIPT_DIR, "translated", "train_checkpoint.parquet")
 MODEL_NAME = "models/gemini-flash-lite-latest"
 
 current_key_idx = 0
