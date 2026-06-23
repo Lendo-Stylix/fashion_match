@@ -36,38 +36,56 @@ def load_scenarios(path: Path) -> list[dict[str, Any]]:
     ]
 
 
+def _profile_text(scenario: dict[str, Any]) -> str:
+    profile = scenario.get("user_profile") or {}
+    height_cm = int(profile.get("height_cm") or 0)
+    weight_kg = int(profile.get("weight_kg") or 0)
+    return f"mình cao {height_cm}cm, nặng {weight_kg}kg"
+
+
 def _user_request_text(scenario: dict[str, Any]) -> str:
     request = scenario["request"]
     style = request.get("style")
     budget = request.get("price_max")
     occasion = request.get("occasion") or scenario.get("target_occasion")
+    profile_text = _profile_text(scenario)
+    seed_title = (scenario.get("seed_item") or {}).get("title_vi") or "item này"
+    scenario_id = scenario.get("scenario_id", "")
     if scenario["task_type"] == "ask_missing_info_grounded":
-        return "Mình muốn phối đồ đẹp hơn nhưng chưa chắc nên mặc vào dịp nào."
+        return (
+            f"{profile_text}, thích phong cách {style}, đang xem {seed_title} "
+            f"với ngân sách khoảng {budget:,}đ [{scenario_id}] nhưng chưa chắc nên mặc vào dịp nào."
+        ).replace(",", ".")
     if scenario["task_type"] == "no_result_or_relax_constraints":
         return (
-            f"Mình cần outfit đi {occasion} nhưng ngân sách chỉ khoảng {budget:,}đ thôi.".replace(
-                ",", "."
-            )
-        )
+            f"{profile_text}, mình cần outfit đi {occasion}, thích phong cách {style} "
+            f"nhưng ngân sách chỉ khoảng {budget:,}đ [{scenario_id}] thôi."
+        ).replace(",", ".")
     if scenario["task_type"] == "polite_decline_anti_hallucination":
         return (
-            "Bạn kiểm tra giúp outfit "
-            f"{request['requested_outfit_id']} có còn không và chốt luôn cho mình nhé."
+            f"{profile_text}, bạn kiểm tra giúp outfit "
+            f"{request['requested_outfit_id']} [{scenario_id}] "
+            "có còn không và chốt luôn cho mình nhé."
         )
     if scenario["task_type"] == "multi_turn_grounded":
-        return "Mình cần một outfit dễ mặc nhưng chưa biết nên ưu tiên dịp nào."
+        return (
+            f"{profile_text}, mình cần một outfit dễ mặc, nghiêng về phong cách {style} "
+            f"với ngân sách khoảng {budget:,}đ [{scenario_id}] nhưng chưa biết nên ưu tiên dịp nào."
+        ).replace(",", ".")
     if scenario["task_type"] == "body_fit_grounded":
         return (
-            f"Mình muốn outfit đi {occasion} hợp dáng {request['body_shape']} "
-            f"và phong cách {style}."
+            f"{profile_text}, mình muốn outfit đi {occasion} hợp dáng {request['body_shape']} "
+            f"và phong cách {style}, ưu tiên item như {seed_title} [{scenario_id}]."
         )
     if scenario["task_type"] == "recommend_explain_grounded":
-        return f"Gợi ý giúp mình outfit đi {occasion} và giải thích vì sao hợp nhé."
-    return (
-        f"Mình cần outfit đi {occasion}, phong cách {style}, ngân sách tối đa {budget:,}đ.".replace(
-            ",", "."
+        return (
+            f"{profile_text}, gợi ý giúp mình outfit đi {occasion}, nghiêng về {style}, "
+            f"ưu tiên {seed_title} [{scenario_id}] và giải thích vì sao hợp nhé."
         )
-    )
+    return (
+        f"{profile_text}, mình cần outfit đi {occasion}, phong cách {style}, "
+        f"ngân sách tối đa {budget:,}đ [{scenario_id}]."
+    ).replace(",", ".")
 
 
 def _format_candidate(candidate: dict[str, Any]) -> str:
@@ -94,15 +112,15 @@ def _template_assistant_messages(
 
     if task_type == "ask_missing_info_grounded":
         question = (
-            "Mình có thể tư vấn chính xác hơn nếu bạn cho biết dịp mặc chính, "
-            "ví dụ đi làm, đi chơi hay du lịch."
+            f"Mình có thể tư vấn chính xác hơn cho phong cách {request['style']} "
+            "nếu bạn cho biết dịp mặc chính, ví dụ đi làm, đi chơi hay du lịch."
         )
         return [{"role": "user", "content": user_text}, {"role": "assistant", "content": question}]
 
     if task_type == "no_result_or_relax_constraints":
         answer = (
             f"Hiện mình chưa thấy item phù hợp dưới mức {request['price_max']:,}đ "
-            f"cho dịp {request['occasion']}. "
+            f"cho dịp {request['occasion']} theo phong cách {request['style']}. "
             "Bạn có thể tăng ngân sách hoặc nới lỏng màu/phong cách để mình tìm thêm lựa chọn."
         ).replace(",", ".")
         return [{"role": "user", "content": user_text}, {"role": "assistant", "content": answer}]
@@ -111,7 +129,7 @@ def _template_assistant_messages(
         picks = "; ".join(_format_candidate(item) for item in candidate_items[:3])
         answer = (
             f"Mình ưu tiên {seed_item.get('title_vi', 'mẫu chính')} "
-            f"vì hợp dịp {request['occasion']} và dễ phối. "
+            f"vì hợp dịp {request['occasion']}, đúng tinh thần {request['style']} và dễ phối. "
             f"Các lựa chọn nền tảng trong catalog hiện có: {picks}."
         )
         return [{"role": "user", "content": user_text}, {"role": "assistant", "content": answer}]
@@ -125,14 +143,21 @@ def _template_assistant_messages(
 
     if task_type == "multi_turn_grounded":
         follow_up = (
-            "Bạn cho mình biết dịp chính nhé, ví dụ đi làm hay du lịch, để mình lọc đúng outfit."
+            f"Bạn cho mình biết dịp chính nhé. Với phong cách {request['style']}, "
+            "mình sẽ lọc chính xác hơn khi biết là đi làm, đi chơi hay du lịch."
         )
         resolved_request = {**request, "occasion": scenario["target_occasion"]}
         tool_call = render_search_outfits_tool_call(resolved_request)
         return [
             {"role": "user", "content": user_text},
             {"role": "assistant", "content": follow_up},
-            {"role": "user", "content": f"Ưu tiên dịp {scenario['target_occasion']} nhé."},
+            {
+                "role": "user",
+                "content": (
+                    f"Ưu tiên dịp {scenario['target_occasion']} nhé, mình vẫn giữ ngân sách "
+                    f"{request['price_max']:,}đ."
+                ).replace(",", "."),
+            },
             {"role": "assistant", "content": tool_call},
         ]
 
@@ -140,7 +165,8 @@ def _template_assistant_messages(
         answer = (
             f"{seed_item.get('title_vi', 'Item này')} là lựa chọn ổn "
             f"vì phom {seed_item.get('category', 'item')} dễ cân bằng "
-            f"cho dáng {request['body_shape']} trong bối cảnh {request['occasion']}."
+            f"cho dáng {request['body_shape']} trong bối cảnh {request['occasion']} "
+            f"và vẫn giữ tinh thần {request['style']}."
         )
         return [{"role": "user", "content": user_text}, {"role": "assistant", "content": answer}]
 

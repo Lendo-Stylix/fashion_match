@@ -198,3 +198,32 @@ def test_generate_grounded_dialogues_cli_runs_directly(tmp_path: Path):
     assert result.returncode == 0, result.stderr
     assert (output_dir / "train.jsonl").is_file()
     assert (output_dir / "manifest.json").is_file()
+
+
+def test_generate_dialogues_from_large_grounded_batch_stays_unique(tmp_path: Path):
+    catalog_path, links_path = _write_catalog(tmp_path)
+    items = load_catalog_items(catalog_path, links_path)
+    scenarios = build_grounded_scenario_bank(
+        items,
+        seed=29,
+        counts_by_task={
+            "tool_calling_grounded": 8,
+            "recommend_explain_grounded": 8,
+            "ask_missing_info_grounded": 8,
+            "no_result_or_relax_constraints": 8,
+            "polite_decline_anti_hallucination": 4,
+            "multi_turn_grounded": 4,
+            "body_fit_grounded": 6,
+        },
+    )
+
+    examples = generate_dialogues_from_scenarios(
+        scenarios,
+        system_prompt=DEFAULT_SYSTEM_PROMPT,
+        backend="template",
+    )
+    signatures = {
+        json.dumps(example["messages"], ensure_ascii=False, sort_keys=True) for example in examples
+    }
+
+    assert len(signatures) == len(examples)

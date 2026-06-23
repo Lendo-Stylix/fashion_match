@@ -225,3 +225,24 @@ def test_build_grounded_scenario_bank_expands_task_coverage_and_grounding_fields
         scenario for scenario in scenarios if scenario["task_type"] == "multi_turn_grounded"
     )
     assert multi_turn["target_occasion"] is not None
+
+
+def test_build_grounded_scenario_bank_supports_explicit_task_counts(tmp_path: Path):
+    catalog_path, links_path = _write_catalog(tmp_path)
+    items = load_catalog_items(catalog_path, links_path)
+    target_counts = {
+        "tool_calling_grounded": 2,
+        "recommend_explain_grounded": 2,
+        "ask_missing_info_grounded": 1,
+        "no_result_or_relax_constraints": 1,
+        "polite_decline_anti_hallucination": 1,
+        "multi_turn_grounded": 1,
+        "body_fit_grounded": 1,
+    }
+
+    scenarios = build_grounded_scenario_bank(items, seed=23, counts_by_task=target_counts)
+    summary = summarize_scenario_bank(scenarios)
+
+    assert summary["total_scenarios"] == sum(target_counts.values())
+    for task_type, expected_count in target_counts.items():
+        assert summary["task_counts"][task_type] == expected_count

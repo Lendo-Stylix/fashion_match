@@ -31,6 +31,16 @@ from outfitmatch.vocab import BODY_SHAPE, OCCASION, SKIN_TONE, STYLE, formalitie
 
 DEFAULT_OUTPUT_DIR = Path("data/stylist/fine_tune/runs/stylist_grounded_v2/scenario_bank")
 SEED_CATEGORIES = frozenset({"top", "dress"})
+GROUNDED_TARGET_TASK_COUNTS: dict[str, int] = {
+    "tool_calling_grounded": 900,
+    "recommend_explain_grounded": 700,
+    "ask_missing_info_grounded": 350,
+    "no_result_or_relax_constraints": 250,
+    "polite_decline_anti_hallucination": 150,
+    "multi_turn_grounded": 150,
+    "body_fit_grounded": 300,
+}
+SCENARIO_TASK_ORDER: tuple[str, ...] = tuple(GROUNDED_TARGET_TASK_COUNTS)
 
 
 def _item_price(item: ItemRecord) -> int:
@@ -87,11 +97,250 @@ def _scenario_payload(
     }
 
 
+def _request_payload(
+    *,
+    rng: random.Random,
+    occasion: str | None,
+    price_max: int,
+    example_index: int = 0,
+) -> dict[str, Any]:
+    return {
+        "occasion": occasion,
+        "style": STYLE[example_index % len(STYLE)],
+        "body_shape": BODY_SHAPE[example_index % len(BODY_SHAPE)],
+        "skin_tone": SKIN_TONE[example_index % len(SKIN_TONE)],
+        "price_max": price_max + (example_index % 5) * 50_000,
+        "exclude_colors": [],
+    }
+
+
+def _resolve_task_counts(
+    *,
+    max_examples_per_task: int,
+    counts_by_task: dict[str, int] | None,
+) -> dict[str, int]:
+    if counts_by_task is None:
+        if max_examples_per_task <= 0:
+            return {}
+        return {task_type: max_examples_per_task for task_type in SCENARIO_TASK_ORDER}
+
+    unknown = sorted(set(counts_by_task) - set(SCENARIO_TASK_ORDER))
+    if unknown:
+        raise ValueError(f"Unsupported grounded task types: {', '.join(unknown)}")
+    return {
+        task_type: max(0, int(counts_by_task.get(task_type, 0)))
+        for task_type in SCENARIO_TASK_ORDER
+    }
+
+
+def _build_one_scenario(
+    *,
+    task_type: str,
+    example_index: int,
+    scenario_id: str,
+    rng: random.Random,
+    tool_occasion: str,
+    secondary_occasion: str,
+    ask_seed_pool: list[ItemRecord],
+    secondary_pool: list[ItemRecord],
+    tool_candidates: list[ItemRecord],
+) -> dict[str, Any]:
+    if task_type == "tool_calling_grounded":
+        tool_seed = tool_candidates[example_index % len(tool_candidates)]
+        return _scenario_payload(
+            scenario_id=scenario_id,
+            task_type=task_type,
+            request=_request_payload(
+                rng=rng,
+                occasion=tool_occasion,
+                example_index=example_index,
+                price_max=max(_item_price(tool_seed), 300_000),
+            ),
+            user_profile={
+                "height_cm": 160 + (example_index % 10),
+                "weight_kg": 52 + (example_index % 8),
+            },
+            seed_item=tool_seed,
+            candidate_items=tool_candidates,
+            expected_behavior={
+                "should_call_tool": True,
+                "should_ask_followup": False,
+                "should_decline": False,
+                "should_relax_constraints": False,
+            },
+        )
+
+    if task_type == "ask_missing_info_grounded":
+        ask_seed = ask_seed_pool[example_index % len(ask_seed_pool)]
+        return _scenario_payload(
+            scenario_id=scenario_id,
+            task_type=task_type,
+            request=_request_payload(
+                rng=rng,
+                occasion=None,
+                price_max=max(_item_price(ask_seed), 300_000),
+                example_index=example_index,
+            ),
+            user_profile={
+                "height_cm": 158 + (example_index % 10),
+                "weight_kg": 50 + (example_index % 8),
+            },
+            seed_item=ask_seed,
+            candidate_items=ask_seed_pool[:3],
+            expected_behavior={
+                "should_call_tool": False,
+                "should_ask_followup": True,
+                "should_decline": False,
+                "should_relax_constraints": False,
+            },
+            target_occasion=tool_occasion,
+        )
+
+    if task_type == "no_result_or_relax_constraints":
+        no_result_seed = secondary_pool[example_index % len(secondary_pool)]
+        min_price = min(_item_price(item) for item in secondary_pool)
+        return _scenario_payload(
+            scenario_id=scenario_id,
+            task_type=task_type,
+            request=_request_payload(
+                rng=rng,
+                occasion=secondary_occasion,
+                price_max=max(0, min_price - 1),
+                example_index=example_index,
+            ),
+            user_profile={
+                "height_cm": 162 + (example_index % 10),
+                "weight_kg": 54 + (example_index % 8),
+            },
+            seed_item=no_result_seed,
+            candidate_items=[],
+            expected_behavior={
+                "should_call_tool": False,
+                "should_ask_followup": False,
+                "should_decline": False,
+                "should_relax_constraints": True,
+            },
+        )
+
+    if task_type == "recommend_explain_grounded":
+        explain_seed = tool_candidates[example_index % len(tool_candidates)]
+        return _scenario_payload(
+            scenario_id=scenario_id,
+            task_type=task_type,
+            request=_request_payload(
+                rng=rng,
+                occasion=tool_occasion,
+                example_index=example_index,
+                price_max=max(_item_price(explain_seed), 300_000),
+            ),
+            user_profile={
+                "height_cm": 159 + (example_index % 10),
+                "weight_kg": 51 + (example_index % 8),
+            },
+            seed_item=explain_seed,
+            candidate_items=tool_candidates,
+            expected_behavior={
+                "should_call_tool": False,
+                "should_ask_followup": False,
+                "should_decline": False,
+                "should_relax_constraints": False,
+            },
+        )
+
+    if task_type == "polite_decline_anti_hallucination":
+        decline_seed = tool_candidates[example_index % len(tool_candidates)]
+        request = _request_payload(
+            rng=rng,
+            occasion=tool_occasion,
+            price_max=max(_item_price(decline_seed), 300_000),
+            example_index=example_index,
+        )
+        request["requested_outfit_id"] = f"OUTFIT_FAKE_{example_index + 1:03d}"
+        return _scenario_payload(
+            scenario_id=scenario_id,
+            task_type=task_type,
+            request=request,
+            user_profile={
+                "height_cm": 164 + (example_index % 10),
+                "weight_kg": 56 + (example_index % 8),
+            },
+            seed_item=decline_seed,
+            candidate_items=[],
+            expected_behavior={
+                "should_call_tool": False,
+                "should_ask_followup": False,
+                "should_decline": True,
+                "should_relax_constraints": False,
+            },
+        )
+
+    if task_type == "multi_turn_grounded":
+        multi_seed = secondary_pool[example_index % len(secondary_pool)]
+        return _scenario_payload(
+            scenario_id=scenario_id,
+            task_type=task_type,
+            request=_request_payload(
+                rng=rng,
+                occasion=None,
+                price_max=max(_item_price(multi_seed), 300_000),
+                example_index=example_index,
+            ),
+            user_profile={
+                "height_cm": 161 + (example_index % 10),
+                "weight_kg": 53 + (example_index % 8),
+            },
+            seed_item=multi_seed,
+            candidate_items=secondary_pool[:3],
+            expected_behavior={
+                "should_call_tool": True,
+                "should_ask_followup": True,
+                "should_decline": False,
+                "should_relax_constraints": False,
+            },
+            target_occasion=secondary_occasion,
+        )
+
+    if task_type == "body_fit_grounded":
+        body_seed = tool_candidates[(example_index + 1) % len(tool_candidates)]
+        return _scenario_payload(
+            scenario_id=scenario_id,
+            task_type=task_type,
+            request=_request_payload(
+                rng=rng,
+                occasion=tool_occasion,
+                example_index=example_index,
+                price_max=max(_item_price(body_seed), 300_000),
+            ),
+            user_profile={
+                "height_cm": 157 + (example_index % 10),
+                "weight_kg": 49 + (example_index % 8),
+            },
+            seed_item=body_seed,
+            candidate_items=tool_candidates,
+            expected_behavior={
+                "should_call_tool": False,
+                "should_ask_followup": False,
+                "should_decline": False,
+                "should_relax_constraints": False,
+            },
+        )
+
+    raise ValueError(f"Unsupported task_type: {task_type}")
+
+
 def build_grounded_scenario_bank(
-    items: list[ItemRecord], *, seed: int = 42, max_examples_per_task: int = 1
+    items: list[ItemRecord],
+    *,
+    seed: int = 42,
+    max_examples_per_task: int = 1,
+    counts_by_task: dict[str, int] | None = None,
 ) -> list[dict[str, Any]]:
     """Build a deterministic grounded scenario bank from real catalog items."""
-    if max_examples_per_task <= 0:
+    task_counts = _resolve_task_counts(
+        max_examples_per_task=max_examples_per_task,
+        counts_by_task=counts_by_task,
+    )
+    if not task_counts:
         return []
 
     available: dict[str, list[ItemRecord]] = {}
@@ -111,208 +360,28 @@ def build_grounded_scenario_bank(
     )
     ask_seed_pool = available[tool_occasion]
     secondary_pool = available[secondary_occasion]
+    tool_candidates = available[tool_occasion][:3]
 
     scenarios: list[dict[str, Any]] = []
     scenario_index = 1
     rng = random.Random(seed)
-
-    def next_style() -> str:
-        return rng.choice(STYLE)
-
-    def next_body_shape() -> str:
-        return rng.choice(BODY_SHAPE)
-
-    def next_skin_tone() -> str:
-        return rng.choice(SKIN_TONE)
-
-    for example_index in range(max_examples_per_task):
-        tool_seed = available[tool_occasion][example_index % len(available[tool_occasion])]
-        tool_candidates = available[tool_occasion][:3]
-        tool_budget = max(_item_price(tool_seed), 300_000)
-        scenarios.append(
-            _scenario_payload(
-                scenario_id=f"SC_{scenario_index:06d}",
-                task_type="tool_calling_grounded",
-                request={
-                    "occasion": tool_occasion,
-                    "style": next_style(),
-                    "body_shape": next_body_shape(),
-                    "skin_tone": next_skin_tone(),
-                    "price_max": tool_budget,
-                    "exclude_colors": [],
-                },
-                user_profile={"height_cm": 160 + example_index, "weight_kg": 52 + example_index},
-                seed_item=tool_seed,
-                candidate_items=tool_candidates,
-                expected_behavior={
-                    "should_call_tool": True,
-                    "should_ask_followup": False,
-                    "should_decline": False,
-                    "should_relax_constraints": False,
-                },
+    for task_type in SCENARIO_TASK_ORDER:
+        count = task_counts.get(task_type, 0)
+        for example_index in range(count):
+            scenarios.append(
+                _build_one_scenario(
+                    task_type=task_type,
+                    example_index=example_index,
+                    scenario_id=f"SC_{scenario_index:06d}",
+                    rng=rng,
+                    tool_occasion=tool_occasion,
+                    secondary_occasion=secondary_occasion,
+                    ask_seed_pool=ask_seed_pool,
+                    secondary_pool=secondary_pool,
+                    tool_candidates=tool_candidates,
+                )
             )
-        )
-        scenario_index += 1
-
-        ask_seed = ask_seed_pool[example_index % len(ask_seed_pool)]
-        scenarios.append(
-            _scenario_payload(
-                scenario_id=f"SC_{scenario_index:06d}",
-                task_type="ask_missing_info_grounded",
-                request={
-                    "occasion": None,
-                    "style": next_style(),
-                    "body_shape": next_body_shape(),
-                    "skin_tone": next_skin_tone(),
-                    "price_max": max(_item_price(ask_seed), 300_000),
-                    "exclude_colors": [],
-                },
-                user_profile={"height_cm": 158 + example_index, "weight_kg": 50 + example_index},
-                seed_item=ask_seed,
-                candidate_items=ask_seed_pool[:3],
-                expected_behavior={
-                    "should_call_tool": False,
-                    "should_ask_followup": True,
-                    "should_decline": False,
-                    "should_relax_constraints": False,
-                },
-                target_occasion=tool_occasion,
-            )
-        )
-        scenario_index += 1
-
-        no_result_seed = secondary_pool[example_index % len(secondary_pool)]
-        min_price = min(_item_price(item) for item in secondary_pool)
-        scenarios.append(
-            _scenario_payload(
-                scenario_id=f"SC_{scenario_index:06d}",
-                task_type="no_result_or_relax_constraints",
-                request={
-                    "occasion": secondary_occasion,
-                    "style": next_style(),
-                    "body_shape": next_body_shape(),
-                    "skin_tone": next_skin_tone(),
-                    "price_max": max(0, min_price - 1),
-                    "exclude_colors": [],
-                },
-                user_profile={"height_cm": 162 + example_index, "weight_kg": 54 + example_index},
-                seed_item=no_result_seed,
-                candidate_items=[],
-                expected_behavior={
-                    "should_call_tool": False,
-                    "should_ask_followup": False,
-                    "should_decline": False,
-                    "should_relax_constraints": True,
-                },
-            )
-        )
-        scenario_index += 1
-
-        explain_seed = tool_candidates[example_index % len(tool_candidates)]
-        scenarios.append(
-            _scenario_payload(
-                scenario_id=f"SC_{scenario_index:06d}",
-                task_type="recommend_explain_grounded",
-                request={
-                    "occasion": tool_occasion,
-                    "style": next_style(),
-                    "body_shape": next_body_shape(),
-                    "skin_tone": next_skin_tone(),
-                    "price_max": max(_item_price(explain_seed), 300_000),
-                    "exclude_colors": [],
-                },
-                user_profile={"height_cm": 159 + example_index, "weight_kg": 51 + example_index},
-                seed_item=explain_seed,
-                candidate_items=tool_candidates,
-                expected_behavior={
-                    "should_call_tool": False,
-                    "should_ask_followup": False,
-                    "should_decline": False,
-                    "should_relax_constraints": False,
-                },
-            )
-        )
-        scenario_index += 1
-
-        decline_seed = tool_candidates[example_index % len(tool_candidates)]
-        scenarios.append(
-            _scenario_payload(
-                scenario_id=f"SC_{scenario_index:06d}",
-                task_type="polite_decline_anti_hallucination",
-                request={
-                    "occasion": tool_occasion,
-                    "style": next_style(),
-                    "body_shape": next_body_shape(),
-                    "skin_tone": next_skin_tone(),
-                    "price_max": max(_item_price(decline_seed), 300_000),
-                    "exclude_colors": [],
-                    "requested_outfit_id": f"OUTFIT_FAKE_{example_index + 1:03d}",
-                },
-                user_profile={"height_cm": 164 + example_index, "weight_kg": 56 + example_index},
-                seed_item=decline_seed,
-                candidate_items=[],
-                expected_behavior={
-                    "should_call_tool": False,
-                    "should_ask_followup": False,
-                    "should_decline": True,
-                    "should_relax_constraints": False,
-                },
-            )
-        )
-        scenario_index += 1
-
-        multi_seed = secondary_pool[example_index % len(secondary_pool)]
-        scenarios.append(
-            _scenario_payload(
-                scenario_id=f"SC_{scenario_index:06d}",
-                task_type="multi_turn_grounded",
-                request={
-                    "occasion": None,
-                    "style": next_style(),
-                    "body_shape": next_body_shape(),
-                    "skin_tone": next_skin_tone(),
-                    "price_max": max(_item_price(multi_seed), 300_000),
-                    "exclude_colors": [],
-                },
-                user_profile={"height_cm": 161 + example_index, "weight_kg": 53 + example_index},
-                seed_item=multi_seed,
-                candidate_items=secondary_pool[:3],
-                expected_behavior={
-                    "should_call_tool": True,
-                    "should_ask_followup": True,
-                    "should_decline": False,
-                    "should_relax_constraints": False,
-                },
-                target_occasion=secondary_occasion,
-            )
-        )
-        scenario_index += 1
-
-        body_seed = tool_candidates[(example_index + 1) % len(tool_candidates)]
-        scenarios.append(
-            _scenario_payload(
-                scenario_id=f"SC_{scenario_index:06d}",
-                task_type="body_fit_grounded",
-                request={
-                    "occasion": tool_occasion,
-                    "style": next_style(),
-                    "body_shape": next_body_shape(),
-                    "skin_tone": next_skin_tone(),
-                    "price_max": max(_item_price(body_seed), 300_000),
-                    "exclude_colors": [],
-                },
-                user_profile={"height_cm": 157 + example_index, "weight_kg": 49 + example_index},
-                seed_item=body_seed,
-                candidate_items=tool_candidates,
-                expected_behavior={
-                    "should_call_tool": False,
-                    "should_ask_followup": False,
-                    "should_decline": False,
-                    "should_relax_constraints": False,
-                },
-            )
-        )
-        scenario_index += 1
+            scenario_index += 1
 
     return scenarios
 
@@ -338,7 +407,7 @@ def write_scenario_bank(output_dir: Path, scenarios: list[dict[str, Any]]) -> di
     scenario_path = output_dir / "scenario_bank.jsonl"
     with scenario_path.open("w", encoding="utf-8") as handle:
         for scenario in scenarios:
-            handle.write(json.dumps(scenario, ensure_ascii=False) + '\n')
+            handle.write(json.dumps(scenario, ensure_ascii=False) + "\n")
     manifest = summarize_scenario_bank(scenarios)
     manifest_path = output_dir / "scenario_manifest.json"
     manifest_path.write_text(
@@ -359,16 +428,24 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--max-examples-per-task", type=int, default=1)
+    parser.add_argument(
+        "--target-profile",
+        choices=["grounded_v1"],
+        default=None,
+        help="Use the plan-aligned 2800-row grounded task mix.",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     items = load_catalog_items(args.catalog_path, args.links_path)
+    counts_by_task = GROUNDED_TARGET_TASK_COUNTS if args.target_profile == "grounded_v1" else None
     scenarios = build_grounded_scenario_bank(
         items,
         seed=args.seed,
         max_examples_per_task=args.max_examples_per_task,
+        counts_by_task=counts_by_task,
     )
     result = write_scenario_bank(args.output_dir, scenarios)
     print(json.dumps(result, ensure_ascii=False, indent=2))
