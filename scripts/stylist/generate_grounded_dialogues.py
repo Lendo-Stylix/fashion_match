@@ -285,11 +285,14 @@ def _chat_completion_request(
     headers = {"Content-Type": "application/json"}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
+    effective_max_tokens = max_tokens
+    if model.startswith("glm-") and effective_max_tokens < 1400:
+        effective_max_tokens = 1400
     payload = {
         "model": model,
         "messages": prompt_messages,
         "temperature": temperature,
-        "max_tokens": max_tokens,
+        "max_tokens": effective_max_tokens,
     }
     request = urllib.request.Request(
         f"{base_url}/chat/completions",
@@ -306,9 +309,17 @@ def _chat_completion_request(
     choices = response_payload.get("choices") or []
     if not choices:
         raise ValueError("OpenAI-compatible response had no choices")
-    content = _extract_message_text((choices[0].get("message") or {}).get("content"))
+    choice = choices[0]
+    message = choice.get("message") or {}
+    content = _extract_message_text(message.get("content"))
     content = _strip_reasoning(content)
     if not content:
+        reasoning = _extract_message_text(message.get("reasoning_content"))
+        finish_reason = choice.get("finish_reason")
+        if reasoning and finish_reason == "length":
+            raise ValueError(
+                "OpenAI-compatible response exhausted tokens in reasoning before final content"
+            )
         raise ValueError("OpenAI-compatible response returned no text payload")
     return content
 
@@ -410,15 +421,27 @@ def _render_openai_compatible_messages(
         return [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": draft_messages[0]["content"]},
-            {"role": "assistant", "content": rewritten},
+            {"role": "assistant", "content": _normalize_assistant_output(task_type, rewritten)},
             draft_messages[2],
             {"role": "assistant", "content": render_search_outfits_tool_call(resolved_request)},
         ]
     return [
         {"role": "system", "content": system_prompt},
         draft_messages[0],
-        {"role": "assistant", "content": rewritten},
+        {"role": "assistant", "content": _normalize_assistant_output(task_type, rewritten)},
     ]
+
+
+def _normalize_assistant_output(task_type: str, content: str) -> str:
+    stripped = content.strip()
+    if task_type == "tool_calling_grounded":
+        if stripped.startswith("```"):
+            stripped = stripped.strip("`")
+            if stripped.lower().startswith("json"):
+                stripped = stripped[4:].strip()
+        if stripped.startswith("{") and stripped.endswith("}"):
+            return f"<tool_call>{stripped}</tool_call>"
+    return stripped
 
 
 def _build_row(
