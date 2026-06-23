@@ -124,6 +124,13 @@ MIXED_SCRIPT_PATTERNS: dict[str, re.Pattern[str]] = {
     "devanagari": re.compile(r"[\u0900-\u097F]"),
 }
 WEIRD_CHAR_PATTERN = re.compile(r"[“”‘’•]|�")
+UNIQUE_BEHAVIOR_SUFFIXES: tuple[str, ...] = (
+    "Nếu muốn, mình có thể siết thêm màu hoặc ngân sách.",
+    "Bạn cũng có thể cho mình store ưu tiên để lọc sát hơn.",
+    "Nếu cần, mình sẽ chuyển gợi ý này thành tiêu chí lọc cụ thể.",
+    "Mình cũng có thể rút gọn thành checklist mua sắm nhanh.",
+    "Nếu thích, mình sẽ biến công thức này thành phiên bản đi cafe hoặc đi làm.",
+)
 
 
 @dataclass(frozen=True)
@@ -793,6 +800,16 @@ def _behavior_messages(
     raise ValueError(f"Unsupported task type: {task_type}")
 
 
+def _dedupe_behavior_messages(
+    messages: list[dict[str, str]], *, duplicate_index: int
+) -> list[dict[str, str]]:
+    """Append a small natural-language suffix so synthetic rows stay unique after packaging."""
+    copied = [dict(message) for message in messages]
+    suffix = UNIQUE_BEHAVIOR_SUFFIXES[duplicate_index % len(UNIQUE_BEHAVIOR_SUFFIXES)]
+    copied[-1]["content"] = _clean_text(f"{copied[-1]['content']} {suffix}")
+    return copied
+
+
 def synthesize_behavioral_examples(
     seed_examples: list[ChatExample],
     *,
@@ -810,6 +827,7 @@ def synthesize_behavioral_examples(
     shuffled = list(seed_examples)
     random.Random(seed).shuffle(shuffled)
     created: list[ChatExample] = []
+    seen_signatures: set[str] = set()
     cursor = 0
     for task_type in BEHAVIORAL_TASKS:
         count = counts_by_task.get(task_type, 0)
@@ -822,14 +840,25 @@ def synthesize_behavioral_examples(
                 hint=hint,
                 index=cursor,
             )
-            created.append(
-                ChatExample(
-                    messages=messages,
+            example = ChatExample(
+                messages=messages,
+                task_type=task_type,
+                source_set="behavioral_synthetic",
+                source_file=f"synthetic:{task_type}",
+            )
+            duplicate_index = 0
+            signature = _example_signature(example)
+            while signature in seen_signatures:
+                duplicate_index += 1
+                example = ChatExample(
+                    messages=_dedupe_behavior_messages(messages, duplicate_index=duplicate_index),
                     task_type=task_type,
                     source_set="behavioral_synthetic",
                     source_file=f"synthetic:{task_type}",
                 )
-            )
+                signature = _example_signature(example)
+            seen_signatures.add(signature)
+            created.append(example)
             cursor += 1
     return created
 

@@ -218,13 +218,13 @@
         "max": 24
       },
       "assistant_words": {
-        "mean": 51.61,
+        "mean": 51.62,
         "median": 50.0,
         "p90": 74.0,
         "max": 95
       },
-      "combined_words_total": 111276,
-      "approx_qwen_tokens": 139095
+      "combined_words_total": 111289,
+      "approx_qwen_tokens": 139111
     },
     "quality_flags": {
       "clean": 1600
@@ -277,8 +277,8 @@
         "p90": 151.0,
         "max": 280
       },
-      "combined_words_total": 1037987,
-      "approx_qwen_tokens": 1297484
+      "combined_words_total": 1038000,
+      "approx_qwen_tokens": 1297500
     },
     "quality_flags": {
       "clean": 8800

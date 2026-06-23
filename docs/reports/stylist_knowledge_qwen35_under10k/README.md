@@ -5,7 +5,7 @@
 - Raw `stylist_knowledge`: **40,302** rows.
 - Quality gate removed **4,308** rows, giữ lại **35,994** clean rows.
 - Final Qwen3.5-9B bundle: **8,800** rows (**7,200 knowledge + 1,600 behavioral**).
-- Approx training budget: **1,037,987 words** ≈ **1,297,484 Qwen tokens**.
+- Approx training budget: **1,038,000 words** ≈ **1,297,500 Qwen tokens**.
 - Bundle cũ: 5700 rows (5000 knowledge + 700 behavioral).
 - Bundle mới: 8800 rows (7200 knowledge + 1600 behavioral).
 ## 2. Findings

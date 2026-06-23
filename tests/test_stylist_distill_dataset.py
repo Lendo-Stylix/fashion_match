@@ -182,3 +182,25 @@ def test_inspect_example_quality_flags_mixed_script_and_overlong_rows() -> None:
 
     assert "mixed_script" in weird_quality.flags
     assert "too_long" in long_quality.flags
+
+
+def test_synthesize_behavioral_examples_avoids_packaging_duplicates() -> None:
+    seeds = [
+        _example(
+            "Mình muốn công thức outfit đi làm gọn gàng.",
+            "Ưu tiên áo sáng màu, quần đứng form và giày tối giản.",
+        ),
+    ]
+
+    behavioral = synthesize_behavioral_examples(
+        seeds,
+        system_prompt=SYSTEM_PROMPT,
+        counts_by_task={"recommend_explain": 3},
+        seed=23,
+    )
+
+    signatures = {
+        json.dumps(example.messages, ensure_ascii=False, sort_keys=True) for example in behavioral
+    }
+    assert len(behavioral) == 3
+    assert len(signatures) == 3
