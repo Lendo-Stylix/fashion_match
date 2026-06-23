@@ -5,10 +5,13 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
+import time
 import urllib.error
 import urllib.request
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -28,12 +31,47 @@ DEFAULT_SYSTEM_PROMPT = (
     "nếu cần tìm outfit thì phải gọi đúng tool search_outfits."
 )
 DEFAULT_OUTPUT_DIR = Path("data/stylist/fine_tune/runs/stylist_grounded_v2/generated_dialogues")
+DEFAULT_ENV_FILE = Path(".env.local")
+DEFAULT_OPENAI_BASE_URL = "http://127.0.0.1:8087/v1"
+NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
+ZAI_BASE_URL = "https://open.bigmodel.cn/api/paas/v4"
+THINK_BLOCK_RE = re.compile(r"<(?:think|thinking)[^>]*>.*?</(?:think|thinking)>", re.DOTALL)
+NVIDIA_MODELS = {
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "nvidia/nemotron-3-ultra-550b-a55b",
+}
+ZAI_MODELS = {
+    "glm-4.5-flash",
+    "glm-4.7-flash",
+    "zai/glm-4.5-flash",
+    "zai/glm-4.7-flash",
+}
 
 
 def load_scenarios(path: Path) -> list[dict[str, Any]]:
     return [
         json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
     ]
+
+
+def _load_env_file(path: Path = DEFAULT_ENV_FILE) -> None:
+    if not path.is_file():
+        return
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+def _env_first(*names: str) -> str | None:
+    for name in names:
+        value = os.getenv(name)
+        if value:
+            return value
+    return None
 
 
 def _profile_text(scenario: dict[str, Any]) -> str:
@@ -173,17 +211,85 @@ def _template_assistant_messages(
     raise ValueError(f"Unsupported task_type: {task_type}")
 
 
-def _call_openai_compatible(prompt_messages: list[dict[str, str]], *, model: str) -> str:
-    base_url = os.getenv("OPENAI_BASE_URL", "http://127.0.0.1:8087/v1").rstrip("/")
+def _api_model_name(model: str) -> str:
+    if model.startswith("zai/"):
+        return model.split("/", 1)[1]
+    return model
+
+
+def _resolve_client_config(
+    model: str,
+    *,
+    base_url_override: str | None = None,
+    api_key_override: str | None = None,
+    env_file: Path = DEFAULT_ENV_FILE,
+) -> tuple[str, str, str]:
+    _load_env_file(env_file)
+    if base_url_override and api_key_override:
+        return base_url_override.rstrip("/"), api_key_override, _api_model_name(model)
+    if model in NVIDIA_MODELS or model.startswith("openai/gpt-oss") or model.startswith("nvidia/"):
+        api_key = api_key_override or _env_first(
+            "NVIDIA_API_KEY",
+            "NVIDIA_NIM_API_TOKEN",
+            "NIVIDIA_NIM_API_TOKEN",
+        )
+        if not api_key:
+            raise ValueError("Missing NVIDIA API key (NVIDIA_API_KEY / NVIDIA_NIM_API_TOKEN)")
+        base_url = (base_url_override or os.getenv("NVIDIA_BASE_URL") or NVIDIA_BASE_URL).rstrip(
+            "/"
+        )
+        return base_url, api_key, _api_model_name(model)
+    if model in ZAI_MODELS or model.startswith("glm-") or model.startswith("zai/"):
+        api_key = api_key_override or _env_first("ZAI_API_TOKEN", "ZHIPU_API_KEY")
+        if not api_key:
+            raise ValueError("Missing ZAI API key (ZAI_API_TOKEN / ZHIPU_API_KEY)")
+        base_url = (base_url_override or os.getenv("ZAI_BASE_URL") or ZAI_BASE_URL).rstrip("/")
+        return base_url, api_key, _api_model_name(model)
+    base_url = (
+        base_url_override or os.getenv("OPENAI_BASE_URL") or DEFAULT_OPENAI_BASE_URL
+    ).rstrip("/")
+    api_key = api_key_override or os.getenv("OPENAI_API_KEY", "")
+    if not api_key and not base_url_override:
+        raise ValueError("Missing OPENAI_API_KEY for generic openai-compatible backend")
+    return base_url, api_key, _api_model_name(model)
+
+
+def _extract_message_text(message: Any) -> str:
+    if isinstance(message, str):
+        return message
+    if isinstance(message, list):
+        parts: list[str] = []
+        for item in message:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict) and isinstance(item.get("text"), str):
+                parts.append(item["text"])
+        return "\n".join(parts).strip()
+    return ""
+
+
+def _strip_reasoning(content: str) -> str:
+    return THINK_BLOCK_RE.sub("", content).strip()
+
+
+def _chat_completion_request(
+    prompt_messages: list[dict[str, str]],
+    *,
+    model: str,
+    base_url: str,
+    api_key: str,
+    temperature: float = 0.2,
+    max_tokens: int = 600,
+    timeout: int = 300,
+) -> str:
     headers = {"Content-Type": "application/json"}
-    api_key = os.getenv("OPENAI_API_KEY")
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
     payload = {
         "model": model,
         "messages": prompt_messages,
-        "temperature": 0.2,
-        "max_tokens": 600,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
     }
     request = urllib.request.Request(
         f"{base_url}/chat/completions",
@@ -192,7 +298,7 @@ def _call_openai_compatible(prompt_messages: list[dict[str, str]], *, model: str
         method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=300) as response:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
             response_payload = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:  # pragma: no cover - live backend path
         detail = exc.read().decode("utf-8", errors="replace")
@@ -200,10 +306,134 @@ def _call_openai_compatible(prompt_messages: list[dict[str, str]], *, model: str
     choices = response_payload.get("choices") or []
     if not choices:
         raise ValueError("OpenAI-compatible response had no choices")
-    content = (choices[0].get("message") or {}).get("content")
-    if not isinstance(content, str) or not content.strip():
+    content = _extract_message_text((choices[0].get("message") or {}).get("content"))
+    content = _strip_reasoning(content)
+    if not content:
         raise ValueError("OpenAI-compatible response returned no text payload")
     return content
+
+
+def _grounding_summary(scenario: dict[str, Any]) -> str:
+    request = scenario["request"]
+    seed_item = scenario.get("seed_item") or {}
+    candidate_items = scenario.get("candidate_items") or []
+    candidates = "; ".join(_format_candidate(item) for item in candidate_items[:5]) or "(không có)"
+    return "\n".join(
+        [
+            f"task_type: {scenario['task_type']}",
+            f"request: {json.dumps(request, ensure_ascii=False, sort_keys=True)}",
+            f"seed_item: {json.dumps(seed_item, ensure_ascii=False, sort_keys=True)}",
+            f"candidate_items: {candidates}",
+        ]
+    )
+
+
+def _rewrite_prompt_messages(
+    scenario: dict[str, Any],
+    *,
+    system_prompt: str,
+) -> list[dict[str, str]]:
+    draft_messages = _template_assistant_messages(scenario)
+    task_type = scenario["task_type"]
+    final_target = draft_messages[-1]["content"]
+    if task_type == "tool_calling_grounded":
+        instruction = (
+            "Bạn đang tạo dữ liệu SFT grounded cho stylist. "
+            "Dữ liệu đã có đủ occasion/style/budget nên assistant PHẢI "
+            "trả về đúng 1 block tool_call, không thêm giải thích, "
+            "không thêm markdown, không đổi schema."
+        )
+    elif task_type == "multi_turn_grounded":
+        instruction = (
+            "Bạn chỉ viết lại assistant ở TURN 1 theo tiếng Việt tự nhiên, "
+            "ngắn gọn, giữ đúng intent hỏi thêm dịp mặc. TURN cuối vẫn là "
+            "tool_call chuẩn nên không được động tới."
+        )
+    else:
+        instruction = (
+            "Viết lại câu trả lời assistant bằng tiếng Việt tự nhiên, "
+            "ngắn gọn 1-3 câu, bám đúng dữ liệu grounded, không bịa thêm "
+            "item/outfit/thuộc tính ngoài prompt."
+        )
+    return [
+        {"role": "system", "content": system_prompt},
+        {
+            "role": "user",
+            "content": (
+                f"{instruction}\n\n"
+                f"Grounding:\n{_grounding_summary(scenario)}\n\n"
+                f"User message: {draft_messages[0]['content']}\n\n"
+                f"Current target draft: {final_target}"
+            ),
+        },
+    ]
+
+
+def _render_openai_compatible_messages(
+    scenario: dict[str, Any],
+    *,
+    system_prompt: str,
+    model: str,
+    base_url_override: str | None,
+    api_key_override: str | None,
+    env_file: Path,
+    max_retries: int,
+) -> list[dict[str, str]]:
+    base_url, api_key, api_model = _resolve_client_config(
+        model,
+        base_url_override=base_url_override,
+        api_key_override=api_key_override,
+        env_file=env_file,
+    )
+    request = dict(scenario["request"])
+    task_type = scenario["task_type"]
+    draft_messages = _template_assistant_messages(scenario)
+    prompt_messages = _rewrite_prompt_messages(scenario, system_prompt=system_prompt)
+    rewritten: str | None = None
+    last_error: Exception | None = None
+    for _attempt in range(max_retries):
+        try:
+            rewritten = _chat_completion_request(
+                prompt_messages,
+                model=api_model,
+                base_url=base_url,
+                api_key=api_key,
+            )
+            break
+        except Exception as exc:  # pragma: no cover - live backend path
+            last_error = exc
+            time.sleep(1)
+    if rewritten is None:
+        raise RuntimeError(f"LLM generation failed for task_type={task_type}") from last_error
+    if task_type == "multi_turn_grounded":
+        resolved_request = {**request, "occasion": scenario["target_occasion"]}
+        return [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": draft_messages[0]["content"]},
+            {"role": "assistant", "content": rewritten},
+            draft_messages[2],
+            {"role": "assistant", "content": render_search_outfits_tool_call(resolved_request)},
+        ]
+    return [
+        {"role": "system", "content": system_prompt},
+        draft_messages[0],
+        {"role": "assistant", "content": rewritten},
+    ]
+
+
+def _build_row(
+    scenario: dict[str, Any],
+    *,
+    messages: list[dict[str, str]],
+    source_file: str,
+) -> dict[str, Any]:
+    return {
+        "messages": messages,
+        "task_type": str(scenario["task_type"]),
+        "source_set": "grounded_generated",
+        "source_file": source_file,
+        "scenario_id": str(scenario["scenario_id"]),
+    }
 
 
 def generate_dialogues_from_scenarios(
@@ -213,44 +443,83 @@ def generate_dialogues_from_scenarios(
     backend: str = "template",
     model: str | None = None,
     source_file: str = "scenario_bank.jsonl",
+    base_url_override: str | None = None,
+    api_key_override: str | None = None,
+    env_file: Path = DEFAULT_ENV_FILE,
+    max_workers: int = 1,
+    max_retries: int = 3,
 ) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for scenario in scenarios:
-        messages = [{"role": "system", "content": system_prompt}]
-        if backend == "template":
-            messages.extend(_template_assistant_messages(scenario))
-        elif backend == "openai-compatible":
-            if not model:
-                raise ValueError("model is required for openai-compatible backend")
-            draft_messages = _template_assistant_messages(scenario)
-            prompt_messages = (
-                messages
-                + draft_messages[:-1]
-                + [
-                    {
-                        "role": "user",
-                        "content": (
-                            "Viết lại câu trả lời assistant ngắn gọn, bám đúng dữ liệu có sẵn "
-                            "và giữ nguyên tool_call nếu có."
-                        ),
-                    }
-                ]
+    if backend == "template":
+        return [
+            _build_row(
+                scenario,
+                messages=[{"role": "system", "content": system_prompt}]
+                + _template_assistant_messages(scenario),
+                source_file=source_file,
             )
-            rewritten = _call_openai_compatible(prompt_messages, model=model)
-            messages.extend(draft_messages[:-1])
-            messages.append({"role": "assistant", "content": rewritten})
-        else:
-            raise ValueError(f"Unsupported backend: {backend}")
-        rows.append(
-            {
-                "messages": messages,
-                "task_type": str(scenario["task_type"]),
-                "source_set": "grounded_generated",
-                "source_file": source_file,
-                "scenario_id": str(scenario["scenario_id"]),
-            }
+            for scenario in scenarios
+        ]
+    if backend != "openai-compatible":
+        raise ValueError(f"Unsupported backend: {backend}")
+    if not model:
+        raise ValueError("model is required for openai-compatible backend")
+
+    def _run_one(index: int, scenario: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        messages = _render_openai_compatible_messages(
+            scenario,
+            system_prompt=system_prompt,
+            model=model,
+            base_url_override=base_url_override,
+            api_key_override=api_key_override,
+            env_file=env_file,
+            max_retries=max_retries,
         )
-    return rows
+        return index, _build_row(scenario, messages=messages, source_file=source_file)
+
+    if max_workers <= 1:
+        return [_run_one(index, scenario)[1] for index, scenario in enumerate(scenarios)]
+
+    ordered_rows: list[dict[str, Any] | None] = [None] * len(scenarios)
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [
+            executor.submit(_run_one, index, scenario) for index, scenario in enumerate(scenarios)
+        ]
+        for future in as_completed(futures):
+            index, row = future.result()
+            ordered_rows[index] = row
+    return [row for row in ordered_rows if row is not None]
+
+
+def _message_signatures(rows: list[dict[str, Any]]) -> set[str]:
+    return {json.dumps(row["messages"], ensure_ascii=False, sort_keys=True) for row in rows}
+
+
+def _assistant_turns(row: dict[str, Any]) -> list[str]:
+    return [
+        str(message.get("content", ""))
+        for message in row.get("messages", [])
+        if message.get("role") == "assistant"
+    ]
+
+
+def build_generation_manifest(rows: list[dict[str, Any]], train_path: Path) -> dict[str, Any]:
+    signatures = _message_signatures(rows)
+    turn_counts = [len(row["messages"]) for row in rows]
+    tool_rows = 0
+    for row in rows:
+        assistant_text = "\n".join(_assistant_turns(row))
+        if "<tool_call>" in assistant_text:
+            tool_rows += 1
+    return {
+        "total_examples": len(rows),
+        "task_counts": dict(sorted(Counter(str(row["task_type"]) for row in rows).items())),
+        "unique_message_examples": len(signatures),
+        "duplicate_message_examples": len(rows) - len(signatures),
+        "tool_call_rows": tool_rows,
+        "avg_turns": round(sum(turn_counts) / len(turn_counts), 2) if turn_counts else 0.0,
+        "max_turns": max(turn_counts, default=0),
+        "train_file": str(train_path),
+    }
 
 
 def write_generated_dialogues(output_dir: Path, rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -260,11 +529,7 @@ def write_generated_dialogues(output_dir: Path, rows: list[dict[str, Any]]) -> d
         "\n".join(json.dumps(row, ensure_ascii=False) for row in rows) + "\n",
         encoding="utf-8",
     )
-    manifest = {
-        "total_examples": len(rows),
-        "task_counts": dict(sorted(Counter(str(row["task_type"]) for row in rows).items())),
-        "train_file": str(train_path),
-    }
+    manifest = build_generation_manifest(rows, train_path)
     (output_dir / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2),
         encoding="utf-8",
@@ -282,6 +547,11 @@ def parse_args() -> argparse.Namespace:
         default="template",
     )
     parser.add_argument("--model", default=None)
+    parser.add_argument("--base-url", default=None)
+    parser.add_argument("--api-key", default=None)
+    parser.add_argument("--env-file", type=Path, default=DEFAULT_ENV_FILE)
+    parser.add_argument("--max-workers", type=int, default=1)
+    parser.add_argument("--max-retries", type=int, default=3)
     parser.add_argument("--system-prompt", default=DEFAULT_SYSTEM_PROMPT)
     return parser.parse_args()
 
@@ -295,6 +565,11 @@ def main() -> None:
         backend=args.backend,
         model=args.model,
         source_file=args.scenario_bank.name,
+        base_url_override=args.base_url,
+        api_key_override=args.api_key,
+        env_file=args.env_file,
+        max_workers=args.max_workers,
+        max_retries=args.max_retries,
     )
     result = write_generated_dialogues(args.output_dir, rows)
     print(json.dumps(result, ensure_ascii=False, indent=2))

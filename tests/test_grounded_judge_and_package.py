@@ -10,6 +10,7 @@ from scripts.stylist.judge_grounded_dialogues import (
     write_judged_dialogues,
 )
 from scripts.stylist.package_grounded_bundle import package_grounded_bundle
+from scripts.stylist.verify_grounded_dialogues import build_report
 
 
 def _row(task_type: str, assistant_text: str, *, source_set: str = "grounded_generated") -> dict:
@@ -170,3 +171,22 @@ def test_grounded_judge_and_package_scripts_run_directly(tmp_path: Path):
     assert package_result.returncode == 0, package_result.stderr
     assert (bundle_dir / "train.jsonl").is_file()
     assert (bundle_dir / "eval.jsonl").is_file()
+
+
+def test_verify_grounded_dialogues_reports_duplicates_and_tool_validity():
+    rows = [
+        _row(
+            "tool_calling_grounded",
+            '<tool_call>{"name":"search_outfits","arguments":{"occasion":"office"}}</tool_call>',
+        ),
+        _row(
+            "tool_calling_grounded",
+            '<tool_call>{"name":"search_outfits","arguments":{"occasion":"office"}}</tool_call>',
+        ),
+        _row("recommend_explain_grounded", "Áo sơ mi trắng hợp công sở."),
+    ]
+    report = build_report(rows)
+    assert report["total_rows"] == 3
+    assert report["duplicate_message_rows"] == 1
+    assert report["valid_tool_rows"] == 2
+    assert report["invalid_tool_rows"] == 0

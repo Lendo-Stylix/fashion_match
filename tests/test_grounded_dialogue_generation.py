@@ -9,11 +9,14 @@ import pandas as pd
 from scripts.stylist.build_grounded_scenario_bank import build_grounded_scenario_bank
 from scripts.stylist.generate_grounded_dialogues import (
     DEFAULT_SYSTEM_PROMPT,
+    build_generation_manifest,
     generate_dialogues_from_scenarios,
     write_generated_dialogues,
 )
+from scripts.stylist.verify_grounded_dialogues import build_report
 
 from outfitmatch.kb.catalog import load_catalog_items
+from outfitmatch.stylist.tools import render_search_outfits_tool_call
 from outfitmatch.stylist.validation import validate_tool_calls
 
 
@@ -166,6 +169,9 @@ def test_write_generated_dialogues_writes_packaging_compatible_jsonl(tmp_path: P
     assert loaded == rows
     assert manifest["total_examples"] == 1
     assert manifest["task_counts"] == {"tool_calling_grounded": 1}
+    assert manifest["unique_message_examples"] == 1
+    assert manifest["duplicate_message_examples"] == 0
+    assert manifest["tool_call_rows"] == 1
 
 
 def test_generate_grounded_dialogues_cli_runs_directly(tmp_path: Path):
@@ -227,3 +233,76 @@ def test_generate_dialogues_from_large_grounded_batch_stays_unique(tmp_path: Pat
     }
 
     assert len(signatures) == len(examples)
+
+
+def test_generate_dialogues_openai_compatible_backend_mocked(monkeypatch, tmp_path: Path):
+    catalog_path, links_path = _write_catalog(tmp_path)
+    items = load_catalog_items(catalog_path, links_path)
+    scenarios = build_grounded_scenario_bank(
+        items,
+        seed=23,
+        counts_by_task={"tool_calling_grounded": 1, "multi_turn_grounded": 1},
+    )
+
+    tool_scenario = next(s for s in scenarios if s["task_type"] == "tool_calling_grounded")
+    responses = iter(
+        [
+            render_search_outfits_tool_call(tool_scenario["request"]),
+            "Bạn cho mình biết dịp chính nhé để mình lọc outfit chính xác hơn.",
+        ]
+    )
+
+    def _fake_chat(*_args, **_kwargs):
+        return next(responses)
+
+    monkeypatch.setattr(
+        "scripts.stylist.generate_grounded_dialogues._chat_completion_request",
+        _fake_chat,
+    )
+
+    rows = generate_dialogues_from_scenarios(
+        scenarios,
+        backend="openai-compatible",
+        model="openai/gpt-oss-120b",
+        base_url_override="https://example.invalid/v1",
+        api_key_override="token",
+    )
+
+    assert len(rows) == 2
+    tool_row = next(row for row in rows if row["task_type"] == "tool_calling_grounded")
+    multi_row = next(row for row in rows if row["task_type"] == "multi_turn_grounded")
+    assert validate_tool_calls(tool_row["messages"][-1]["content"])[0] is True
+    assert multi_row["messages"][-1]["content"].startswith("<tool_call>")
+    report = build_report(rows)
+    assert report["invalid_tool_rows"] == 0
+    assert report["duplicate_message_rows"] == 0
+
+
+def test_build_generation_manifest_reports_duplicates():
+    rows = [
+        {
+            "messages": [
+                {"role": "system", "content": "s"},
+                {"role": "user", "content": "u"},
+                {"role": "assistant", "content": "a"},
+            ],
+            "task_type": "recommend_explain_grounded",
+            "source_set": "grounded_generated",
+            "source_file": "scenario_bank.jsonl",
+            "scenario_id": "SC_1",
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "s"},
+                {"role": "user", "content": "u"},
+                {"role": "assistant", "content": "a"},
+            ],
+            "task_type": "recommend_explain_grounded",
+            "source_set": "grounded_generated",
+            "source_file": "scenario_bank.jsonl",
+            "scenario_id": "SC_2",
+        },
+    ]
+    manifest = build_generation_manifest(rows, Path("train.jsonl"))
+    assert manifest["unique_message_examples"] == 1
+    assert manifest["duplicate_message_examples"] == 1
