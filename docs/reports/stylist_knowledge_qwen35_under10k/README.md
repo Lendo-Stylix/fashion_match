@@ -1,4 +1,7 @@
 # Stylist knowledge distillation report
+
+> Detailed analysis: `DETAILED_REPORT.md`
+
 **Date:** 2026-06-23  
 **Branch:** feature/stylist-knowledge-distill-report
 ## 1. Executive summary
