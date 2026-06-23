@@ -1,0 +1,109 @@
+task: fine_tune_stylist_model_kaggle
+mode: kaggle_qlora
+created_for: OutfitMatch v3.1-lite Grounded Conversational Stylist
+kaggle:
+  owner: nhatquangvominh
+  dataset_slug: om-stylist-qlora-grounded-data
+  kernel_slug_prefix: om-sty-grounded
+  machine_shape: NvidiaTeslaT4x2
+  enable_gpu: true
+  enable_internet: true
+  is_private: true
+secrets:
+  allowed_hf_token_env_vars:
+  - HF_API_TOKEN_2
+  - HF_API_TOKEN_3
+  forbidden_hf_token_env_vars:
+  - HF_API_TOKEN_1
+  - HF_TOKEN
+  - HUGGINGFACE_TOKEN
+dataset:
+  source_mode: grounded_bundle
+  root: data/stylist/fine_tune
+  stylist_knowledge_dir: data/stylist/fine_tune/runs/stylist_grounded_v2/final_bundle
+  users_query_response_dir: data/stylist/fine_tune/users_query_and_response
+  accepted_extensions:
+  - .csv
+  - .jsonl
+  - .json
+  - .md
+  - .txt
+  prefer_translated_columns: true
+  eval_fraction: 0.03
+  max_eval_records: 512
+  seed: 42
+  system_prompt: 'Bạn là AI stylist tiếng Việt của OutfitMatch cho thị trường Việt Nam. Trả lời ngắn gọn, bám catalog thật, gọi đúng search_outfits khi cần, không bịa outfit_id hoặc sản phẩm không có trong dữ liệu.'
+training:
+  framework: unsloth
+  strategy: qlora_sft
+  install_packages:
+  - unsloth
+  - trl
+  - peft
+  - accelerate
+  - bitsandbytes
+  - datasets
+  - huggingface_hub
+  - wandb
+  load_in_4bit: true
+  bnb_4bit_quant_type: nf4
+  bnb_4bit_use_double_quant: true
+  compute_dtype: float16
+  max_seq_length: 2048
+  packing: true
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 8
+  learning_rate: 0.0002
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.03
+  num_train_epochs: 1
+  optim: adamw_8bit
+  weight_decay: 0.01
+  logging_steps: 10
+  eval_steps: 100
+  save_steps: 250
+  save_total_limit: 2
+  ddp:
+    enabled: true
+    backend: torchrun
+    ddp_find_unused_parameters: false
+    effective_batch_size_note: per_device_train_batch_size * visible_gpus * gradient_accumulation_steps
+  lora:
+    r: 16
+    alpha: 32
+    dropout: 0.05
+    bias: none
+    target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  output_root: /kaggle/working/outfitmatch_stylist_qlora
+  report_to:
+  - wandb
+  max_session_steps: 1000
+  wandb:
+    project: outfitmatch-stylist
+    entity: null
+    kaggle_secret_name: WANDB_API_KEY
+    checkpoint_artifact_name: outfitmatch-{run_id}-checkpoint
+models:
+- run_id: qwen35_9b
+  hf_token_env: HF_API_TOKEN_2
+  base_model: Qwen/Qwen3.5-9B
+  preferred_unsloth_4bit_model: unsloth/Qwen3.5-9B-bnb-4bit
+  gguf_repo: unsloth/Qwen3.5-9B-GGUF
+  modality: image_text_to_text
+  role: grounded_bundle_candidate
+  request_overrides:
+    chat_template_kwargs:
+      enable_thinking: false
+outputs:
+  package_root: data/stylist/fine_tune/runs/kaggle_qlora_grounded
+  normalized_train_jsonl: data/stylist/fine_tune/runs/kaggle_qlora_grounded/kaggle_dataset/train.jsonl
+  normalized_eval_jsonl: data/stylist/fine_tune/runs/kaggle_qlora_grounded/kaggle_dataset/eval.jsonl
+  manifest: data/stylist/fine_tune/runs/kaggle_qlora_grounded/manifest.json

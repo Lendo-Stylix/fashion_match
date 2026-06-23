@@ -8,7 +8,7 @@ Security invariants:
 - Generated kernels reference only Kaggle secret names, never token values.
 - Only HF_API_TOKEN_2 and HF_API_TOKEN_3 are accepted by the config validator.
 - `users_query_and_response` is ignored; supported dataset.source_mode values are
-  `stylist_knowledge_only` and `distilled_behavioral_bundle`.
+  `stylist_knowledge_only`, `distilled_behavioral_bundle`, and `grounded_bundle`.
 """
 
 from __future__ import annotations
@@ -83,11 +83,15 @@ def validate_config(config: dict[str, Any]) -> None:
         raise ValueError("HF_API_TOKEN_1 must be explicitly forbidden")
 
     source_mode = config.get("dataset", {}).get("source_mode")
-    allowed_source_modes = {"stylist_knowledge_only", "distilled_behavioral_bundle"}
+    allowed_source_modes = {
+        "stylist_knowledge_only",
+        "distilled_behavioral_bundle",
+        "grounded_bundle",
+    }
     if source_mode not in allowed_source_modes:
         raise ValueError(
             "dataset.source_mode must be one of: stylist_knowledge_only, "
-            "distilled_behavioral_bundle"
+            "distilled_behavioral_bundle, grounded_bundle"
         )
 
     for model in config.get("models", []):
@@ -225,7 +229,7 @@ def collect_examples(config: dict[str, Any]) -> list[ChatExample]:
         raise FileNotFoundError(f"Missing training data directory: {source_dir}")
 
     candidate_paths: list[Path]
-    if source_mode == "distilled_behavioral_bundle":
+    if source_mode in {"distilled_behavioral_bundle", "grounded_bundle"}:
         preferred = source_dir / "train.jsonl"
         candidate_paths = (
             [preferred] if preferred.is_file() else sorted(source_dir.rglob("*.jsonl"))
@@ -339,7 +343,6 @@ def _resolve_resume_checkpoint_source(path: Path) -> Path:
     return sorted(candidates, key=lambda candidate: candidate.name)[-1]
 
 
-
 def stage_resume_checkpoint(config: dict[str, Any], package_root: Path) -> dict[str, Any] | None:
     """Copy a local checkpoint into the Kaggle dataset bundle for offline resume."""
     resume_cfg = dict(config.get("training", {}).get("resume_checkpoint", {}))
@@ -366,7 +369,6 @@ def stage_resume_checkpoint(config: dict[str, Any], package_root: Path) -> dict[
     }
 
 
-
 def write_dataset_metadata(config: dict[str, Any], package_root: Path) -> dict[str, str]:
     """Write Kaggle dataset metadata."""
     kaggle = config["kaggle"]
@@ -381,7 +383,6 @@ def write_dataset_metadata(config: dict[str, Any], package_root: Path) -> dict[s
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return {"dataset_id": metadata["id"], "dataset_slug": dataset_slug}
-
 
 
 def _canonicalize_package_name(value: str) -> str:
@@ -401,9 +402,7 @@ def build_bootstrap_wheelhouse(config: dict[str, Any], package_root: Path) -> di
         return None
 
     requirements = [
-        str(item).strip()
-        for item in bootstrap.get("requirements", [])
-        if str(item).strip()
+        str(item).strip() for item in bootstrap.get("requirements", []) if str(item).strip()
     ]
     if not requirements:
         return None
@@ -476,6 +475,7 @@ def build_bootstrap_wheelhouse(config: dict[str, Any], package_root: Path) -> di
         "removed_files": sorted(removed_files),
         "download_stdout": completed.stdout.strip(),
     }
+
 
 def _kernel_script(config: dict[str, Any], model: dict[str, Any], dataset_slug: str) -> str:
     """Return a self-contained Kaggle training script for one model."""
@@ -1302,8 +1302,7 @@ def push_with_kaggle_cli(
         (["kaggle", "datasets", "create", "-p", ".", "-r", "zip"], dataset_dir),
     ]
     commands.extend(
-        (["kaggle", "kernels", "push", "-p", "."], Path(row["kernel_dir"]))
-        for row in kernel_rows
+        (["kaggle", "kernels", "push", "-p", "."], Path(row["kernel_dir"])) for row in kernel_rows
     )
 
     env = os.environ.copy()
@@ -1381,6 +1380,7 @@ def push_with_kaggle_cli(
         if output:
             summaries.append(output.strip())
     return summaries
+
 
 def build_package(
     config_path: Path,

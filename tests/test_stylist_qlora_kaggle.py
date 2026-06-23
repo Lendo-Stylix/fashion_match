@@ -208,3 +208,80 @@ def test_build_package_supports_distilled_behavioral_bundle(tmp_path: Path) -> N
         "stylist_knowledge",
         "tool_calling",
     }
+
+
+def test_build_package_supports_grounded_bundle(tmp_path: Path) -> None:
+    source_dir = tmp_path / "grounded_bundle"
+    package_root = tmp_path / "runs" / "kaggle_qlora_grounded"
+    source_dir.mkdir(parents=True)
+
+    tool_row = {
+        "messages": [
+            {"role": "system", "content": "Bạn là stylist."},
+            {"role": "user", "content": "Tìm outfit đi làm giúp mình."},
+            {
+                "role": "assistant",
+                "content": (
+                    '<tool_call>{"name":"search_outfits",'
+                    '"arguments":{"occasion":"office"}}</tool_call>'
+                ),
+            },
+        ],
+        "task_type": "tool_calling_grounded",
+        "source_set": "grounded_generated",
+        "source_file": "train.jsonl",
+    }
+    explain_row = {
+        "messages": [
+            {"role": "system", "content": "Bạn là stylist."},
+            {"role": "user", "content": "Giải thích outfit này hợp vì sao."},
+            {
+                "role": "assistant",
+                "content": "Áo sơ mi trắng và quần suông tạo cảm giác gọn gàng, hợp đi làm.",
+            },
+        ],
+        "task_type": "recommend_explain_grounded",
+        "source_set": "grounded_generated",
+        "source_file": "train.jsonl",
+    }
+    lines = "\n".join(
+        [
+            json.dumps(tool_row, ensure_ascii=False),
+            json.dumps(explain_row, ensure_ascii=False),
+        ]
+    )
+    (source_dir / "train.jsonl").write_text(lines + "\n", encoding="utf-8")
+    (source_dir / "manifest.json").write_text(
+        json.dumps({"total_examples": 2}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    config = load_config(Path("configs/stylist_finetune_kaggle_grounded.yaml"))
+    config["dataset"]["stylist_knowledge_dir"] = str(source_dir)
+    config["dataset"]["max_eval_records"] = 1
+    config["outputs"]["package_root"] = str(package_root)
+    config["outputs"]["manifest"] = str(package_root / "manifest.json")
+    config_path = tmp_path / "grounded_config.yaml"
+    import yaml
+
+    config_path.write_text(yaml.safe_dump(config, allow_unicode=True), encoding="utf-8")
+
+    manifest = build_package(config_path, clean=True, push=False)
+    assert manifest["dataset"]["source_mode"] == "grounded_bundle"
+    assert manifest["dataset"]["total_examples"] == 2
+    assert manifest["dataset"]["train_examples"] == 1
+    assert manifest["dataset"]["eval_examples"] == 1
+
+    packaged_rows = []
+    for split_name in ("train", "eval"):
+        split_path = package_root / "kaggle_dataset" / f"{split_name}.jsonl"
+        packaged_rows.extend(
+            json.loads(line)
+            for line in split_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        )
+    assert {row["source_set"] for row in packaged_rows} == {"grounded_generated"}
+    assert {row["task_type"] for row in packaged_rows} == {
+        "tool_calling_grounded",
+        "recommend_explain_grounded",
+    }

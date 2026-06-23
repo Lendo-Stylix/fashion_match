@@ -4,6 +4,18 @@ Each merged feature gets one entry here. Format: `## feature-name` → brief des
 
 ---
 
+## stylist-grounded-pipeline — Retrieval-Grounded Stylist SFT Pipeline
+
+`src/outfitmatch/stylist/tools.py` + `validation.py` now freeze the canonical `<tool_call>{...}</tool_call>` contract in code, parser, and tests so training data stays aligned with runtime tool parsing.
+
+`scripts/stylist/build_grounded_scenario_bank.py` deterministically derives grounded scenario metadata from real catalog items, including seed/candidate item snapshots for `tool_calling_grounded`, `recommend_explain_grounded`, `ask_missing_info_grounded`, `no_result_or_relax_constraints`, `polite_decline_anti_hallucination`, `multi_turn_grounded`, and `body_fit_grounded`.
+
+`scripts/stylist/generate_grounded_dialogues.py`, `judge_grounded_dialogues.py`, and `package_grounded_bundle.py` now cover the draft → deterministic judge → final bundle path. The pipeline produces `data/stylist/fine_tune/runs/stylist_grounded_v2/` artifacts and `configs/stylist_finetune_kaggle_grounded.yaml` lets `prepare_stylist_qlora_kaggle.py` package `dataset.source_mode: grounded_bundle` for Kaggle QLoRA.
+
+Sprint 7/8 — grounded stylist data generation pipeline. Commit: pending
+
+---
+
 ## stylist-knowledge-distill — Qwen3.5 Under-10k Dataset Bundle
 
 `scripts/stylist/distill_stylist_dataset.py` now applies a quality gate before sampling: drop mixed-script translation artifacts, prompt-echo rows, and overlong essay answers; cap near-duplicate prompt families; then select a topic-balanced knowledge core with richer manifest diagnostics (`quality_gate`, word stats, answer-length mix, topic targets). A new CLI preset `--preset qwen35-under10k` builds the recommended 7.2k knowledge + 1.6k behavioral bundle for QLoRA on `Qwen/Qwen3.5-9B`.

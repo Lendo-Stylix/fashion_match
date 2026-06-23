@@ -1,14 +1,17 @@
-"""Outfit ID hallucination detection.
+"""Outfit and tool-call hallucination detection.
 
-After Qwen3-VL generates a response, extract all outfit_id references and
-verify each one exists in the Knowledge Base. Any unrecognised ID is flagged
-as a hallucination and must NOT be shown to the user.
+After Qwen3-VL generates a response, validate referenced outfit IDs, tool-call
+payloads, and explicit size mentions against runtime constraints.
 """
 
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Collection
+from typing import Any
+
+from outfitmatch.stylist.tools import TOOL_CALL_PATTERN, validate_tool_call_payload
 
 # Matches OF_XXXXX where X is a digit — adjust if outfit_id format changes.
 _OUTFIT_ID_RE = re.compile(r"\bOF_\d{5,}\b")
@@ -39,6 +42,38 @@ def validate_response(response: str, valid_ids: Collection[str]) -> tuple[bool, 
     found = extract_outfit_ids(response)
     invalid = [i for i in found if i not in valid_ids]
     return len(invalid) == 0, invalid
+
+
+def extract_tool_calls(text: str) -> list[dict[str, Any]]:
+    """Return all valid JSON tool-call payloads found in text, preserving order."""
+    payloads: list[dict[str, Any]] = []
+    for match in TOOL_CALL_PATTERN.finditer(text):
+        try:
+            payload = json.loads(match.group(1))
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict):
+            payloads.append(payload)
+    return payloads
+
+
+def validate_tool_calls(text: str) -> tuple[bool, list[str]]:
+    """Validate every tool-call block found in text against the canonical schema."""
+    errors: list[str] = []
+    for index, match in enumerate(TOOL_CALL_PATTERN.finditer(text)):
+        try:
+            payload = json.loads(match.group(1))
+        except json.JSONDecodeError as exc:
+            errors.append(f"tool_call[{index}] invalid JSON: {exc.msg}")
+            continue
+        if not isinstance(payload, dict):
+            errors.append(f"tool_call[{index}] payload must be an object")
+            continue
+        ok, payload_errors = validate_tool_call_payload(payload)
+        errors.extend(f"tool_call[{index}] {error}" for error in payload_errors)
+        if not ok and not payload_errors:
+            errors.append(f"tool_call[{index}] invalid payload")
+    return len(errors) == 0, errors
 
 
 def extract_size_mentions(text: str) -> list[str]:
