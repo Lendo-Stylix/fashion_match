@@ -475,3 +475,52 @@ def test_final_merged_kaggle_config_targets_requested_three_models() -> None:
         "HF_API_TOKEN_3",
     }
     assert all(model.get("requires_hf_token") is False for model in config["models"])
+
+
+def test_build_bootstrap_wheelhouse_skips_git_urls(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Git URLs in install_packages must be ignored by wheelhouse downloader."""
+    commands: list[list[str]] = []
+
+    class Completed:
+        def __init__(self) -> None:
+            self.stdout = "ok"
+
+    def fake_run(command: list[str], **_: object) -> Completed:
+        commands.append(command)
+        dest = Path(command[command.index("--dest") + 1])
+        dest.mkdir(parents=True, exist_ok=True)
+        # Create dummy wheel files for each requirement
+        for req in command[command.index("--abi") + 2 :]:
+            name = req.split("==", 1)[0].split(">=", 1)[0].split("<", 1)[0]
+            wheel = dest / f"{name.replace('-', '_')}-1.0.0-py3-none-any.whl"
+            wheel.write_text("wheel", encoding="utf-8")
+        return Completed()
+
+    monkeypatch.setattr(
+        "scripts.stylist.prepare_stylist_qlora_kaggle.shutil.which", lambda _: "pip"
+    )
+    monkeypatch.setattr("scripts.stylist.prepare_stylist_qlora_kaggle.subprocess.run", fake_run)
+
+    config = {
+        "training": {
+            "bootstrap_wheelhouse": {
+                "enabled": True,
+                "requirements": [
+                    "unsloth==2025.8.5",
+                    "git+https://github.com/unslothai/unsloth.git",
+                    "transformers==4.57.3",
+                ],
+                "no_deps_packages": [],
+                "exclude_packages": [],
+            }
+        }
+    }
+    manifest = build_bootstrap_wheelhouse(config, tmp_path / "pkg")
+    assert manifest is not None
+    # Verify git URL was skipped and not passed to pip download
+    all_args = " ".join(arg for cmd in commands for arg in cmd)
+    assert "git+https" not in all_args
+    assert "unsloth==2025.8.5" in all_args
+    assert "transformers==4.57.3" in all_args

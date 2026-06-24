@@ -404,6 +404,16 @@ def build_bootstrap_wheelhouse(config: dict[str, Any], package_root: Path) -> di
     requirements = [
         str(item).strip() for item in bootstrap.get("requirements", []) if str(item).strip()
     ]
+    skipped: list[str] = []
+    wheelable: list[str] = []
+    for req in requirements:
+        if req.startswith("git+") or req.startswith("http:") or req.startswith("https:"):
+            skipped.append(req)
+        else:
+            wheelable.append(req)
+    if skipped:
+        print(f"Skipping non-wheelable requirements from wheelhouse: {skipped}", flush=True)
+    requirements = wheelable
     if not requirements:
         return None
 
