@@ -178,17 +178,20 @@ def test_build_package_normalizes_only_stylist_knowledge(tmp_path: Path) -> None
     assert 'name.startswith("bitsandbytes.")' in kernel_text
     assert "sys.modules.pop(name, None)" in kernel_text
     assert "Patched builtins.PreTrainedConfig for Unsloth compatibility" not in kernel_text
-    assert "Loaded all config classes from installed transformers" in kernel_text
-    assert "Patched unsloth exec to inject config classes" in kernel_text
-    assert "Patched builtins for Unsloth compatibility" in kernel_text
-    assert "builtins.auto_docstring = auto_docstring" in kernel_text
-    assert "builtins.strict = _identity_decorator" in kernel_text
-    assert "builtins.PreTrainedConfig = PretrainedConfig" in kernel_text
+    assert (
+        "Patched installed unsloth/models/_utils.py for transformers compatibility" in kernel_text
+    )
+    assert "from transformers.utils.auto_docstring import auto_docstring" in kernel_text
+    assert (
+        "from transformers.configuration_utils import PretrainedConfig as PreTrainedConfig"
+        in kernel_text
+    )
+    assert "UNSLOTH_COMPILE_DISABLE" in kernel_text
     assert "USE_TF" in kernel_text
     assert "TRANSFORMERS_NO_TF" in kernel_text
     assert "_identity_torch_compile" in kernel_text
-    assert "inspect.currentframe()" in kernel_text
-    assert "importlib.import_module(module_path)" in kernel_text
+    assert "inspect.currentframe()" not in kernel_text
+    assert "importlib.import_module(module_path)" not in kernel_text
     assert "py_file = wh_path /" not in kernel_text
     assert "import unsloth  # noqa: F401" in kernel_text
     # The shim imports from transformers before import unsloth at the top of main,

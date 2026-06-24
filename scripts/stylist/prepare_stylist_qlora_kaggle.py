@@ -1109,10 +1109,8 @@ def _identity_decorator(*args, **kwargs):
 
 
 def _patch_unsloth_auto_docstring() -> None:
-    import builtins
-    import importlib
-    import inspect
-    import types
+    import site
+    import torch as _torch_for_unsloth_patch
 
     kaggle_input = Path("/kaggle/input")
     wheelhouse_candidate = None
@@ -1130,6 +1128,7 @@ def _patch_unsloth_auto_docstring() -> None:
     os.environ.setdefault("USE_TF", "0")
     os.environ.setdefault("TRANSFORMERS_NO_TF", "1")
     os.environ.setdefault("USE_FLAX", "0")
+    os.environ.setdefault("UNSLOTH_COMPILE_DISABLE", "1")
 
     wheelhouse_str = str(wheelhouse_candidate)
     try:
@@ -1142,96 +1141,100 @@ def _patch_unsloth_auto_docstring() -> None:
     if _is_main_process():
         print(f"Added wheelhouse to sys.path: {{wheelhouse_candidate}}", flush=True)
 
-    def _import_installed_attr(module_path: str, attr_name: str):
-        try:
-            module = importlib.import_module(module_path)
-        except Exception as exc:
+    def _find_site_file(relative_path: str) -> Path | None:
+        search_roots = [Path(root) for root in site.getsitepackages()]
+        user_site = site.getusersitepackages()
+        if user_site:
+            search_roots.append(Path(user_site))
+        for root in search_roots:
+            candidate = root / relative_path
+            if candidate.is_file():
+                return candidate
+        return None
+
+    def _patch_installed_unsloth_utils() -> None:
+        utils_path = _find_site_file("unsloth/models/_utils.py")
+        if utils_path is None:
             if _is_main_process():
-                print(f"Failed to import {{module_path}}: {{exc}}", flush=True)
-            return None
-        return getattr(module, attr_name, None)
+                print("Skipping Unsloth compatibility patch: _utils.py not found", flush=True)
+            return
 
-    PretrainedConfig = _import_installed_attr(
-        "transformers.configuration_utils",
-        "PretrainedConfig",
-    )
-    auto_docstring = _import_installed_attr(
-        "transformers.utils.auto_docstring",
-        "auto_docstring",
-    )
-    layer_type_validation = _import_installed_attr(
-        "transformers.configuration_utils",
-        "layer_type_validation",
-    )
-    LlamaConfig = _import_installed_attr(
-        "transformers.models.llama.configuration_llama",
-        "LlamaConfig",
-    )
-    MistralConfig = _import_installed_attr(
-        "transformers.models.mistral.configuration_mistral",
-        "MistralConfig",
-    )
-    GemmaConfig = _import_installed_attr(
-        "transformers.models.gemma.configuration_gemma",
-        "GemmaConfig",
-    )
-    Gemma2Config = _import_installed_attr(
-        "transformers.models.gemma2.configuration_gemma2",
-        "Gemma2Config",
-    )
-    Qwen2Config = _import_installed_attr(
-        "transformers.models.qwen2.configuration_qwen2",
-        "Qwen2Config",
-    )
-    GraniteConfig = _import_installed_attr(
-        "transformers.models.granite.configuration_granite",
-        "GraniteConfig",
-    )
-    Qwen3Config = _import_installed_attr(
-        "transformers.models.qwen3.configuration_qwen3",
-        "Qwen3Config",
-    )
-    Qwen3MoeConfig = _import_installed_attr(
-        "transformers.models.qwen3_moe.configuration_qwen3_moe",
-        "Qwen3MoeConfig",
-    )
-    FalconH1Config = _import_installed_attr(
-        "transformers.models.falcon_h1.configuration_falcon_h1",
-        "FalconH1Config",
-    )
-    if PretrainedConfig is None or auto_docstring is None:
-        if _is_main_process():
-            print(
-                "Skipping Unsloth compatibility patch: could not import installed transformers",
-                flush=True,
+        text = utils_path.read_text(encoding="utf-8", errors="ignore")
+        original = text
+
+        import_anchor = "from transformers import PretrainedConfig\\n"
+        compat_imports = (
+            "from transformers.configuration_utils import PretrainedConfig as PreTrainedConfig\\n"
+            "from transformers.utils.auto_docstring import auto_docstring\\n"
+            "from transformers.models.llama.configuration_llama import LlamaConfig\\n"
+            "from transformers.models.mistral.configuration_mistral import MistralConfig\\n"
+            "from transformers.models.gemma.configuration_gemma import GemmaConfig\\n"
+            "from transformers.models.gemma2.configuration_gemma2 import Gemma2Config\\n"
+            "from transformers.models.qwen2.configuration_qwen2 import Qwen2Config\\n"
+            "from transformers.models.granite.configuration_granite import GraniteConfig\\n"
+            "from transformers.models.qwen3.configuration_qwen3 import Qwen3Config\\n"
+            "from transformers.models.qwen3_moe.configuration_qwen3_moe import Qwen3MoeConfig\\n"
+            "from transformers.models.falcon_h1.configuration_falcon_h1 import FalconH1Config\\n"
+            "\\n"
+            "def strict(*args, **kwargs):\\n"
+            "    if args and len(args) == 1 and callable(args[0]) and not kwargs:\\n"
+            "        return args[0]\\n"
+            "\\n"
+            "    def _wrap(obj):\\n"
+            "        return obj\\n"
+            "\\n"
+            "    return _wrap\\n"
+        )
+        if (
+            "from transformers.utils.auto_docstring import auto_docstring" not in text
+            and import_anchor in text
+        ):
+            text = text.replace(import_anchor, import_anchor + compat_imports, 1)
+
+        compile_start = text.find("# Torch compile settings")
+        compile_end = text.find("del accelerate", compile_start)
+        if (
+            compile_start != -1
+            and compile_end != -1
+            and "_UNSLOTH_TORCH_COMPILE_PATCHED" not in text
+        ):
+            compile_end = text.find("\\n", compile_end)
+            if compile_end == -1:
+                compile_end = len(text)
+            else:
+                compile_end += 1
+            replacement = (
+                "# Torch compile settings\\n"
+                "UNSLOTH_COMPILE_DEBUG = False\\n"
+                "UNSLOTH_COMPILE_MAXIMUM = False\\n"
+                "UNSLOTH_COMPILE_IGNORE_ERRORS = True\\n"
+                "_UNSLOTH_TORCH_COMPILE_PATCHED = True\\n"
+                "\\n"
+                "@functools.lru_cache(None)\\n"
+                "def is_big_gpu(index) -> bool:\\n"
+                "    return False\\n"
+                "\\n"
+                "torch_compile_options = {{}}\\n"
+                "\\n"
+                "def torch_compile_kwargs(*args, **kwargs):\\n"
+                "    return {{\\"dynamic\\": False, \\"fullgraph\\": False, "
+                "\\"options\\": torch_compile_options}}\\n"
             )
-        return
+            text = text[:compile_start] + replacement + text[compile_end:]
 
-    auto_docstring_module = sys.modules.get("transformers.utils.auto_docstring")
-    if auto_docstring_module is None:
-        auto_docstring_module = types.ModuleType("transformers.utils.auto_docstring")
-        sys.modules["transformers.utils.auto_docstring"] = auto_docstring_module
-    auto_docstring_module.auto_docstring = auto_docstring
+        if text != original:
+            utils_path.write_text(text, encoding="utf-8")
+            if _is_main_process():
+                print(
+                    "Patched installed unsloth/models/_utils.py for transformers compatibility: "
+                    f"{{utils_path}}",
+                    flush=True,
+                )
+        elif _is_main_process():
+            print("Installed unsloth/models/_utils.py already patched", flush=True)
 
-    injected_globals = {{
-        "auto_docstring": auto_docstring,
-        "strict": _identity_decorator,
-        "PreTrainedConfig": PretrainedConfig,
-        "layer_type_validation": layer_type_validation,
-        "LlamaConfig": LlamaConfig,
-        "MistralConfig": MistralConfig,
-        "GemmaConfig": GemmaConfig,
-        "Gemma2Config": Gemma2Config,
-        "Qwen2Config": Qwen2Config,
-        "GraniteConfig": GraniteConfig,
-        "Qwen3Config": Qwen3Config,
-        "Qwen3MoeConfig": Qwen3MoeConfig,
-        "FalconH1Config": FalconH1Config,
-    }}
+    _patch_installed_unsloth_utils()
 
-    _ORIGINAL_BUILTIN_EXEC = builtins.exec
-
-    import torch as _torch_for_unsloth_patch
     _ORIGINAL_TORCH_COMPILE = getattr(_torch_for_unsloth_patch, "compile", None)
 
     def _identity_torch_compile(fn=None, *args, **kwargs):
@@ -1246,69 +1249,17 @@ def _patch_unsloth_auto_docstring() -> None:
     if _ORIGINAL_TORCH_COMPILE is not None:
         _torch_for_unsloth_patch.compile = _identity_torch_compile
 
-    def _patched_exec(source, globals_dict=None, /, *args, **kwargs):
-        frame = inspect.currentframe()
-        caller = frame.f_back if frame is not None else None
-        target_globals = globals_dict
-        target_locals = None
-        if target_globals is None and caller is not None:
-            target_globals = caller.f_globals
-            target_locals = caller.f_locals
-        module_name = (
-            str(target_globals.get("__name__", "")) if isinstance(target_globals, dict) else ""
-        )
-        source_text = source if isinstance(source, str) else ""
-        should_inject = module_name == "unsloth.models._utils" or (
-            source_text and "auto_docstring" in source_text
-        )
-        if not should_inject:
-            if target_globals is None:
-                return _ORIGINAL_BUILTIN_EXEC(source, *args, **kwargs)
-            if target_locals is None:
-                return _ORIGINAL_BUILTIN_EXEC(source, target_globals, *args, **kwargs)
-            return _ORIGINAL_BUILTIN_EXEC(source, target_globals, target_locals, *args, **kwargs)
-        for name, value in injected_globals.items():
-            if value is not None and isinstance(target_globals, dict):
-                target_globals.setdefault(name, value)
-        if target_locals is None:
-            return _ORIGINAL_BUILTIN_EXEC(source, target_globals, *args, **kwargs)
-        return _ORIGINAL_BUILTIN_EXEC(source, target_globals, target_locals, *args, **kwargs)
-
-    builtins.exec = _patched_exec
-    builtins.auto_docstring = auto_docstring
-    builtins.strict = _identity_decorator
-    builtins.PreTrainedConfig = PretrainedConfig
-    builtins.layer_type_validation = layer_type_validation
-    builtins.LlamaConfig = LlamaConfig
-    builtins.MistralConfig = MistralConfig
-    builtins.GemmaConfig = GemmaConfig
-    builtins.Gemma2Config = Gemma2Config
-    builtins.Qwen2Config = Qwen2Config
-    builtins.GraniteConfig = GraniteConfig
-    builtins.Qwen3Config = Qwen3Config
-    builtins.Qwen3MoeConfig = Qwen3MoeConfig
-    builtins.FalconH1Config = FalconH1Config
-    if _is_main_process():
-        print("Loaded all config classes from installed transformers", flush=True)
-        print("Patched unsloth exec to inject config classes", flush=True)
-        print("Patched builtins for Unsloth compatibility", flush=True)
-
     try:
         import unsloth  # noqa: F401
-        from unsloth.models._utils import (  # noqa: F401
-            _apply_lora,
-            _dequantize_weight,
-            _get_matching_param_names,
-            _safe_save,
-            _save_to_peft_format,
-        )
     finally:
-        builtins.exec = _ORIGINAL_BUILTIN_EXEC
         if _ORIGINAL_TORCH_COMPILE is not None:
             _torch_for_unsloth_patch.compile = _ORIGINAL_TORCH_COMPILE
 
     if _is_main_process():
-        print("Unsloth loaded successfully with installed transformers", flush=True)
+        print(
+            "Unsloth loaded successfully with patched installed transformers compatibility",
+            flush=True,
+        )
 
 
 def main() -> None:
