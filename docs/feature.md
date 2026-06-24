@@ -4,6 +4,16 @@ Each merged feature gets one entry here. Format: `## feature-name` → brief des
 
 ---
 
+## stylist-qlora-final-merged — 11.6k Merged Kaggle QLoRA Launch
+
+`configs/stylist_finetune_kaggle_final_merged.yaml` now targets the full merged stylist SFT source (`2800` grounded GPT-OSS rows + `8800` distilled core rows) via `merged_source_gptoss_2800_core8800`, preserving all `11600` unique examples before Kaggle repackages them into fresh train/eval splits.
+
+`tests/test_stylist_qlora_kaggle.py` adds coverage for the merged-bundle packaging path, confirms the requested three-model slate (`Qwen3-VL-8B-Instruct`, `Qwen3-VL-8B-Thinking`, `Qwen3.5-9B`), and verifies the Kaggle kernel script still supports W&B fallback via `WANDB_API_TOKEN` alongside `WANDB_API_KEY`.
+
+Sprint 8/9 — final merged QLoRA packaging + multi-account Kaggle launch. Commit: pending
+
+---
+
 ## stylist-grounded-pipeline — Retrieval-Grounded Stylist SFT Pipeline
 
 `src/outfitmatch/stylist/tools.py` + `validation.py` now freeze the canonical `<tool_call>{...}</tool_call>` contract in code, parser, and tests so training data stays aligned with runtime tool parsing.

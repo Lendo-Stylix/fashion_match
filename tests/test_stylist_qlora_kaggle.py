@@ -115,6 +115,7 @@ def test_build_package_normalizes_only_stylist_knowledge(tmp_path: Path) -> None
     assert expected_marker in kernel_bytes
     assert "_restore_checkpoint_from_wandb" in kernel_text
     assert "WANDB_API_KEY" in kernel_text
+    assert "WANDB_API_TOKEN" in kernel_text
     assert "max_session_steps" in kernel_text
     assert "local wheelhouse" in kernel_text
     assert "wheelhouse_enabled" in kernel_text
@@ -285,3 +286,111 @@ def test_build_package_supports_grounded_bundle(tmp_path: Path) -> None:
         "tool_calling_grounded",
         "recommend_explain_grounded",
     }
+
+
+def test_build_package_supports_final_merged_bundle(tmp_path: Path) -> None:
+    source_dir = tmp_path / "final_merged_bundle"
+    package_root = tmp_path / "runs" / "kaggle_qlora_final_merged"
+    source_dir.mkdir(parents=True)
+
+    grounded_row = {
+        "messages": [
+            {"role": "system", "content": "Bạn là stylist."},
+            {"role": "user", "content": "Tìm outfit đi làm tối giản giúp mình."},
+            {
+                "role": "assistant",
+                "content": (
+                    '<tool_call>{"name":"search_outfits","arguments":'
+                    '{"occasion":"office","style":"minimalist"}}</tool_call>'
+                ),
+            },
+        ],
+        "task_type": "tool_calling_grounded",
+        "source_set": "grounded_generated",
+        "source_file": "train.jsonl",
+    }
+    distilled_row = {
+        "messages": [
+            {"role": "system", "content": "Bạn là stylist."},
+            {"role": "user", "content": "Vì sao quần ống suông hợp dáng quả lê?"},
+            {
+                "role": "assistant",
+                "content": "Quần ống suông giúp cân bằng phần hông và kéo dài tỷ lệ chân.",
+            },
+        ],
+        "task_type": "stylist_knowledge",
+        "source_set": "stylist_knowledge",
+        "source_file": "train.jsonl",
+    }
+    lines = "\n".join(
+        [
+            json.dumps(grounded_row, ensure_ascii=False),
+            json.dumps(distilled_row, ensure_ascii=False),
+        ]
+    )
+    (source_dir / "train.jsonl").write_text(lines + "\n", encoding="utf-8")
+    (source_dir / "manifest.json").write_text(
+        json.dumps({"total_examples": 2}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    config = load_config(Path("configs/stylist_finetune_kaggle_final_merged.yaml"))
+    config["dataset"]["stylist_knowledge_dir"] = str(source_dir)
+    config["dataset"]["max_eval_records"] = 1
+    config["outputs"]["package_root"] = str(package_root)
+    config["outputs"]["manifest"] = str(package_root / "manifest.json")
+    config_path = tmp_path / "final_merged_config.yaml"
+    import yaml
+
+    config_path.write_text(yaml.safe_dump(config, allow_unicode=True), encoding="utf-8")
+
+    manifest = build_package(config_path, clean=True, push=False)
+    assert manifest["dataset"]["source_mode"] == "grounded_bundle"
+    assert manifest["dataset"]["total_examples"] == 2
+    assert manifest["dataset"]["train_examples"] == 1
+    assert manifest["dataset"]["eval_examples"] == 1
+    assert len(manifest["kernels"]) == 3
+
+    packaged_rows = []
+    for split_name in ("train", "eval"):
+        split_path = package_root / "kaggle_dataset" / f"{split_name}.jsonl"
+        packaged_rows.extend(
+            json.loads(line)
+            for line in split_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        )
+    assert {row["source_set"] for row in packaged_rows} == {
+        "grounded_generated",
+        "stylist_knowledge",
+    }
+    assert {row["task_type"] for row in packaged_rows} == {
+        "tool_calling_grounded",
+        "stylist_knowledge",
+    }
+
+
+def test_final_merged_kaggle_config_targets_requested_three_models() -> None:
+    config = load_config(Path("configs/stylist_finetune_kaggle_final_merged.yaml"))
+
+    assert config["dataset"]["source_mode"] == "grounded_bundle"
+    assert config["dataset"]["stylist_knowledge_dir"].endswith("merged_source_gptoss_2800_core8800")
+    assert config["training"]["max_session_steps"] == 250
+    assert config["training"]["save_steps"] == 250
+    assert config["training"]["bootstrap_wheelhouse"]["enabled"] is True
+    assert config["training"]["wandb"]["kaggle_secret_name"] == "WANDB_API_KEY"
+    assert config["training"]["wandb"]["entity"] == "vominhnhatquang-fpt-university"
+
+    model_map = {model["run_id"]: model for model in config["models"]}
+    assert set(model_map) == {
+        "qwen3vl8b_instruct",
+        "qwen3vl8b_thinking",
+        "qwen35_9b",
+    }
+    assert model_map["qwen3vl8b_instruct"]["gguf_repo"] == "unsloth/Qwen3-VL-8B-Instruct-GGUF"
+    assert model_map["qwen3vl8b_thinking"]["gguf_repo"] == "unsloth/Qwen3-VL-8B-Thinking-GGUF"
+    assert model_map["qwen35_9b"]["gguf_repo"] == "unsloth/Qwen3.5-9B-GGUF"
+    assert model_map["qwen3vl8b_thinking"]["base_model"] == "Qwen/Qwen3-VL-8B-Thinking"
+    assert {model["hf_token_env"] for model in config["models"]} <= {
+        "HF_API_TOKEN_2",
+        "HF_API_TOKEN_3",
+    }
+    assert all(model.get("requires_hf_token") is False for model in config["models"])
