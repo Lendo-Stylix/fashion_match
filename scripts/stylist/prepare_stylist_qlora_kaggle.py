@@ -561,7 +561,7 @@ def _resolve_wheelhouse(dataset_root: Path) -> Path | None:
 
 
 def _wheelhouse_wheel_paths(wheelhouse: Path) -> list[str]:
-    skip_prefixes = ("torch-", "torchvision-", "xformers-", "nvidia-")
+    skip_prefixes = ("nvidia-",)
     return [
         str(path)
         for path in sorted(wheelhouse.glob("*.whl"))
@@ -596,11 +596,22 @@ def _bitsandbytes_cuda_lib_present() -> bool:
     return False
 
 
+def _bitsandbytes_import_ok() -> bool:
+    try:
+        import bitsandbytes  # noqa: F401
+        return True
+    except Exception as exc:
+        if _is_main_process():
+            print(f"bitsandbytes import failed before repair: {{exc}}", flush=True)
+        return False
+
+
 def _repair_bitsandbytes_for_cuda() -> None:
     import torch
 
     cuda_version = str(getattr(getattr(torch, "version", None), "cuda", "") or "")
-    if not cuda_version or _bitsandbytes_cuda_lib_present():
+    needs_repair = not _bitsandbytes_cuda_lib_present() or not _bitsandbytes_import_ok()
+    if not cuda_version or not needs_repair:
         return
     repair_command = [
         sys.executable,
@@ -614,10 +625,10 @@ def _repair_bitsandbytes_for_cuda() -> None:
         "bitsandbytes>=0.49.2",
     ]
     _run_pip_with_retries(repair_command, label="bitsandbytes network repair")
-    if not _bitsandbytes_cuda_lib_present():
+    if not _bitsandbytes_cuda_lib_present() or not _bitsandbytes_import_ok():
         raise RuntimeError(
             "bitsandbytes repair failed for CUDA "
-            f"{{cuda_version}}; expected CUDA library still missing"
+            f"{{cuda_version}}; library/import sanity still broken"
         )
 
 
@@ -1048,6 +1059,7 @@ def main() -> None:
     _maybe_relaunch_torchrun()
 
     import torch
+    import unsloth  # noqa: F401
     from datasets import load_dataset
     from huggingface_hub import login
     from transformers import (

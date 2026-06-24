@@ -121,6 +121,8 @@ def test_build_package_normalizes_only_stylist_knowledge(tmp_path: Path) -> None
     assert "wheelhouse_enabled" in kernel_text
     assert "network pip install" in kernel_text
     assert "bitsandbytes network repair" in kernel_text
+    assert "import unsloth" in kernel_text
+    assert kernel_text.index("import unsloth") < kernel_text.index("from transformers import")
 
 
 def test_build_package_supports_distilled_behavioral_bundle(tmp_path: Path) -> None:
@@ -378,6 +380,10 @@ def test_final_merged_kaggle_config_targets_requested_three_models() -> None:
     assert config["training"]["bootstrap_wheelhouse"]["enabled"] is True
     assert config["training"]["wandb"]["kaggle_secret_name"] == "WANDB_API_KEY"
     assert config["training"]["wandb"]["entity"] == "vominhnhatquang-fpt-university"
+
+    assert "transformers>=4.46.1,<5" in config["training"]["install_packages"]
+    assert "transformers>=4.46.1,<5" in config["training"]["bootstrap_wheelhouse"]["requirements"]
+    assert "huggingface_hub<1.0" in config["training"]["install_packages"]
 
     model_map = {model["run_id"]: model for model in config["models"]}
     assert set(model_map) == {
