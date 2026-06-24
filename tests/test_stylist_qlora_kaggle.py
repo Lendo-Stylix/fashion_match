@@ -119,8 +119,11 @@ def test_build_package_normalizes_only_stylist_knowledge(tmp_path: Path) -> None
     assert "max_session_steps" in kernel_text
     assert "local wheelhouse" in kernel_text
     assert "wheelhouse_enabled" in kernel_text
+    assert "torchaudio" in kernel_text
     assert "network pip install" in kernel_text
     assert "bitsandbytes network repair" in kernel_text
+    assert 'name.startswith("bitsandbytes.")' in kernel_text
+    assert "sys.modules.pop(name, None)" in kernel_text
     assert "import unsloth" in kernel_text
     assert kernel_text.index("import unsloth") < kernel_text.index("from transformers import")
 

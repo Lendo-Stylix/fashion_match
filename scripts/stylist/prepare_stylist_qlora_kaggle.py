@@ -597,6 +597,13 @@ def _bitsandbytes_cuda_lib_present() -> bool:
 
 
 def _bitsandbytes_import_ok() -> bool:
+    stale = [
+        name
+        for name in list(sys.modules)
+        if name == "bitsandbytes" or name.startswith("bitsandbytes.")
+    ]
+    for name in stale:
+        sys.modules.pop(name, None)
     try:
         import bitsandbytes  # noqa: F401
         return True
@@ -639,7 +646,7 @@ def _install(dataset_root: Path) -> None:
     wheelhouse_enabled = bool(TRAINING_CFG.get("bootstrap_wheelhouse", {{}}).get("enabled", True))
     wheelhouse = _resolve_wheelhouse(dataset_root) if wheelhouse_enabled else None
     if wheelhouse is not None:
-        reset_packages = sorted(set(packages + ["xformers", "torchvision"]))
+        reset_packages = sorted(set(packages + ["xformers", "torchvision", "torchaudio"]))
         _best_effort_uninstall(reset_packages)
         wheel_paths = _wheelhouse_wheel_paths(wheelhouse)
         local_command = [
