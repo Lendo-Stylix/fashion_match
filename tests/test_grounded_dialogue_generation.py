@@ -9,6 +9,7 @@ import pandas as pd
 from scripts.stylist.build_grounded_scenario_bank import build_grounded_scenario_bank
 from scripts.stylist.generate_grounded_dialogues import (
     DEFAULT_SYSTEM_PROMPT,
+    _template_assistant_messages,
     build_generation_manifest,
     generate_dialogues_from_scenarios,
     write_generated_dialogues,
@@ -276,6 +277,78 @@ def test_generate_dialogues_openai_compatible_backend_mocked(monkeypatch, tmp_pa
     report = build_report(rows)
     assert report["invalid_tool_rows"] == 0
     assert report["duplicate_message_rows"] == 0
+
+
+def test_generate_dialogues_openai_compatible_multi_turn_strips_leaked_tool_call(
+    monkeypatch, tmp_path: Path
+):
+    catalog_path, links_path = _write_catalog(tmp_path)
+    items = load_catalog_items(catalog_path, links_path)
+    scenarios = build_grounded_scenario_bank(
+        items,
+        seed=31,
+        counts_by_task={"multi_turn_grounded": 1},
+    )
+    scenario = scenarios[0]
+    leaked = (
+        "Bạn cho mình biết dịp chính nhé để mình lọc outfit chính xác hơn.\n\n"
+        + render_search_outfits_tool_call(
+            {**scenario["request"], "occasion": scenario["target_occasion"]}
+        )
+    )
+
+    monkeypatch.setattr(
+        "scripts.stylist.generate_grounded_dialogues._chat_completion_request",
+        lambda *_args, **_kwargs: leaked,
+    )
+
+    rows = generate_dialogues_from_scenarios(
+        scenarios,
+        backend="openai-compatible",
+        model="openai/gpt-oss-120b",
+        base_url_override="https://example.invalid/v1",
+        api_key_override="token",
+    )
+
+    assistants = [m["content"] for m in rows[0]["messages"] if m["role"] == "assistant"]
+    assert len(assistants) == 2
+    assert "<tool_call>" not in assistants[0]
+    assert assistants[0] == "Bạn cho mình biết dịp chính nhé để mình lọc outfit chính xác hơn."
+    assert assistants[1].startswith("<tool_call>")
+
+
+def test_generate_dialogues_openai_compatible_multi_turn_falls_back_when_only_tool_call(
+    monkeypatch, tmp_path: Path
+):
+    catalog_path, links_path = _write_catalog(tmp_path)
+    items = load_catalog_items(catalog_path, links_path)
+    scenarios = build_grounded_scenario_bank(
+        items,
+        seed=37,
+        counts_by_task={"multi_turn_grounded": 1},
+    )
+    scenario = scenarios[0]
+
+    monkeypatch.setattr(
+        "scripts.stylist.generate_grounded_dialogues._chat_completion_request",
+        lambda *_args, **_kwargs: render_search_outfits_tool_call(
+            {**scenario["request"], "occasion": scenario["target_occasion"]}
+        ),
+    )
+
+    rows = generate_dialogues_from_scenarios(
+        scenarios,
+        backend="openai-compatible",
+        model="openai/gpt-oss-120b",
+        base_url_override="https://example.invalid/v1",
+        api_key_override="token",
+    )
+
+    assistants = [m["content"] for m in rows[0]["messages"] if m["role"] == "assistant"]
+    assert len(assistants) == 2
+    assert "<tool_call>" not in assistants[0]
+    assert assistants[0] == _template_assistant_messages(scenario)[1]["content"]
+    assert assistants[1].startswith("<tool_call>")
 
 
 def test_build_generation_manifest_reports_duplicates():

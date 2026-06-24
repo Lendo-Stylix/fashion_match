@@ -36,6 +36,7 @@ DEFAULT_OPENAI_BASE_URL = "http://127.0.0.1:8087/v1"
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
 ZAI_BASE_URL = "https://open.bigmodel.cn/api/paas/v4"
 THINK_BLOCK_RE = re.compile(r"<(?:think|thinking)[^>]*>.*?</(?:think|thinking)>", re.DOTALL)
+TOOL_CALL_BLOCK_RE = re.compile(r"<tool_call>.*?</tool_call>", re.DOTALL)
 NVIDIA_MODELS = {
     "openai/gpt-oss-120b",
     "openai/gpt-oss-20b",
@@ -402,7 +403,7 @@ def _render_openai_compatible_messages(
     prompt_messages = _rewrite_prompt_messages(scenario, system_prompt=system_prompt)
     rewritten: str | None = None
     last_error: Exception | None = None
-    for _attempt in range(max_retries):
+    for attempt in range(max_retries):
         try:
             rewritten = _chat_completion_request(
                 prompt_messages,
@@ -413,7 +414,9 @@ def _render_openai_compatible_messages(
             break
         except Exception as exc:  # pragma: no cover - live backend path
             last_error = exc
-            time.sleep(1)
+            if attempt + 1 < max_retries:
+                wait_seconds = min(30, 5 * (attempt + 1)) if "HTTP 429" in str(exc) else attempt + 1
+                time.sleep(wait_seconds)
     if rewritten is None:
         raise RuntimeError(f"LLM generation failed for task_type={task_type}") from last_error
     if task_type == "multi_turn_grounded":
@@ -421,7 +424,14 @@ def _render_openai_compatible_messages(
         return [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": draft_messages[0]["content"]},
-            {"role": "assistant", "content": _normalize_assistant_output(task_type, rewritten)},
+            {
+                "role": "assistant",
+                "content": _normalize_assistant_output(
+                    task_type,
+                    rewritten,
+                    fallback=draft_messages[1]["content"],
+                ),
+            },
             draft_messages[2],
             {"role": "assistant", "content": render_search_outfits_tool_call(resolved_request)},
         ]
@@ -432,7 +442,12 @@ def _render_openai_compatible_messages(
     ]
 
 
-def _normalize_assistant_output(task_type: str, content: str) -> str:
+def _normalize_assistant_output(
+    task_type: str,
+    content: str,
+    *,
+    fallback: str | None = None,
+) -> str:
     stripped = content.strip()
     if task_type == "tool_calling_grounded":
         if stripped.startswith("```"):
@@ -441,6 +456,10 @@ def _normalize_assistant_output(task_type: str, content: str) -> str:
                 stripped = stripped[4:].strip()
         if stripped.startswith("{") and stripped.endswith("}"):
             return f"<tool_call>{stripped}</tool_call>"
+    if task_type == "multi_turn_grounded":
+        cleaned = TOOL_CALL_BLOCK_RE.sub("", stripped).strip()
+        cleaned = "\n".join(line.strip() for line in cleaned.splitlines() if line.strip())
+        return cleaned or (fallback or "")
     return stripped
 
 
