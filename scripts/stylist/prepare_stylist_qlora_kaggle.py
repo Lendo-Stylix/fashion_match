@@ -416,7 +416,7 @@ def build_bootstrap_wheelhouse(config: dict[str, Any], package_root: Path) -> di
     if not pip_executable:
         raise RuntimeError("bootstrap_wheelhouse requires a local pip executable on PATH")
 
-    command = [
+    base_command = [
         pip_executable,
         "download",
         "--dest",
@@ -430,38 +430,73 @@ def build_bootstrap_wheelhouse(config: dict[str, Any], package_root: Path) -> di
         str(bootstrap.get("implementation", "cp")),
         "--abi",
         str(bootstrap.get("abi", "cp312")),
-        *requirements,
     ]
-    completed = subprocess.run(
-        command,
-        check=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        capture_output=True,
-    )
+    no_deps_packages = {
+        _canonicalize_package_name(str(item))
+        for item in bootstrap.get("no_deps_packages", [])
+        if str(item).strip()
+    }
+
+    def _requirement_name(requirement: str) -> str:
+        return _canonicalize_package_name(
+            requirement.split("==", 1)[0].split(">=", 1)[0].split("<", 1)[0]
+        )
+
+    grouped_requirements = {
+        True: [req for req in requirements if _requirement_name(req) in no_deps_packages],
+        False: [req for req in requirements if _requirement_name(req) not in no_deps_packages],
+    }
+
+    download_commands: list[list[str]] = []
+    download_stdout_parts: list[str] = []
+    for use_no_deps in (True, False):
+        group = grouped_requirements[use_no_deps]
+        if not group:
+            continue
+        command = [
+            *base_command,
+            *(["--no-deps"] if use_no_deps else []),
+            *group,
+        ]
+        completed = subprocess.run(
+            command,
+            check=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            capture_output=True,
+        )
+        download_commands.append(command)
+        stdout = str(getattr(completed, "stdout", "") or "").strip()
+        if stdout:
+            download_stdout_parts.append(stdout)
 
     excluded = {
         _canonicalize_package_name(str(item))
         for item in bootstrap.get("exclude_packages", ["torch", "torchvision"])
     }
     removed_files: list[str] = []
-    for path in list(wheelhouse_dir.iterdir()):
-        if not path.is_file():
+    for wheel_path in list(wheelhouse_dir.iterdir()):
+        if not wheel_path.is_file():
             continue
-        if _distribution_name_from_filename(path.name) in excluded:
-            removed_files.append(path.name)
-            path.unlink()
+        if _distribution_name_from_filename(wheel_path.name) in excluded:
+            removed_files.append(wheel_path.name)
+            wheel_path.unlink()
 
-    wheel_files = sorted(path.name for path in wheelhouse_dir.iterdir() if path.is_file())
+    wheel_files = sorted(
+        wheel_path.name for wheel_path in wheelhouse_dir.iterdir() if wheel_path.is_file()
+    )
     manifest = {
         "requirements": requirements,
+        "no_deps_packages": sorted(no_deps_packages),
         "excluded_packages": sorted(excluded),
         "wheel_count": len(wheel_files),
         "wheel_files": wheel_files,
         "removed_files": sorted(removed_files),
-        "download_command": command,
+        "download_commands": download_commands,
     }
+    if download_commands:
+        manifest["download_command"] = download_commands[0]
     (wheelhouse_dir / "wheelhouse_manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
@@ -470,10 +505,11 @@ def build_bootstrap_wheelhouse(config: dict[str, Any], package_root: Path) -> di
         "enabled": True,
         "path": str(wheelhouse_dir),
         "requirements": requirements,
+        "no_deps_packages": sorted(no_deps_packages),
         "excluded_packages": sorted(excluded),
         "wheel_count": len(wheel_files),
         "removed_files": sorted(removed_files),
-        "download_stdout": completed.stdout.strip(),
+        "download_stdout": "\n\n".join(download_stdout_parts),
     }
 
 
@@ -1060,12 +1096,229 @@ def _load_unsloth_model(hf_token: str | None):
     raise RuntimeError(f"Could not load any Unsloth model candidate: {{last_error}}")
 
 
+
+
+def _identity_decorator(*args, **kwargs):
+    if args and len(args) == 1 and callable(args[0]) and not kwargs:
+        return args[0]
+
+    def _wrap(obj):
+        return obj
+
+    return _wrap
+
+
+def _patch_unsloth_auto_docstring() -> None:
+    import builtins
+    import importlib
+    import inspect
+    import types
+
+    kaggle_input = Path("/kaggle/input")
+    wheelhouse_candidate = None
+    if kaggle_input.is_dir():
+        for sub in sorted(kaggle_input.iterdir()):
+            candidate = sub / "wheelhouse"
+            if candidate.is_dir():
+                wheelhouse_candidate = candidate
+                break
+    if wheelhouse_candidate is None:
+        if _is_main_process():
+            print("Skipping Unsloth compatibility patch: no wheelhouse found", flush=True)
+        return
+
+    os.environ.setdefault("USE_TF", "0")
+    os.environ.setdefault("TRANSFORMERS_NO_TF", "1")
+    os.environ.setdefault("USE_FLAX", "0")
+
+    wheelhouse_str = str(wheelhouse_candidate)
+    try:
+        while wheelhouse_str in sys.path:
+            sys.path.remove(wheelhouse_str)
+    except ValueError:
+        pass
+    sys.path.insert(0, wheelhouse_str)
+    sys.path.insert(0, wheelhouse_str)
+    if _is_main_process():
+        print(f"Added wheelhouse to sys.path: {{wheelhouse_candidate}}", flush=True)
+
+    def _import_installed_attr(module_path: str, attr_name: str):
+        try:
+            module = importlib.import_module(module_path)
+        except Exception as exc:
+            if _is_main_process():
+                print(f"Failed to import {{module_path}}: {{exc}}", flush=True)
+            return None
+        return getattr(module, attr_name, None)
+
+    PretrainedConfig = _import_installed_attr(
+        "transformers.configuration_utils",
+        "PretrainedConfig",
+    )
+    auto_docstring = _import_installed_attr(
+        "transformers.utils.auto_docstring",
+        "auto_docstring",
+    )
+    layer_type_validation = _import_installed_attr(
+        "transformers.configuration_utils",
+        "layer_type_validation",
+    )
+    LlamaConfig = _import_installed_attr(
+        "transformers.models.llama.configuration_llama",
+        "LlamaConfig",
+    )
+    MistralConfig = _import_installed_attr(
+        "transformers.models.mistral.configuration_mistral",
+        "MistralConfig",
+    )
+    GemmaConfig = _import_installed_attr(
+        "transformers.models.gemma.configuration_gemma",
+        "GemmaConfig",
+    )
+    Gemma2Config = _import_installed_attr(
+        "transformers.models.gemma2.configuration_gemma2",
+        "Gemma2Config",
+    )
+    Qwen2Config = _import_installed_attr(
+        "transformers.models.qwen2.configuration_qwen2",
+        "Qwen2Config",
+    )
+    GraniteConfig = _import_installed_attr(
+        "transformers.models.granite.configuration_granite",
+        "GraniteConfig",
+    )
+    Qwen3Config = _import_installed_attr(
+        "transformers.models.qwen3.configuration_qwen3",
+        "Qwen3Config",
+    )
+    Qwen3MoeConfig = _import_installed_attr(
+        "transformers.models.qwen3_moe.configuration_qwen3_moe",
+        "Qwen3MoeConfig",
+    )
+    FalconH1Config = _import_installed_attr(
+        "transformers.models.falcon_h1.configuration_falcon_h1",
+        "FalconH1Config",
+    )
+    if PretrainedConfig is None or auto_docstring is None:
+        if _is_main_process():
+            print(
+                "Skipping Unsloth compatibility patch: could not import installed transformers",
+                flush=True,
+            )
+        return
+
+    auto_docstring_module = sys.modules.get("transformers.utils.auto_docstring")
+    if auto_docstring_module is None:
+        auto_docstring_module = types.ModuleType("transformers.utils.auto_docstring")
+        sys.modules["transformers.utils.auto_docstring"] = auto_docstring_module
+    auto_docstring_module.auto_docstring = auto_docstring
+
+    injected_globals = {{
+        "auto_docstring": auto_docstring,
+        "strict": _identity_decorator,
+        "PreTrainedConfig": PretrainedConfig,
+        "layer_type_validation": layer_type_validation,
+        "LlamaConfig": LlamaConfig,
+        "MistralConfig": MistralConfig,
+        "GemmaConfig": GemmaConfig,
+        "Gemma2Config": Gemma2Config,
+        "Qwen2Config": Qwen2Config,
+        "GraniteConfig": GraniteConfig,
+        "Qwen3Config": Qwen3Config,
+        "Qwen3MoeConfig": Qwen3MoeConfig,
+        "FalconH1Config": FalconH1Config,
+    }}
+
+    _ORIGINAL_BUILTIN_EXEC = builtins.exec
+
+    import torch as _torch_for_unsloth_patch
+    _ORIGINAL_TORCH_COMPILE = getattr(_torch_for_unsloth_patch, "compile", None)
+
+    def _identity_torch_compile(fn=None, *args, **kwargs):
+        if fn is not None and callable(fn):
+            return fn
+
+        def _wrap(obj):
+            return obj
+
+        return _wrap
+
+    if _ORIGINAL_TORCH_COMPILE is not None:
+        _torch_for_unsloth_patch.compile = _identity_torch_compile
+
+    def _patched_exec(source, globals_dict=None, /, *args, **kwargs):
+        frame = inspect.currentframe()
+        caller = frame.f_back if frame is not None else None
+        target_globals = globals_dict
+        target_locals = None
+        if target_globals is None and caller is not None:
+            target_globals = caller.f_globals
+            target_locals = caller.f_locals
+        module_name = (
+            str(target_globals.get("__name__", "")) if isinstance(target_globals, dict) else ""
+        )
+        source_text = source if isinstance(source, str) else ""
+        should_inject = module_name == "unsloth.models._utils" or (
+            source_text and "auto_docstring" in source_text
+        )
+        if not should_inject:
+            if target_globals is None:
+                return _ORIGINAL_BUILTIN_EXEC(source, *args, **kwargs)
+            if target_locals is None:
+                return _ORIGINAL_BUILTIN_EXEC(source, target_globals, *args, **kwargs)
+            return _ORIGINAL_BUILTIN_EXEC(source, target_globals, target_locals, *args, **kwargs)
+        for name, value in injected_globals.items():
+            if value is not None and isinstance(target_globals, dict):
+                target_globals.setdefault(name, value)
+        if target_locals is None:
+            return _ORIGINAL_BUILTIN_EXEC(source, target_globals, *args, **kwargs)
+        return _ORIGINAL_BUILTIN_EXEC(source, target_globals, target_locals, *args, **kwargs)
+
+    builtins.exec = _patched_exec
+    builtins.auto_docstring = auto_docstring
+    builtins.strict = _identity_decorator
+    builtins.PreTrainedConfig = PretrainedConfig
+    builtins.layer_type_validation = layer_type_validation
+    builtins.LlamaConfig = LlamaConfig
+    builtins.MistralConfig = MistralConfig
+    builtins.GemmaConfig = GemmaConfig
+    builtins.Gemma2Config = Gemma2Config
+    builtins.Qwen2Config = Qwen2Config
+    builtins.GraniteConfig = GraniteConfig
+    builtins.Qwen3Config = Qwen3Config
+    builtins.Qwen3MoeConfig = Qwen3MoeConfig
+    builtins.FalconH1Config = FalconH1Config
+    if _is_main_process():
+        print("Loaded all config classes from installed transformers", flush=True)
+        print("Patched unsloth exec to inject config classes", flush=True)
+        print("Patched builtins for Unsloth compatibility", flush=True)
+
+    try:
+        import unsloth  # noqa: F401
+        from unsloth.models._utils import (  # noqa: F401
+            _apply_lora,
+            _dequantize_weight,
+            _get_matching_param_names,
+            _safe_save,
+            _save_to_peft_format,
+        )
+    finally:
+        builtins.exec = _ORIGINAL_BUILTIN_EXEC
+        if _ORIGINAL_TORCH_COMPILE is not None:
+            _torch_for_unsloth_patch.compile = _ORIGINAL_TORCH_COMPILE
+
+    if _is_main_process():
+        print("Unsloth loaded successfully with installed transformers", flush=True)
+
+
 def main() -> None:
     dataset_root = _find_dataset_root()
     _install(dataset_root)
     _maybe_relaunch_torchrun()
 
     import torch
+
+    _patch_unsloth_auto_docstring()
     import unsloth  # noqa: F401
     from datasets import load_dataset
     from huggingface_hub import login

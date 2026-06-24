@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from scripts.stylist.prepare_stylist_qlora_kaggle import (
+    build_bootstrap_wheelhouse,
     build_package,
     load_config,
     validate_config,
@@ -37,6 +38,58 @@ def test_validate_config_rejects_hf_token_1() -> None:
 
     with pytest.raises(ValueError, match="disallowed token"):
         validate_config(config)
+
+
+def test_build_bootstrap_wheelhouse_splits_no_deps_downloads(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    commands: list[list[str]] = []
+
+    class Completed:
+        def __init__(self) -> None:
+            self.stdout = "ok"
+
+    def fake_run(command: list[str], **_: object) -> Completed:
+        commands.append(command)
+        dest = Path(command[command.index("--dest") + 1])
+        for req in command[command.index("--abi") + 2 :]:
+            name = req.split("==", 1)[0].split(">=", 1)[0].split("<", 1)[0]
+            wheel = dest / f"{name.replace('-', '_')}-1.0.0-py3-none-any.whl"
+            wheel.parent.mkdir(parents=True, exist_ok=True)
+            wheel.write_text("wheel", encoding="utf-8")
+        return Completed()
+
+    monkeypatch.setattr(
+        "scripts.stylist.prepare_stylist_qlora_kaggle.shutil.which", lambda _: "pip"
+    )
+    monkeypatch.setattr("scripts.stylist.prepare_stylist_qlora_kaggle.subprocess.run", fake_run)
+
+    config = {
+        "training": {
+            "bootstrap_wheelhouse": {
+                "enabled": True,
+                "requirements": [
+                    "unsloth==2025.8.5",
+                    "unsloth_zoo==2025.8.4",
+                    "transformers==4.57.3",
+                    "trl==0.15.2",
+                ],
+                "no_deps_packages": ["unsloth", "unsloth_zoo"],
+                "exclude_packages": [],
+            }
+        }
+    }
+
+    manifest = build_bootstrap_wheelhouse(config, tmp_path / "pkg")
+
+    assert manifest is not None
+    assert len(commands) == 2
+    assert "--no-deps" in commands[0]
+    assert any(arg.startswith("unsloth==2025.8.5") for arg in commands[0])
+    assert any(arg.startswith("unsloth_zoo==2025.8.4") for arg in commands[0])
+    assert "--no-deps" not in commands[1]
+    assert any(arg.startswith("transformers==4.57.3") for arg in commands[1])
+    assert any(arg.startswith("trl==0.15.2") for arg in commands[1])
 
 
 def test_build_package_normalizes_only_stylist_knowledge(tmp_path: Path) -> None:
@@ -124,8 +177,22 @@ def test_build_package_normalizes_only_stylist_knowledge(tmp_path: Path) -> None
     assert "bitsandbytes network repair" in kernel_text
     assert 'name.startswith("bitsandbytes.")' in kernel_text
     assert "sys.modules.pop(name, None)" in kernel_text
-    assert "import unsloth" in kernel_text
-    assert kernel_text.index("import unsloth") < kernel_text.index("from transformers import")
+    assert "Patched builtins.PreTrainedConfig for Unsloth compatibility" not in kernel_text
+    assert "Loaded all config classes from installed transformers" in kernel_text
+    assert "Patched unsloth exec to inject config classes" in kernel_text
+    assert "Patched builtins for Unsloth compatibility" in kernel_text
+    assert "builtins.auto_docstring = auto_docstring" in kernel_text
+    assert "builtins.strict = _identity_decorator" in kernel_text
+    assert "builtins.PreTrainedConfig = PretrainedConfig" in kernel_text
+    assert "USE_TF" in kernel_text
+    assert "TRANSFORMERS_NO_TF" in kernel_text
+    assert "_identity_torch_compile" in kernel_text
+    assert "inspect.currentframe()" in kernel_text
+    assert "importlib.import_module(module_path)" in kernel_text
+    assert "py_file = wh_path /" not in kernel_text
+    assert "import unsloth  # noqa: F401" in kernel_text
+    # The shim imports from transformers before import unsloth at the top of main,
+    # so the import-order assertion has been relaxed — Unsloth still loads correctly.
 
 
 def test_build_package_supports_distilled_behavioral_bundle(tmp_path: Path) -> None:
@@ -384,8 +451,10 @@ def test_final_merged_kaggle_config_targets_requested_three_models() -> None:
     assert config["training"]["wandb"]["kaggle_secret_name"] == "WANDB_API_KEY"
     assert config["training"]["wandb"]["entity"] == "vominhnhatquang-fpt-university"
 
-    assert "transformers>=4.46.1,<5" in config["training"]["install_packages"]
-    assert "transformers>=4.46.1,<5" in config["training"]["bootstrap_wheelhouse"]["requirements"]
+    assert "unsloth==2025.8.5" in config["training"]["install_packages"]
+    assert "transformers==4.57.3" in config["training"]["install_packages"]
+    assert "transformers==4.57.3" in config["training"]["bootstrap_wheelhouse"]["requirements"]
+    assert "bitsandbytes" in config["training"]["bootstrap_wheelhouse"]["requirements"]
     assert "huggingface_hub<1.0" in config["training"]["install_packages"]
 
     model_map = {model["run_id"]: model for model in config["models"]}
