@@ -5,7 +5,7 @@ kaggle:
   owner: nhatquangvominh
   dataset_slug: om-stylist-qlora-q35-under10k-data
   kernel_slug_prefix: om-sty-q35u10k
-  machine_shape: NvidiaTeslaT4x2
+  machine_shape: NvidiaTeslaT4
   enable_gpu: true
   enable_internet: true
   is_private: true

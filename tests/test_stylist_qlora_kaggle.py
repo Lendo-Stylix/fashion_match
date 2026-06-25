@@ -5,10 +5,12 @@ from pathlib import Path
 
 import pytest
 from scripts.stylist.prepare_stylist_qlora_kaggle import (
+    _kernel_script,
     build_bootstrap_wheelhouse,
     build_package,
     load_config,
     validate_config,
+    write_kernel_packages,
 )
 
 
@@ -25,7 +27,7 @@ def test_kaggle_qlora_config_enforces_user_constraints() -> None:
     assert config["training"]["strategy"] == "qlora_sft"
     assert config["training"]["max_session_steps"] == 1000
     assert config["training"]["wandb"]["kaggle_secret_name"] == "WANDB_API_KEY"
-    assert config["kaggle"]["machine_shape"] == "NvidiaTeslaT4x2"
+    assert config["kaggle"]["machine_shape"] == "NvidiaTeslaT4"
     assert {model["hf_token_env"] for model in config["models"]} <= {
         "HF_API_TOKEN_2",
         "HF_API_TOKEN_3",
@@ -90,6 +92,97 @@ def test_build_bootstrap_wheelhouse_splits_no_deps_downloads(
     assert "--no-deps" not in commands[1]
     assert any(arg.startswith("transformers==4.57.3") for arg in commands[1])
     assert any(arg.startswith("trl==0.15.2") for arg in commands[1])
+
+
+def test_build_bootstrap_wheelhouse_supports_extra_platform_tags(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    commands: list[list[str]] = []
+
+    class Completed:
+        stdout = "ok"
+
+    def fake_run(command: list[str], **_: object) -> Completed:
+        commands.append(command)
+        dest = Path(command[command.index("--dest") + 1])
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / "bitsandbytes-0.49.2-py3-none-manylinux_2_24_x86_64.whl").write_text(
+            "wheel", encoding="utf-8"
+        )
+        return Completed()
+
+    monkeypatch.setattr(
+        "scripts.stylist.prepare_stylist_qlora_kaggle.shutil.which", lambda _: "pip"
+    )
+    monkeypatch.setattr("scripts.stylist.prepare_stylist_qlora_kaggle.subprocess.run", fake_run)
+
+    config = {
+        "training": {
+            "bootstrap_wheelhouse": {
+                "enabled": True,
+                "requirements": ["bitsandbytes==0.49.2"],
+                "platform": "manylinux2014_x86_64",
+                "extra_platforms": ["manylinux_2_24_x86_64"],
+                "no_deps_packages": ["bitsandbytes"],
+                "exclude_packages": [],
+            }
+        }
+    }
+
+    manifest = build_bootstrap_wheelhouse(config, tmp_path / "pkg")
+
+    assert manifest is not None
+    platform_values = [
+        command[index + 1]
+        for command in commands
+        for index, arg in enumerate(command)
+        if arg == "--platform"
+    ]
+    assert platform_values == ["manylinux2014_x86_64", "manylinux_2_24_x86_64"]
+
+
+def test_build_bootstrap_wheelhouse_adds_torch_cuda_runtime_requirements(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    commands: list[list[str]] = []
+
+    class Completed:
+        def __init__(self) -> None:
+            self.stdout = "ok"
+
+    def fake_run(command: list[str], **_: object) -> Completed:
+        commands.append(command)
+        dest = Path(command[command.index("--dest") + 1])
+        for req in command[command.index("--abi") + 2 :]:
+            name = req.split("==", 1)[0].split(">=", 1)[0].split("<", 1)[0]
+            wheel = dest / f"{name.replace('-', '_')}-1.0.0-py3-none-any.whl"
+            wheel.parent.mkdir(parents=True, exist_ok=True)
+            wheel.write_text("wheel", encoding="utf-8")
+        return Completed()
+
+    monkeypatch.setattr(
+        "scripts.stylist.prepare_stylist_qlora_kaggle.shutil.which", lambda _: "pip"
+    )
+    monkeypatch.setattr("scripts.stylist.prepare_stylist_qlora_kaggle.subprocess.run", fake_run)
+
+    config = {
+        "training": {
+            "bootstrap_wheelhouse": {
+                "enabled": True,
+                "requirements": ["torch==2.4.0", "transformers==5.2.0"],
+                "no_deps_packages": [],
+                "exclude_packages": [],
+            }
+        }
+    }
+
+    manifest = build_bootstrap_wheelhouse(config, tmp_path / "pkg")
+
+    assert manifest is not None
+    flat = [arg for command in commands for arg in command]
+    assert "nvidia-cuda-runtime-cu12==12.1.105" in flat
+    assert "nvidia-cublas-cu12==12.1.3.1" in flat
+    assert "nvidia-cudnn-cu12==9.1.0.70" in flat
 
 
 def test_build_package_normalizes_only_stylist_knowledge(tmp_path: Path) -> None:
@@ -174,7 +267,7 @@ def test_build_package_normalizes_only_stylist_knowledge(tmp_path: Path) -> None
     assert "wheelhouse_enabled" in kernel_text
     assert "torchaudio" in kernel_text
     assert "network pip install" in kernel_text
-    assert "bitsandbytes network repair" in kernel_text
+    assert "bitsandbytes local wheel repair" in kernel_text
     assert 'name.startswith("bitsandbytes.")' in kernel_text
     assert "sys.modules.pop(name, None)" in kernel_text
     assert "Patched builtins.PreTrainedConfig for Unsloth compatibility" not in kernel_text
@@ -409,6 +502,7 @@ def test_build_package_supports_final_merged_bundle(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     config = load_config(Path("configs/stylist_finetune_kaggle_final_merged.yaml"))
+    config["training"]["bootstrap_wheelhouse"]["enabled"] = False
     config["dataset"]["stylist_knowledge_dir"] = str(source_dir)
     config["dataset"]["max_eval_records"] = 1
     config["outputs"]["package_root"] = str(package_root)
@@ -455,10 +549,12 @@ def test_final_merged_kaggle_config_targets_requested_three_models() -> None:
     assert config["training"]["wandb"]["entity"] == "vominhnhatquang-fpt-university"
 
     assert "unsloth==2025.8.5" in config["training"]["install_packages"]
-    assert "transformers==4.57.3" in config["training"]["install_packages"]
-    assert "transformers==4.57.3" in config["training"]["bootstrap_wheelhouse"]["requirements"]
-    assert "bitsandbytes" in config["training"]["bootstrap_wheelhouse"]["requirements"]
-    assert "huggingface_hub<1.0" in config["training"]["install_packages"]
+    assert "transformers==5.2.0" in config["training"]["install_packages"]
+    assert "transformers==5.2.0" in config["training"]["bootstrap_wheelhouse"]["requirements"]
+    assert "bitsandbytes==0.49.2" in config["training"]["bootstrap_wheelhouse"]["requirements"]
+    assert "huggingface_hub==1.3.7" in config["training"]["install_packages"]
+    assert "datasets==3.6.0" in config["training"]["install_packages"]
+    assert "wandb==0.23.0" in config["training"]["install_packages"]
 
     model_map = {model["run_id"]: model for model in config["models"]}
     assert set(model_map) == {
@@ -469,12 +565,483 @@ def test_final_merged_kaggle_config_targets_requested_three_models() -> None:
     assert model_map["qwen3vl8b_instruct"]["gguf_repo"] == "unsloth/Qwen3-VL-8B-Instruct-GGUF"
     assert model_map["qwen3vl8b_thinking"]["gguf_repo"] == "unsloth/Qwen3-VL-8B-Thinking-GGUF"
     assert model_map["qwen35_9b"]["gguf_repo"] == "unsloth/Qwen3.5-9B-GGUF"
-    assert model_map["qwen3vl8b_thinking"]["base_model"] == "Qwen/Qwen3-VL-8B-Thinking"
+    assert model_map["qwen3vl8b_instruct"]["base_model"] == "unsloth/Qwen3-VL-8B-Instruct"
+    assert model_map["qwen3vl8b_thinking"]["base_model"] == "unsloth/Qwen3-VL-8B-Thinking"
+    assert model_map["qwen35_9b"]["base_model"] == "unsloth/Qwen3.5-9B"
+    assert model_map["qwen35_9b"]["preferred_unsloth_4bit_model"] == "unsloth/Qwen3.5-9B"
     assert {model["hf_token_env"] for model in config["models"]} <= {
         "HF_API_TOKEN_2",
         "HF_API_TOKEN_3",
     }
     assert all(model.get("requires_hf_token") is False for model in config["models"])
+
+
+def test_kernel_installs_git_packages_after_wheelhouse_without_deps() -> None:
+    """Wheelhouse path must still install git-only Unsloth code without deps."""
+    config = {
+        "training": {
+            "install_packages": [
+                "git+https://github.com/unslothai/unsloth.git",
+                "git+https://github.com/unslothai/unsloth-zoo.git",
+                "transformers==4.57.3",
+            ],
+            "bootstrap_wheelhouse": {"enabled": True},
+            "lora": {
+                "target_modules": ["q_proj"],
+                "r": 16,
+                "alpha": 32,
+                "dropout": 0.05,
+                "bias": "none",
+            },
+            "max_seq_length": 2048,
+            "load_in_4bit": True,
+            "output_root": "/kaggle/working/out",
+            "ddp": {"enabled": False},
+            "wandb": {},
+            "report_to": [],
+            "per_device_train_batch_size": 1,
+            "per_device_eval_batch_size": 1,
+            "gradient_accumulation_steps": 1,
+            "num_train_epochs": 1,
+            "learning_rate": 2e-4,
+            "warmup_ratio": 0.03,
+            "lr_scheduler_type": "cosine",
+            "optim": "adamw_8bit",
+            "weight_decay": 0.01,
+            "logging_steps": 10,
+            "eval_steps": 100,
+            "save_steps": 250,
+            "save_total_limit": 2,
+        }
+    }
+    model = {
+        "run_id": "qwen3vl8b_instruct",
+        "base_model": "Qwen/Qwen3-VL-8B-Instruct",
+        "preferred_unsloth_4bit_model": "unsloth/Qwen3-VL-8B-Instruct-bnb-4bit",
+        "hf_token_env": "HF_API_TOKEN_2",
+        "requires_hf_token": False,
+    }
+
+    kernel_text = _kernel_script(config, model, "dummy-dataset")
+
+    assert "--no-deps" in kernel_text
+    assert "--force-reinstall" in kernel_text
+    assert "*wheel_paths" in kernel_text
+    assert "if not git_packages:" in kernel_text
+    assert "*git_packages" in kernel_text
+    git_install_idx = kernel_text.index('label="network git install"')
+    assert kernel_text.rfind('"--no-deps"', 0, git_install_idx) > 0
+    assert kernel_text.rfind("*git_packages", 0, git_install_idx) > 0
+    assert 'label="network git install"' in kernel_text
+    assert "if wheelhouse_installed:" in kernel_text
+
+
+def test_kernel_scans_kaggle_input_for_wheelhouse_fallback() -> None:
+    config = {
+        "training": {
+            "install_packages": ["unsloth==2025.8.5", "transformers==5.2.0"],
+            "bootstrap_wheelhouse": {"enabled": True},
+            "lora": {
+                "target_modules": ["q_proj"],
+                "r": 16,
+                "alpha": 32,
+                "dropout": 0.05,
+                "bias": "none",
+            },
+            "max_seq_length": 2048,
+            "load_in_4bit": True,
+            "output_root": "/kaggle/working/out",
+            "ddp": {"enabled": False},
+            "wandb": {},
+            "report_to": [],
+            "per_device_train_batch_size": 1,
+            "per_device_eval_batch_size": 1,
+            "gradient_accumulation_steps": 1,
+            "num_train_epochs": 1,
+            "learning_rate": 2e-4,
+            "warmup_ratio": 0.03,
+            "lr_scheduler_type": "cosine",
+            "optim": "adamw_8bit",
+            "weight_decay": 0.01,
+            "logging_steps": 10,
+            "eval_steps": 100,
+            "save_steps": 250,
+            "save_total_limit": 2,
+        }
+    }
+    model = {
+        "run_id": "qwen35_9b",
+        "base_model": "unsloth/Qwen3.5-9B",
+        "preferred_unsloth_4bit_model": "unsloth/Qwen3.5-9B",
+        "hf_token_env": "HF_API_TOKEN_3",
+        "requires_hf_token": False,
+    }
+
+    kernel_text = _kernel_script(config, model, "dummy-dataset")
+
+    assert 'Path("/kaggle/input").glob("**/wheelhouse*")' in kernel_text
+    assert "Using {label} wheelhouse dir:" in kernel_text
+    assert "Using {label} wheelhouse archive:" in kernel_text
+    assert "Found {len(wheelhouses)} wheelhouse" in kernel_text
+
+
+def test_write_kernel_packages_includes_extra_dataset_sources(tmp_path: Path) -> None:
+    config = {
+        "kaggle": {
+            "owner": "huuhoangg",
+            "kernel_slug_prefix": "om-sty-final-t4-qwen35",
+            "is_private": True,
+            "enable_gpu": True,
+            "enable_internet": True,
+            "machine_shape": "NvidiaTeslaT4",
+            "extra_dataset_sources": ["huuhoangg/om-sty-final-t4-cuda-wheelhouse"],
+        },
+        "models": [
+            {
+                "run_id": "qwen35_9b",
+                "base_model": "unsloth/Qwen3.5-9B",
+                "preferred_unsloth_4bit_model": "unsloth/Qwen3.5-9B",
+                "hf_token_env": "HF_API_TOKEN_3",
+                "requires_hf_token": False,
+            }
+        ],
+        "training": {
+            "install_packages": ["unsloth==2025.8.5"],
+            "bootstrap_wheelhouse": {"enabled": True},
+            "lora": {
+                "target_modules": ["q_proj"],
+                "r": 16,
+                "alpha": 32,
+                "dropout": 0.05,
+                "bias": "none",
+            },
+            "max_seq_length": 2048,
+            "load_in_4bit": True,
+            "output_root": "/kaggle/working/out",
+            "ddp": {"enabled": False},
+            "wandb": {},
+            "report_to": [],
+            "per_device_train_batch_size": 1,
+            "per_device_eval_batch_size": 1,
+            "gradient_accumulation_steps": 1,
+            "num_train_epochs": 1,
+            "learning_rate": 2e-4,
+            "warmup_ratio": 0.03,
+            "lr_scheduler_type": "cosine",
+            "optim": "adamw_8bit",
+            "weight_decay": 0.01,
+            "logging_steps": 10,
+            "eval_steps": 100,
+            "save_steps": 250,
+            "save_total_limit": 2,
+        },
+    }
+
+    rows = write_kernel_packages(
+        config, tmp_path, dataset_id="huuhoangg/om-sty-final-t4-qwen35-data", dataset_slug="dummy"
+    )
+
+    metadata = json.loads((Path(rows[0]["kernel_dir"]) / "kernel-metadata.json").read_text())
+    assert metadata["dataset_sources"] == [
+        "huuhoangg/om-sty-final-t4-qwen35-data",
+        "huuhoangg/om-sty-final-t4-cuda-wheelhouse",
+    ]
+
+
+def test_kernel_installs_from_multiple_discovered_wheelhouses_for_cuda_extras() -> None:
+    config = {
+        "training": {
+            "install_packages": ["unsloth==2025.8.5", "torch==2.4.0"],
+            "bootstrap_wheelhouse": {"enabled": True},
+            "lora": {
+                "target_modules": ["q_proj"],
+                "r": 16,
+                "alpha": 32,
+                "dropout": 0.05,
+                "bias": "none",
+            },
+            "max_seq_length": 2048,
+            "load_in_4bit": True,
+            "output_root": "/kaggle/working/out",
+            "ddp": {"enabled": False},
+            "wandb": {},
+            "report_to": [],
+            "per_device_train_batch_size": 1,
+            "per_device_eval_batch_size": 1,
+            "gradient_accumulation_steps": 1,
+            "num_train_epochs": 1,
+            "learning_rate": 2e-4,
+            "warmup_ratio": 0.03,
+            "lr_scheduler_type": "cosine",
+            "optim": "adamw_8bit",
+            "weight_decay": 0.01,
+            "logging_steps": 10,
+            "eval_steps": 100,
+            "save_steps": 250,
+            "save_total_limit": 2,
+        }
+    }
+    model = {
+        "run_id": "qwen35_9b",
+        "base_model": "unsloth/Qwen3.5-9B",
+        "preferred_unsloth_4bit_model": "unsloth/Qwen3.5-9B",
+        "hf_token_env": "HF_API_TOKEN_3",
+        "requires_hf_token": False,
+    }
+
+    kernel_text = _kernel_script(config, model, "dummy-dataset")
+
+    assert "def _resolve_wheelhouses(dataset_root: Path) -> list[Path]:" in kernel_text
+    assert "wheelhouses = _resolve_wheelhouses(dataset_root)" in kernel_text
+    assert "for wheelhouse in wheelhouses:" in kernel_text
+    assert 'Path("/kaggle/input").glob("**/wheelhouse*")' in kernel_text
+    assert "Found {len(wheelhouses)} wheelhouse" in kernel_text
+
+
+def test_kernel_logs_torch_cuda_before_importing_unsloth() -> None:
+    config = {
+        "training": {
+            "install_packages": ["unsloth==2025.8.5", "torch==2.4.0"],
+            "bootstrap_wheelhouse": {"enabled": True},
+            "lora": {
+                "target_modules": ["q_proj"],
+                "r": 16,
+                "alpha": 32,
+                "dropout": 0.05,
+                "bias": "none",
+            },
+            "max_seq_length": 2048,
+            "load_in_4bit": True,
+            "output_root": "/kaggle/working/out",
+            "ddp": {"enabled": False},
+            "wandb": {},
+            "report_to": [],
+            "per_device_train_batch_size": 1,
+            "per_device_eval_batch_size": 1,
+            "gradient_accumulation_steps": 1,
+            "num_train_epochs": 1,
+            "learning_rate": 2e-4,
+            "warmup_ratio": 0.03,
+            "lr_scheduler_type": "cosine",
+            "optim": "adamw_8bit",
+            "weight_decay": 0.01,
+            "logging_steps": 10,
+            "eval_steps": 100,
+            "save_steps": 250,
+            "save_total_limit": 2,
+        }
+    }
+    model = {
+        "run_id": "qwen35_9b",
+        "base_model": "unsloth/Qwen3.5-9B",
+        "preferred_unsloth_4bit_model": "unsloth/Qwen3.5-9B",
+        "hf_token_env": "HF_API_TOKEN_3",
+        "requires_hf_token": False,
+    }
+
+    kernel_text = _kernel_script(config, model, "dummy-dataset")
+    main_start = kernel_text.index("def main() -> None:")
+    debug_idx = kernel_text.index("    _debug_torch_cuda()", main_start)
+    patch_idx = kernel_text.index("    _patch_unsloth_auto_docstring()", main_start)
+
+    require_idx = kernel_text.index("    _require_torch_cuda()", main_start)
+
+    assert debug_idx < require_idx < patch_idx
+    assert "Kaggle did not attach a CUDA GPU" in kernel_text
+
+
+def test_kernel_deduplicates_wheelhouse_by_distribution_and_repairs_bitsandbytes_locally() -> None:
+    config = {
+        "training": {
+            "install_packages": ["bitsandbytes==0.42.0", "torch==2.4.0"],
+            "bootstrap_wheelhouse": {"enabled": True},
+            "lora": {
+                "target_modules": ["q_proj"],
+                "r": 16,
+                "alpha": 32,
+                "dropout": 0.05,
+                "bias": "none",
+            },
+            "max_seq_length": 2048,
+            "load_in_4bit": True,
+            "output_root": "/kaggle/working/out",
+            "ddp": {"enabled": False},
+            "wandb": {},
+            "report_to": [],
+            "per_device_train_batch_size": 1,
+            "per_device_eval_batch_size": 1,
+            "gradient_accumulation_steps": 1,
+            "num_train_epochs": 1,
+            "learning_rate": 2e-4,
+            "warmup_ratio": 0.03,
+            "lr_scheduler_type": "cosine",
+            "optim": "adamw_8bit",
+            "weight_decay": 0.01,
+            "logging_steps": 10,
+            "eval_steps": 100,
+            "save_steps": 250,
+            "save_total_limit": 2,
+        }
+    }
+    model = {
+        "run_id": "qwen35_9b",
+        "base_model": "unsloth/Qwen3.5-9B",
+        "preferred_unsloth_4bit_model": "unsloth/Qwen3.5-9B",
+        "hf_token_env": "HF_API_TOKEN_3",
+        "requires_hf_token": False,
+    }
+
+    kernel_text = _kernel_script(config, model, "dummy-dataset")
+
+    assert "def _wheel_distribution_key(path: Path) -> str:" in kernel_text
+    assert "selected[key] = str(path)" in kernel_text
+    assert "def _bitsandbytes_wheel_paths(wheel_paths: list[str]) -> list[str]:" in kernel_text
+    assert "_repair_bitsandbytes_for_cuda(wheel_paths)" in kernel_text
+    assert "bitsandbytes local wheel repair" in kernel_text
+    assert "bitsandbytes>=0.49.2" not in kernel_text
+    assert "bitsandbytes network repair" not in kernel_text
+
+
+def test_kernel_does_not_skip_nvidia_wheels_from_wheelhouse() -> None:
+    config = {
+        "training": {
+            "install_packages": ["unsloth==2025.8.5", "torch==2.4.0"],
+            "bootstrap_wheelhouse": {"enabled": True},
+            "lora": {
+                "target_modules": ["q_proj"],
+                "r": 16,
+                "alpha": 32,
+                "dropout": 0.05,
+                "bias": "none",
+            },
+            "max_seq_length": 2048,
+            "load_in_4bit": True,
+            "output_root": "/kaggle/working/out",
+            "ddp": {"enabled": False},
+            "wandb": {},
+            "report_to": [],
+            "per_device_train_batch_size": 1,
+            "per_device_eval_batch_size": 1,
+            "gradient_accumulation_steps": 1,
+            "num_train_epochs": 1,
+            "learning_rate": 2e-4,
+            "warmup_ratio": 0.03,
+            "lr_scheduler_type": "cosine",
+            "optim": "adamw_8bit",
+            "weight_decay": 0.01,
+            "logging_steps": 10,
+            "eval_steps": 100,
+            "save_steps": 250,
+            "save_total_limit": 2,
+        }
+    }
+    model = {
+        "run_id": "qwen35_9b",
+        "base_model": "unsloth/Qwen3.5-9B",
+        "preferred_unsloth_4bit_model": "unsloth/Qwen3.5-9B",
+        "hf_token_env": "HF_API_TOKEN_3",
+        "requires_hf_token": False,
+    }
+
+    kernel_text = _kernel_script(config, model, "dummy-dataset")
+
+    assert 'skip_prefixes = ("nvidia-",)' not in kernel_text
+    assert 'for path in sorted(wheelhouse.glob("*.whl"))' in kernel_text
+
+
+def test_kernel_patches_unsloth_with_rope_compat_imports() -> None:
+    config = {
+        "training": {
+            "install_packages": ["unsloth==2025.8.5", "transformers==5.2.0"],
+            "bootstrap_wheelhouse": {"enabled": True},
+            "lora": {
+                "target_modules": ["q_proj"],
+                "r": 16,
+                "alpha": 32,
+                "dropout": 0.05,
+                "bias": "none",
+            },
+            "max_seq_length": 2048,
+            "load_in_4bit": True,
+            "output_root": "/kaggle/working/out",
+            "ddp": {"enabled": False},
+            "wandb": {},
+            "report_to": [],
+            "per_device_train_batch_size": 1,
+            "per_device_eval_batch_size": 1,
+            "gradient_accumulation_steps": 1,
+            "num_train_epochs": 1,
+            "learning_rate": 2e-4,
+            "warmup_ratio": 0.03,
+            "lr_scheduler_type": "cosine",
+            "optim": "adamw_8bit",
+            "weight_decay": 0.01,
+            "logging_steps": 10,
+            "eval_steps": 100,
+            "save_steps": 250,
+            "save_total_limit": 2,
+        }
+    }
+    model = {
+        "run_id": "qwen35_9b",
+        "base_model": "unsloth/Qwen3.5-9B",
+        "preferred_unsloth_4bit_model": "unsloth/Qwen3.5-9B",
+        "hf_token_env": "HF_API_TOKEN_3",
+        "requires_hf_token": False,
+    }
+
+    kernel_text = _kernel_script(config, model, "dummy-dataset")
+
+    assert "from transformers.modeling_rope_utils import (" in kernel_text
+    assert "RopeParameters," in kernel_text
+    assert "ROPE_INIT_FUNCTIONS," in kernel_text
+    assert "rope_config_validation," in kernel_text
+
+
+def test_push_with_kaggle_cli_falls_back_to_owner_username(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("KAGGLE_API_TOKEN_1", raising=False)
+    monkeypatch.delenv("KAGGLE_API_TOKEN", raising=False)
+    env_file = tmp_path / ".env.local"
+    env_file.write_text("KAGGLE_API_TOKEN_1=dummy-token\n", encoding="utf-8")
+    dataset_dir = tmp_path / "pkg" / "kaggle_dataset"
+    kernel_dir = tmp_path / "pkg" / "kaggle_kernel_demo"
+    dataset_dir.mkdir(parents=True)
+    kernel_dir.mkdir(parents=True)
+    (dataset_dir / "dataset-metadata.json").write_text(
+        json.dumps({"id": "nhatquangvominh/demo-dataset"}), encoding="utf-8"
+    )
+
+    seen_envs: list[dict[str, str]] = []
+
+    class Completed:
+        def __init__(self) -> None:
+            self.stdout = "ok"
+            self.stderr = ""
+
+    def fake_run(command: list[str], **kwargs: object) -> Completed:
+        env = kwargs.get("env")
+        assert isinstance(env, dict)
+        seen_envs.append(env)
+        return Completed()
+
+    monkeypatch.setattr("scripts.stylist.prepare_stylist_qlora_kaggle.subprocess.run", fake_run)
+
+    from scripts.stylist.prepare_stylist_qlora_kaggle import push_with_kaggle_cli
+
+    summaries = push_with_kaggle_cli(
+        tmp_path / "pkg",
+        [{"kernel_dir": str(kernel_dir), "kernel_id": "nhatquangvominh/demo-kernel"}],
+        env_file=env_file,
+        token_env_var="KAGGLE_API_TOKEN_1",
+        username_env_var=None,
+    )
+
+    assert summaries
+    assert seen_envs
+    assert all(env["KAGGLE_API_TOKEN"] == "dummy-token" for env in seen_envs)
+    assert all(env["KAGGLE_USERNAME"] == "nhatquangvominh" for env in seen_envs)
 
 
 def test_build_bootstrap_wheelhouse_skips_git_urls(

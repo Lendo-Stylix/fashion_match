@@ -5,7 +5,7 @@ kaggle:
   owner: nhatquangvominh
   dataset_slug: om-stylist-qlora-grounded-data
   kernel_slug_prefix: om-sty-grounded
-  machine_shape: NvidiaTeslaT4x2
+  machine_shape: NvidiaTeslaT4
   enable_gpu: true
   enable_internet: true
   is_private: true

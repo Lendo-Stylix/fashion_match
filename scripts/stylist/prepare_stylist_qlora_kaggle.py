@@ -32,6 +32,21 @@ import yaml
 
 DEFAULT_CONFIG = Path("configs/stylist_finetune_kaggle.yaml")
 SUPPORTED_SUFFIXES = {".csv", ".jsonl", ".json", ".md", ".txt"}
+TORCH_CUDA_REQUIREMENTS: dict[str, list[str]] = {
+    "torch==2.4.0": [
+        "nvidia-cuda-nvrtc-cu12==12.1.105",
+        "nvidia-cuda-runtime-cu12==12.1.105",
+        "nvidia-cuda-cupti-cu12==12.1.105",
+        "nvidia-cudnn-cu12==9.1.0.70",
+        "nvidia-cublas-cu12==12.1.3.1",
+        "nvidia-cufft-cu12==11.0.2.54",
+        "nvidia-curand-cu12==10.3.2.106",
+        "nvidia-cusolver-cu12==11.4.5.107",
+        "nvidia-cusparse-cu12==12.1.0.106",
+        "nvidia-nccl-cu12==2.20.5",
+        "nvidia-nvtx-cu12==12.1.105",
+    ]
+}
 
 
 @dataclass(frozen=True)
@@ -404,6 +419,17 @@ def build_bootstrap_wheelhouse(config: dict[str, Any], package_root: Path) -> di
     requirements = [
         str(item).strip() for item in bootstrap.get("requirements", []) if str(item).strip()
     ]
+    augmented_requirements: list[str] = []
+    seen_requirements: set[str] = set()
+    for req in requirements:
+        if req not in seen_requirements:
+            augmented_requirements.append(req)
+            seen_requirements.add(req)
+        for extra in TORCH_CUDA_REQUIREMENTS.get(req, []):
+            if extra not in seen_requirements:
+                augmented_requirements.append(extra)
+                seen_requirements.add(extra)
+    requirements = augmented_requirements
     skipped: list[str] = []
     wheelable: list[str] = []
     for req in requirements:
@@ -426,14 +452,23 @@ def build_bootstrap_wheelhouse(config: dict[str, Any], package_root: Path) -> di
     if not pip_executable:
         raise RuntimeError("bootstrap_wheelhouse requires a local pip executable on PATH")
 
+    platform_values = [str(bootstrap.get("platform", "manylinux2014_x86_64"))]
+    platform_values.extend(str(item) for item in bootstrap.get("extra_platforms", []))
+    platform_args: list[str] = []
+    seen_platforms: set[str] = set()
+    for platform in platform_values:
+        if not platform or platform in seen_platforms:
+            continue
+        seen_platforms.add(platform)
+        platform_args.extend(["--platform", platform])
+
     base_command = [
         pip_executable,
         "download",
         "--dest",
         str(wheelhouse_dir),
         "--only-binary=:all:",
-        "--platform",
-        str(bootstrap.get("platform", "manylinux2014_x86_64")),
+        *platform_args,
         "--python-version",
         str(bootstrap.get("python_version", "3.12")),
         "--implementation",
@@ -587,33 +622,85 @@ def _best_effort_uninstall(packages: list[str]) -> None:
         )
 
 
-def _resolve_wheelhouse(dataset_root: Path) -> Path | None:
-    direct = dataset_root / "wheelhouse"
-    if direct.is_dir():
-        return direct
-    archive = dataset_root / "wheelhouse.zip"
-    if not archive.is_file():
-        return None
-    extract_root = Path("/kaggle/working") / "_bootstrap_wheelhouse"
-    if extract_root.exists():
-        shutil.rmtree(extract_root)
-    shutil.unpack_archive(str(archive), str(extract_root))
-    extracted = extract_root / "wheelhouse"
-    if extracted.is_dir():
-        return extracted
-    if extract_root.is_dir():
-        return extract_root
-    return None
+def _resolve_wheelhouses(dataset_root: Path) -> list[Path]:
+    wheelhouses: list[Path] = []
+    seen: set[str] = set()
+    extraction_index = 0
+
+    def _add_dir(candidate: Path, label: str) -> None:
+        if not candidate.is_dir() or not any(candidate.glob("*.whl")):
+            return
+        key = str(candidate.resolve())
+        if key in seen:
+            return
+        seen.add(key)
+        wheelhouses.append(candidate)
+        if _is_main_process():
+            print(f"Using {{label}} wheelhouse dir: {{candidate}}", flush=True)
+
+    def _extract_archive(archive: Path, label: str) -> None:
+        nonlocal extraction_index
+        if not archive.is_file():
+            return
+        extraction_index += 1
+        if _is_main_process():
+            print(f"Using {{label}} wheelhouse archive: {{archive}}", flush=True)
+        extract_root = Path("/kaggle/working") / f"_bootstrap_wheelhouse_{{extraction_index}}"
+        if extract_root.exists():
+            shutil.rmtree(extract_root)
+        shutil.unpack_archive(str(archive), str(extract_root))
+        preferred = [
+            extract_root / archive.stem,
+            extract_root / "wheelhouse",
+            extract_root,
+        ]
+        for candidate in preferred:
+            _add_dir(candidate, f"extracted {{label}}")
+        for candidate in sorted(extract_root.glob("**/wheelhouse*")):
+            _add_dir(candidate, f"extracted {{label}}")
+
+    for candidate in sorted(dataset_root.glob("wheelhouse*")):
+        if candidate.is_dir():
+            _add_dir(candidate, "dataset")
+        elif candidate.is_file() and candidate.suffix == ".zip":
+            _extract_archive(candidate, "dataset")
+
+    for candidate in sorted(Path("/kaggle/input").glob("**/wheelhouse*")):
+        if candidate.is_dir():
+            _add_dir(candidate, "discovered")
+        elif candidate.is_file() and candidate.suffix == ".zip":
+            _extract_archive(candidate, "discovered")
+
+    if _is_main_process() and wheelhouses:
+        print(f"Found {{len(wheelhouses)}} wheelhouse directories", flush=True)
+    return wheelhouses
 
 
-def _wheelhouse_wheel_paths(wheelhouse: Path) -> list[str]:
-    skip_prefixes = ("nvidia-",)
+def _wheel_distribution_key(path: Path) -> str:
+    try:
+        from pip._vendor.packaging.utils import parse_wheel_filename
+
+        name, _, _, _ = parse_wheel_filename(path.name)
+        return str(name).replace("_", "-").lower()
+    except Exception:
+        return path.name.split("-", 1)[0].replace("_", "-").lower()
+
+
+def _wheelhouse_wheel_paths(wheelhouses: list[Path]) -> list[str]:
+    selected: dict[str, str] = {{}}
+    for wheelhouse in wheelhouses:
+        for path in sorted(wheelhouse.glob("*.whl")):
+            key = _wheel_distribution_key(path)
+            selected[key] = str(path)
+    return list(selected.values())
+
+
+def _bitsandbytes_wheel_paths(wheel_paths: list[str]) -> list[str]:
     return [
-        str(path)
-        for path in sorted(wheelhouse.glob("*.whl"))
-        if not path.name.startswith(skip_prefixes)
+        candidate
+        for candidate in wheel_paths
+        if _wheel_distribution_key(Path(candidate)) == "bitsandbytes"
     ]
-
 
 def _bitsandbytes_cuda_lib_present() -> bool:
     import site
@@ -659,42 +746,62 @@ def _bitsandbytes_import_ok() -> bool:
         return False
 
 
-def _repair_bitsandbytes_for_cuda() -> None:
+def _repair_bitsandbytes_for_cuda(wheel_paths: list[str]) -> None:
     import torch
 
     cuda_version = str(getattr(getattr(torch, "version", None), "cuda", "") or "")
     needs_repair = not _bitsandbytes_cuda_lib_present() or not _bitsandbytes_import_ok()
     if not cuda_version or not needs_repair:
         return
-    repair_command = [
-        sys.executable,
-        "-m",
-        "pip",
-        "install",
-        "-q",
-        "--no-deps",
-        "--upgrade",
-        "--force-reinstall",
-        "bitsandbytes>=0.49.2",
-    ]
-    _run_pip_with_retries(repair_command, label="bitsandbytes network repair")
-    if not _bitsandbytes_cuda_lib_present() or not _bitsandbytes_import_ok():
-        raise RuntimeError(
-            "bitsandbytes repair failed for CUDA "
-            f"{{cuda_version}}; library/import sanity still broken"
-        )
+    candidates = _bitsandbytes_wheel_paths(wheel_paths)
+    if candidates:
+        repair_command = [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "-q",
+            "--no-index",
+            "--no-deps",
+            "--force-reinstall",
+            *candidates,
+        ]
+        try:
+            _run_pip_with_retries(repair_command, label="bitsandbytes local wheel repair")
+        except subprocess.CalledProcessError as exc:
+            raise RuntimeError(
+                "bitsandbytes local repair failed; no network repair attempted"
+            ) from exc
+        if not _bitsandbytes_cuda_lib_present() or not _bitsandbytes_import_ok():
+            raise RuntimeError(
+                "bitsandbytes local repair failed for CUDA "
+                f"{{cuda_version}}; library/import sanity still broken"
+            )
+        return
+    raise RuntimeError(
+        "bitsandbytes needs CUDA repair but no local bitsandbytes wheel was found; "
+        "no network repair attempted"
+    )
 
 
 def _install(dataset_root: Path) -> None:
     if os.environ.get("OM_SKIP_PIP_INSTALL") == "1":
         return
     packages = list({packages!r}.split())
+
+    # Separate git URLs from versioned packages to avoid pip dependency conflicts
+    # (e.g. latest unsloth-zoo requires newer trl than our pinned trl==0.15.2).
+    git_packages = [p for p in packages if p.startswith("git+")]
+    versioned_packages = [p for p in packages if not p.startswith("git+")]
+
     wheelhouse_enabled = bool(TRAINING_CFG.get("bootstrap_wheelhouse", {{}}).get("enabled", True))
-    wheelhouse = _resolve_wheelhouse(dataset_root) if wheelhouse_enabled else None
-    if wheelhouse is not None:
-        reset_packages = sorted(set(packages + ["xformers", "torchvision", "torchaudio"]))
+    wheelhouses = _resolve_wheelhouses(dataset_root) if wheelhouse_enabled else []
+    wheelhouse_installed = False
+    if wheelhouses:
+        # Exclude git URLs from reset_packages; they can't be force-reinstalled as paths.
+        reset_packages = sorted(set(versioned_packages + ["xformers", "torchvision", "torchaudio"]))
         _best_effort_uninstall(reset_packages)
-        wheel_paths = _wheelhouse_wheel_paths(wheelhouse)
+        wheel_paths = _wheelhouse_wheel_paths(wheelhouses)
         local_command = [
             sys.executable,
             "-m",
@@ -707,15 +814,18 @@ def _install(dataset_root: Path) -> None:
         ]
         try:
             _run_pip_with_retries(local_command, label="local wheelhouse pip install")
-            _repair_bitsandbytes_for_cuda()
+            _repair_bitsandbytes_for_cuda(wheel_paths)
+            wheelhouse_installed = True
             if _is_main_process():
                 print(
                     "Installed "
-                    f"{{len(wheel_paths)}} wheelhouse packages without dependency resolution: "
-                    f"{{wheelhouse}}",
+                    f"{{len(wheel_paths)}} wheelhouse packages from "
+                    f"{{len(wheelhouses)}} wheelhouse directories without dependency resolution: "
+                    f"{{wheelhouses}}",
                     flush=True,
                 )
-            return
+            if not git_packages:
+                return
         except subprocess.CalledProcessError as exc:
             if _is_main_process():
                 print(
@@ -723,18 +833,41 @@ def _install(dataset_root: Path) -> None:
                     flush=True,
                 )
 
-    network_command = [
-        sys.executable,
-        "-m",
-        "pip",
-        "install",
-        "-q",
-        "--upgrade",
-        "--force-reinstall",
-        *packages,
-    ]
-    _run_pip_with_retries(network_command, label="network pip install")
-    _repair_bitsandbytes_for_cuda()
+    # Install git URLs after wheelhouse, but with --no-deps so Unsloth git code
+    # cannot pull newer torch/torchao/trl deps than our Kaggle-compatible wheels.
+    if git_packages:
+        _run_pip_with_retries(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "-q",
+                "--upgrade",
+                "--no-deps",
+                *git_packages,
+            ],
+            label="network git install",
+        )
+    if wheelhouse_installed:
+        _repair_bitsandbytes_for_cuda(wheel_paths)
+        return
+    # Then install versioned packages from network only if wheelhouse was absent/failed.
+    if versioned_packages:
+        _run_pip_with_retries(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "-q",
+                "--upgrade",
+                "--force-reinstall",
+                *versioned_packages,
+            ],
+            label="network pip install",
+        )
+    _repair_bitsandbytes_for_cuda(wheel_paths)
 
 
 def _maybe_relaunch_torchrun() -> None:
@@ -752,7 +885,7 @@ def _maybe_relaunch_torchrun() -> None:
         sys.argv[0],
         "--ddp-child",
     ]
-    print("Relaunching with torchrun for T4x2 DDP:", " ".join(cmd), flush=True)
+    print("Relaunching with torchrun for multi-GPU DDP:", " ".join(cmd), flush=True)
     os.execvp(cmd[0], cmd)
 
 
@@ -790,6 +923,18 @@ def _debug_torch_cuda() -> None:
             )
         except Exception as exc:
             print(f"nvidia-smi probe failed: {{exc}}", flush=True)
+
+
+def _require_torch_cuda() -> None:
+    import torch
+
+    if torch.cuda.is_available() and torch.cuda.device_count() > 0:
+        return
+    raise RuntimeError(
+        "Kaggle did not attach a CUDA GPU to this run; "
+        "torch is CUDA-enabled but no NVIDIA device/nvidia-smi is visible. "
+        "Check Kaggle GPU quota/account accelerator availability before retrying."
+    )
 
 
 def _requires_hf_token() -> bool:
@@ -1185,6 +1330,11 @@ def _patch_unsloth_auto_docstring() -> None:
             "from transformers.models.qwen3.configuration_qwen3 import Qwen3Config\\n"
             "from transformers.models.qwen3_moe.configuration_qwen3_moe import Qwen3MoeConfig\\n"
             "from transformers.models.falcon_h1.configuration_falcon_h1 import FalconH1Config\\n"
+            "from transformers.modeling_rope_utils import (\\n"
+            "    ROPE_INIT_FUNCTIONS,\\n"
+            "    RopeParameters,\\n"
+            "    rope_config_validation,\\n"
+            ")\\n"
             "\\n"
             "def strict(*args, **kwargs):\\n"
             "    if args and len(args) == 1 and callable(args[0]) and not kwargs:\\n"
@@ -1279,6 +1429,8 @@ def main() -> None:
 
     import torch
 
+    _debug_torch_cuda()
+    _require_torch_cuda()
     _patch_unsloth_auto_docstring()
     import unsloth  # noqa: F401
     from datasets import load_dataset
@@ -1293,8 +1445,6 @@ def main() -> None:
     hf_token = _get_hf_token()
     if hf_token:
         login(token=hf_token, add_to_git_credential=False)
-
-    _debug_torch_cuda()
 
     train_path = dataset_root / "train.jsonl"
     eval_path = dataset_root / "eval.jsonl"
@@ -1490,6 +1640,7 @@ def write_kernel_packages(
         (kernel_dir / code_file).write_text(
             _kernel_script(config, model, dataset_slug), encoding="utf-8"
         )
+        extra_dataset_sources = [str(source) for source in kaggle.get("extra_dataset_sources", [])]
         metadata = {
             "id": f"{owner}/{kernel_slug}",
             "title": kernel_slug,
@@ -1500,11 +1651,11 @@ def write_kernel_packages(
             "enable_gpu": str(bool(kaggle.get("enable_gpu", True))).lower(),
             "enable_tpu": "false",
             "enable_internet": str(bool(kaggle.get("enable_internet", True))).lower(),
-            "dataset_sources": [dataset_id],
+            "dataset_sources": [dataset_id, *extra_dataset_sources],
             "competition_sources": [],
             "kernel_sources": [],
             "model_sources": [],
-            "machine_shape": str(kaggle.get("machine_shape", "NvidiaTeslaT4x2")),
+            "machine_shape": str(kaggle.get("machine_shape", "NvidiaTeslaT4")),
         }
         (kernel_dir / "kernel-metadata.json").write_text(
             json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
@@ -1545,10 +1696,25 @@ def push_with_kaggle_cli(
             f"Missing Kaggle token '{token_env_var}'. Set it in the environment or {env_file}."
         )
     env["KAGGLE_API_TOKEN"] = token
-    if username_env_var:
-        username = resolve_env_value(username_env_var, env_file)
-        if username:
-            env["KAGGLE_USERNAME"] = username
+    username = resolve_env_value(username_env_var, env_file) if username_env_var else None
+    if not username:
+        metadata_path = dataset_dir / "dataset-metadata.json"
+        if metadata_path.exists():
+            try:
+                dataset_meta = json.loads(metadata_path.read_text(encoding="utf-8"))
+                dataset_id = str(dataset_meta.get("id", ""))
+                if "/" in dataset_id:
+                    username = dataset_id.split("/", 1)[0].strip()
+            except Exception:
+                username = None
+    if not username:
+        for row in kernel_rows:
+            kernel_id = str(row.get("kernel_id", ""))
+            if "/" in kernel_id:
+                username = kernel_id.split("/", 1)[0].strip()
+                break
+    if username:
+        env["KAGGLE_USERNAME"] = username
 
     summaries: list[str] = []
     for command, cwd in commands:
