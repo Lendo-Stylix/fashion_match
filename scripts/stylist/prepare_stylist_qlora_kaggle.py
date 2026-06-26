@@ -582,6 +582,14 @@ TRAINING_CFG = {training_py}
 DATASET_SLUG = {dataset_slug!r}
 TARGET_MODULES = {target_modules_json}
 
+# Disable optional framework imports/compilation before importing torch/transformers/Unsloth.
+os.environ.setdefault("USE_TF", "0")
+os.environ.setdefault("TRANSFORMERS_NO_TF", "1")
+os.environ.setdefault("USE_FLAX", "0")
+os.environ.setdefault("UNSLOTH_COMPILE_DISABLE", "1")
+os.environ.setdefault("TORCH_COMPILE_DISABLE", "1")
+os.environ.setdefault("OM_SKIP_UNSLOTH_RL_PATCH", "1")
+
 
 def _is_main_process() -> bool:
     return int(os.environ.get("LOCAL_RANK", "0")) == 0
@@ -659,6 +667,20 @@ def _resolve_wheelhouses(dataset_root: Path) -> list[Path]:
         for candidate in sorted(extract_root.glob("**/wheelhouse*")):
             _add_dir(candidate, f"extracted {{label}}")
 
+    def _add_loose_wheel_dir(wheel_path: Path, label: str) -> None:
+        if not wheel_path.is_file() or wheel_path.suffix != ".whl":
+            return
+        candidate = wheel_path.parent
+        if not any(candidate.glob("*.whl")):
+            return
+        key = str(candidate.resolve())
+        if key in seen:
+            return
+        seen.add(key)
+        wheelhouses.append(candidate)
+        if _is_main_process():
+            print(f"Using {{label}} loose wheel dir: {{candidate}}", flush=True)
+
     for candidate in sorted(dataset_root.glob("wheelhouse*")):
         if candidate.is_dir():
             _add_dir(candidate, "dataset")
@@ -670,6 +692,9 @@ def _resolve_wheelhouses(dataset_root: Path) -> list[Path]:
             _add_dir(candidate, "discovered")
         elif candidate.is_file() and candidate.suffix == ".zip":
             _extract_archive(candidate, "discovered")
+
+    for wheel_path in sorted(Path("/kaggle/input").glob("**/*.whl")):
+        _add_loose_wheel_dir(wheel_path, "discovered")
 
     if _is_main_process() and wheelhouses:
         print(f"Found {{len(wheelhouses)}} wheelhouse directories", flush=True)
@@ -772,11 +797,20 @@ def _repair_bitsandbytes_for_cuda(wheel_paths: list[str]) -> None:
             raise RuntimeError(
                 "bitsandbytes local repair failed; no network repair attempted"
             ) from exc
-        if not _bitsandbytes_cuda_lib_present() or not _bitsandbytes_import_ok():
+        if not _bitsandbytes_cuda_lib_present():
             raise RuntimeError(
                 "bitsandbytes local repair failed for CUDA "
-                f"{{cuda_version}}; library/import sanity still broken"
+                f"{{cuda_version}}; CUDA library still missing"
             )
+        if not _bitsandbytes_import_ok():
+            if _is_main_process():
+                print(
+                    "bitsandbytes import sanity still failed after local repair; "
+                    "continuing because repeated import in the bootstrap process can "
+                    "double-register torch custom operators. A fresh training process "
+                    "will import bitsandbytes after torchrun relaunch.",
+                    flush=True,
+                )
         return
     raise RuntimeError(
         "bitsandbytes needs CUDA repair but no local bitsandbytes wheel was found; "
@@ -887,6 +921,18 @@ def _maybe_relaunch_torchrun() -> None:
     ]
     print("Relaunching with torchrun for multi-GPU DDP:", " ".join(cmd), flush=True)
     os.execvp(cmd[0], cmd)
+
+
+def _configure_cuda_device_for_ddp() -> None:
+    import torch
+
+    local_rank = os.environ.get("LOCAL_RANK")
+    if local_rank is None or not torch.cuda.is_available():
+        return
+    device_index = int(local_rank)
+    torch.cuda.set_device(device_index)
+    if _is_main_process():
+        print(f"Set CUDA device from LOCAL_RANK={{device_index}}", flush=True)
 
 
 def _debug_torch_cuda() -> None:
@@ -1195,6 +1241,34 @@ def _load_unsloth_model(hf_token: str | None):
     last_error = None
     for model_name in [m for m in model_candidates if m]:
         try:
+            from unsloth import FastModel
+            model, tokenizer = FastModel.from_pretrained(
+                model_name=model_name,
+                max_seq_length=int(TRAINING_CFG["max_seq_length"]),
+                dtype=None,
+                load_in_4bit=bool(TRAINING_CFG["load_in_4bit"]),
+                load_in_8bit=False,
+                full_finetuning=False,
+                token=hf_token,
+                trust_remote_code=True,
+            )
+            model = FastModel.get_peft_model(
+                model,
+                r=int(TRAINING_CFG["lora"]["r"]),
+                target_modules=TARGET_MODULES,
+                lora_alpha=int(TRAINING_CFG["lora"]["alpha"]),
+                lora_dropout=float(TRAINING_CFG["lora"].get("dropout", 0.0)),
+                bias=str(TRAINING_CFG["lora"].get("bias", "none")),
+                use_gradient_checkpointing="unsloth",
+                random_state=42,
+                max_seq_length=int(TRAINING_CFG["max_seq_length"]),
+            )
+            return model, tokenizer, model_name, "FastModel"
+        except Exception as exc:
+            last_error = exc
+            if _is_main_process():
+                print(f"FastModel failed for {{model_name}}: {{exc}}", flush=True)
+        try:
             from unsloth import FastLanguageModel
             model, tokenizer = FastLanguageModel.from_pretrained(
                 model_name=model_name,
@@ -1270,9 +1344,8 @@ def _patch_unsloth_auto_docstring() -> None:
     kaggle_input = Path("/kaggle/input")
     wheelhouse_candidate = None
     if kaggle_input.is_dir():
-        for sub in sorted(kaggle_input.iterdir()):
-            candidate = sub / "wheelhouse"
-            if candidate.is_dir():
+        for candidate in sorted(kaggle_input.glob("**/wheelhouse*")):
+            if candidate.is_dir() and any(candidate.glob("*.whl")):
                 wheelhouse_candidate = candidate
                 break
     if wheelhouse_candidate is None:
@@ -1284,6 +1357,7 @@ def _patch_unsloth_auto_docstring() -> None:
     os.environ.setdefault("TRANSFORMERS_NO_TF", "1")
     os.environ.setdefault("USE_FLAX", "0")
     os.environ.setdefault("UNSLOTH_COMPILE_DISABLE", "1")
+    os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
     wheelhouse_str = str(wheelhouse_candidate)
     try:
@@ -1393,7 +1467,70 @@ def _patch_unsloth_auto_docstring() -> None:
         elif _is_main_process():
             print("Installed unsloth/models/_utils.py already patched", flush=True)
 
+
+    def _patch_installed_unsloth_vision() -> None:
+        vision_path = _find_site_file("unsloth/models/vision.py")
+        if vision_path is None:
+            if _is_main_process():
+                print("Skipping Unsloth compatibility patch: vision.py not found", flush=True)
+            return
+
+        text = vision_path.read_text(encoding="utf-8", errors="ignore")
+        original = text
+        old_import = "from transformers import GenerationConfig, CompileConfig, HybridCache"
+        new_import = chr(10).join(
+            [
+                "from transformers import GenerationConfig, CompileConfig",
+                "try:",
+                "    from transformers import HybridCache",
+                "except ImportError:",
+                "    try:",
+                "        from transformers.cache_utils import HybridCache",
+                "    except ImportError:",
+                "        from typing import Any as HybridCache",
+            ]
+        )
+        if old_import in text and "from transformers.cache_utils import HybridCache" not in text:
+            text = text.replace(old_import, new_import, 1)
+
+        if text != original:
+            vision_path.write_text(text, encoding="utf-8")
+            if _is_main_process():
+                print(
+                    "Patched installed unsloth/models/vision.py for HybridCache compatibility: "
+                    f"{{vision_path}}",
+                    flush=True,
+                )
+        elif _is_main_process():
+            print("Installed unsloth/models/vision.py already patched", flush=True)
+
+    def _patch_installed_unsloth_llama_rl() -> None:
+        llama_path = _find_site_file("unsloth/models/llama.py")
+        if llama_path is None:
+            if _is_main_process():
+                print("Skipping Unsloth compatibility patch: llama.py not found", flush=True)
+            return
+
+        text = llama_path.read_text(encoding="utf-8", errors="ignore")
+        original = text
+        old_call = "PatchFastRL(FastLanguageModel = FastLlamaModel)"
+        new_call = "pass  # OM_SKIP_UNSLOTH_RL_PATCH skipped PatchFastRL"
+        if old_call in text and "OM_SKIP_UNSLOTH_RL_PATCH" not in text:
+            text = text.replace(old_call, new_call, 1)
+
+        if text != original:
+            llama_path.write_text(text, encoding="utf-8")
+            if _is_main_process():
+                print(
+                    "Patched installed unsloth/models/llama.py to skip RL trainer patch: "
+                    f"{{llama_path}}",
+                    flush=True,
+                )
+        elif _is_main_process():
+            print("Installed unsloth/models/llama.py already patched", flush=True)
     _patch_installed_unsloth_utils()
+    _patch_installed_unsloth_vision()
+    _patch_installed_unsloth_llama_rl()
 
     _ORIGINAL_TORCH_COMPILE = getattr(_torch_for_unsloth_patch, "compile", None)
 
@@ -1408,6 +1545,33 @@ def _patch_unsloth_auto_docstring() -> None:
 
     if _ORIGINAL_TORCH_COMPILE is not None:
         _torch_for_unsloth_patch.compile = _identity_torch_compile
+
+    if not hasattr(_torch_for_unsloth_patch.nn.Module, "set_submodule"):
+        def _om_set_submodule(self, target, module, strict=False):
+            if target == "":
+                raise ValueError("Cannot set the root module via set_submodule")
+            atoms = target.split(".")
+            parent_path = ".".join(atoms[:-1])
+            parent = self.get_submodule(parent_path) if parent_path else self
+            if strict and not hasattr(parent, atoms[-1]):
+                raise AttributeError("Target submodule does not exist")
+            setattr(parent, atoms[-1], module)
+
+        _torch_for_unsloth_patch.nn.Module.set_submodule = _om_set_submodule
+        if _is_main_process():
+            print("Patched torch.nn.Module.set_submodule for Unsloth compatibility", flush=True)
+
+    try:
+        import torch._inductor as _torch_inductor
+        import torch._inductor.config as _torch_inductor_config
+
+        if not hasattr(_torch_inductor, "config"):
+            _torch_inductor.config = _torch_inductor_config
+            if _is_main_process():
+                print("Patched torch._inductor.config attribute for unsloth_zoo", flush=True)
+    except Exception as exc:
+        if _is_main_process():
+            print(f"Skipping torch._inductor.config compatibility patch: {{exc}}", flush=True)
 
     try:
         import unsloth  # noqa: F401
@@ -1429,6 +1593,7 @@ def main() -> None:
 
     import torch
 
+    _configure_cuda_device_for_ddp()
     _debug_torch_cuda()
     _require_torch_cuda()
     _patch_unsloth_auto_docstring()

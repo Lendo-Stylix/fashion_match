@@ -274,12 +274,24 @@ def test_build_package_normalizes_only_stylist_knowledge(tmp_path: Path) -> None
     assert (
         "Patched installed unsloth/models/_utils.py for transformers compatibility" in kernel_text
     )
+    assert "Patched installed unsloth/models/vision.py for HybridCache compatibility" in kernel_text
+    assert "Patched installed unsloth/models/llama.py to skip RL trainer patch" in kernel_text
+    assert "OM_SKIP_UNSLOTH_RL_PATCH" in kernel_text
+    assert "double-register torch custom operators" in kernel_text
+    assert "Patched torch._inductor.config attribute for unsloth_zoo" in kernel_text
+    assert "Patched torch.nn.Module.set_submodule for Unsloth compatibility" in kernel_text
+    assert "Set CUDA device from LOCAL_RANK" in kernel_text
+    assert "from unsloth import FastModel" in kernel_text
+    assert "full_finetuning=False" in kernel_text
+    assert "PYTORCH_CUDA_ALLOC_CONF" in kernel_text
     assert "from transformers.utils.auto_docstring import auto_docstring" in kernel_text
     assert (
         "from transformers.configuration_utils import PretrainedConfig as PreTrainedConfig"
         in kernel_text
     )
     assert "UNSLOTH_COMPILE_DISABLE" in kernel_text
+    assert "TORCH_COMPILE_DISABLE" in kernel_text
+    assert kernel_text.index("TORCH_COMPILE_DISABLE") < kernel_text.index("import unsloth")
     assert "USE_TF" in kernel_text
     assert "TRANSFORMERS_NO_TF" in kernel_text
     assert "_identity_torch_compile" in kernel_text
@@ -680,7 +692,9 @@ def test_kernel_scans_kaggle_input_for_wheelhouse_fallback() -> None:
     kernel_text = _kernel_script(config, model, "dummy-dataset")
 
     assert 'Path("/kaggle/input").glob("**/wheelhouse*")' in kernel_text
+    assert 'Path("/kaggle/input").glob("**/*.whl")' in kernel_text
     assert "Using {label} wheelhouse dir:" in kernel_text
+    assert "Using {label} loose wheel dir:" in kernel_text
     assert "Using {label} wheelhouse archive:" in kernel_text
     assert "Found {len(wheelhouses)} wheelhouse" in kernel_text
 
