@@ -26,7 +26,11 @@ fashion_match/
 │   ├── 📂 discovery/          - Scripts to discover product URLs
 │   ├── 📂 experience/         - Site-specific crawler logs and code
 │   └── 📂 harvest/            - Harvesters to extract detailed product details
-├── 📂 traslate/               # [PREPROCESSING] Scripts to translate data to Vietnamese
+├── 📂 traslate/               # [PREPROCESSING] Translation, cleaning, and dataset pruning
+│   ├── 📂 raw/                - Original unfiltered dataset
+│   ├── 📂 processed/          - Cleaned full dataset and training-ready 10k dataset
+│   ├── 📄 clean_dataset.py    - Script to clean and normalize translations
+│   └── 📄 prune_dataset.py    - Script to prune and balance dataset using stratified sampling
 ├── 📂 scripts/                # [UTILITIES] Scripts to merge, clean, and validate data
 ├── 📂 src/outfitmatch/        # [BACKEND & MODEL] Core ML model & recommendation logic
 │   ├── 📂 train/              - Model training pipelines (contrastive, preference)
