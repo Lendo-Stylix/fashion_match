@@ -284,6 +284,16 @@ def test_build_package_normalizes_only_stylist_knowledge(tmp_path: Path) -> None
     assert "from unsloth import FastModel" in kernel_text
     assert "full_finetuning=False" in kernel_text
     assert "PYTORCH_CUDA_ALLOC_CONF" in kernel_text
+    assert "def _is_supported_archive(path: Path) -> bool:" in kernel_text
+    assert 'path.suffix in {".zip", ".tar"}' in kernel_text
+    assert "Extracted resume checkpoint archive:" in kernel_text
+    assert (
+        "Patched Transformers torch.load safety gate for trusted Kaggle resume checkpoint"
+        in kernel_text
+    )
+    assert "CVE-2025-32434" in kernel_text
+    assert "Dropped RNG state files for trusted torch 2.4 resume" in kernel_text
+    assert "rng_state*.pth" in kernel_text
     assert "from transformers.utils.auto_docstring import auto_docstring" in kernel_text
     assert (
         "from transformers.configuration_utils import PretrainedConfig as PreTrainedConfig"

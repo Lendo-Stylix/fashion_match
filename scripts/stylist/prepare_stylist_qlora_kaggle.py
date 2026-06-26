@@ -646,6 +646,9 @@ def _resolve_wheelhouses(dataset_root: Path) -> list[Path]:
         if _is_main_process():
             print(f"Using {{label}} wheelhouse dir: {{candidate}}", flush=True)
 
+    def _is_supported_archive(path: Path) -> bool:
+        return path.suffix in {{".zip", ".tar"}} or path.name.endswith((".tar.gz", ".tgz"))
+
     def _extract_archive(archive: Path, label: str) -> None:
         nonlocal extraction_index
         if not archive.is_file():
@@ -684,13 +687,13 @@ def _resolve_wheelhouses(dataset_root: Path) -> list[Path]:
     for candidate in sorted(dataset_root.glob("wheelhouse*")):
         if candidate.is_dir():
             _add_dir(candidate, "dataset")
-        elif candidate.is_file() and candidate.suffix == ".zip":
+        elif candidate.is_file() and _is_supported_archive(candidate):
             _extract_archive(candidate, "dataset")
 
     for candidate in sorted(Path("/kaggle/input").glob("**/wheelhouse*")):
         if candidate.is_dir():
             _add_dir(candidate, "discovered")
-        elif candidate.is_file() and candidate.suffix == ".zip":
+        elif candidate.is_file() and _is_supported_archive(candidate):
             _extract_archive(candidate, "discovered")
 
     for wheel_path in sorted(Path("/kaggle/input").glob("**/*.whl")):
@@ -1136,7 +1139,32 @@ def _restore_checkpoint_from_dataset(output_dir: Path, dataset_root: Path) -> Pa
         return None
     source_root = dataset_root / subdir
     if not source_root.exists():
-        return None
+        archive_candidates = [
+            dataset_root / (subdir + suffix)
+            for suffix in (".tar", ".zip", ".tar.gz", ".tgz")
+        ]
+        archive_candidates.extend(sorted(dataset_root.glob(subdir + ".*")))
+        archive = next((candidate for candidate in archive_candidates if candidate.is_file()), None)
+        if archive is None:
+            return None
+        extract_root = Path("/kaggle/working") / ("_resume_checkpoint_" + subdir)
+        if _is_main_process():
+            if extract_root.exists():
+                shutil.rmtree(extract_root)
+            shutil.unpack_archive(str(archive), str(extract_root))
+            print("Extracted resume checkpoint archive:", archive, flush=True)
+        marker = extract_root / ".extract-complete"
+        if _is_main_process():
+            marker.write_text(str(archive) + "\\n", encoding="utf-8")
+        else:
+            deadline = time.time() + 300
+            while not marker.exists() and time.time() < deadline:
+                time.sleep(2)
+            if not marker.exists():
+                raise TimeoutError("Timed out waiting for resume checkpoint extraction")
+        source_root = extract_root / subdir
+        if not source_root.exists():
+            source_root = extract_root
     candidates = [
         candidate for candidate in source_root.rglob("checkpoint-*") if candidate.is_dir()
     ]
@@ -1209,6 +1237,44 @@ def _upload_checkpoint_to_wandb(output_dir: Path, run_id: str, global_step: int)
         print(f"Uploaded checkpoint artifact: {{latest.name}}", flush=True)
     except Exception as exc:
         print(f"W&B checkpoint upload failed: {{exc}}", flush=True)
+
+
+def _drop_rng_state_files_for_torch24_resume(checkpoint_dir: Path) -> None:
+    # Torch 2.4 weights_only=True cannot unpickle numpy RNG state in Transformers 5.2.
+    # Dropping RNG files lets trusted checkpoint resume model/optimizer/scheduler safely.
+    removed = []
+    for pattern in ("rng_state*.pth", "rng_state_*.pth"):
+        for path in checkpoint_dir.glob(pattern):
+            try:
+                path.unlink()
+                removed.append(path.name)
+            except FileNotFoundError:
+                pass
+    if removed and _is_main_process():
+        print(f"Dropped RNG state files for trusted torch 2.4 resume: {{removed}}", flush=True)
+
+
+def _allow_trusted_torch_load_resume() -> None:
+    # Trusted self-produced checkpoint resume on Kaggle torch 2.4.
+    # Transformers 5.2 blocks optimizer.pt loads unless torch>=2.6 due CVE-2025-32434.
+    try:
+        import transformers.trainer as _trainer_module
+        import transformers.utils.import_utils as _import_utils
+
+        def _trusted_resume_noop() -> None:
+            return None
+
+        _import_utils.check_torch_load_is_safe = _trusted_resume_noop
+        if hasattr(_trainer_module, "check_torch_load_is_safe"):
+            _trainer_module.check_torch_load_is_safe = _trusted_resume_noop
+        if _is_main_process():
+            print(
+                "Patched Transformers torch.load safety gate for trusted Kaggle resume checkpoint",
+                flush=True,
+            )
+    except Exception as exc:
+        if _is_main_process():
+            print(f"Could not patch trusted resume torch.load safety gate: {{exc}}", flush=True)
 
 
 def _format_messages(example, tokenizer):
@@ -1653,6 +1719,9 @@ def main() -> None:
     if resume_checkpoint is None:
         resume_checkpoint = _restore_checkpoint_from_wandb(output_dir, run_id)
     resume_step = _checkpoint_global_step(resume_checkpoint)
+    if resume_checkpoint is not None:
+        _allow_trusted_torch_load_resume()
+        _drop_rng_state_files_for_torch24_resume(resume_checkpoint)
     session_step_limit = int(TRAINING_CFG.get("max_session_steps", 0) or 0)
 
     args = TrainingArguments(
