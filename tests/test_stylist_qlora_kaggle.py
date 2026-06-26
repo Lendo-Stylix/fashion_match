@@ -256,6 +256,7 @@ def test_build_package_normalizes_only_stylist_knowledge(tmp_path: Path) -> None
     assert "OM_SKIP_PIP_INSTALL" in kernel_text
     assert "resume_from_checkpoint=" in kernel_text
     assert "_restore_checkpoint_from_dataset" in kernel_text
+    assert 'if not resume_cfg.get("local_path")' in kernel_text
     assert "_wait_for_restored_checkpoint" in kernel_text
     expected_marker = b'marker.write_text(label + "' + bytes([92, 110]) + b'", encoding="utf-8")'
     assert expected_marker in kernel_bytes

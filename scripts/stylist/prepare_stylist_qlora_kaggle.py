@@ -1134,6 +1134,11 @@ def _restore_checkpoint_from_dataset(output_dir: Path, dataset_root: Path) -> Pa
     if existing is not None:
         return existing
     resume_cfg = dict(TRAINING_CFG.get("resume_checkpoint", {{}}))
+    # Only restore packaged checkpoints when the package was explicitly built for resume.
+    # Some shared Kaggle datasets contain stale resume_checkpoint archives from older
+    # model variants; auto-discovering those can load incompatible LoRA shapes.
+    if not resume_cfg.get("local_path"):
+        return None
     subdir = str(resume_cfg.get("packaged_subdir", "resume_checkpoint") or "").strip()
     if not subdir:
         return None
