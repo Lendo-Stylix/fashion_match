@@ -52,6 +52,10 @@ Thumbs.db
 .vscode/
 
 # Translation datasets (large files)
-traslate/*.parquet
-traslate/*.jsonl
+traslate/**/*.parquet
+traslate/**/*.jsonl
+
+# Allow Jupyter Notebooks in traslate directory
+!traslate/**/*.ipynb
+!traslate/*.ipynb
 
