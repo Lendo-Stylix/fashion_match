@@ -1,0 +1,1002 @@
+[
+  {
+    "id": 0,
+    "rougeL_fmeasure": 0.3949843260188088,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 1,
+    "rougeL_fmeasure": 0.35874439461883406,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 2,
+    "rougeL_fmeasure": 0.34108527131782945,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 3,
+    "rougeL_fmeasure": 0.28571428571428575,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 4,
+    "rougeL_fmeasure": 0.3305785123966942,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 5,
+    "rougeL_fmeasure": 0.3707865168539326,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 6,
+    "rougeL_fmeasure": 0.304,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 7,
+    "rougeL_fmeasure": 0.4423963133640553,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 8,
+    "rougeL_fmeasure": 0.4,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 9,
+    "rougeL_fmeasure": 0.4434389140271493,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 10,
+    "rougeL_fmeasure": 0.33599999999999997,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 11,
+    "rougeL_fmeasure": 0.32653061224489793,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 12,
+    "rougeL_fmeasure": 0.31390134529147984,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 13,
+    "rougeL_fmeasure": 0.28395061728395066,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 14,
+    "rougeL_fmeasure": 0.36269430051813467,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 15,
+    "rougeL_fmeasure": 0.42187499999999994,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 16,
+    "rougeL_fmeasure": 0.39898989898989895,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 17,
+    "rougeL_fmeasure": 0.2905982905982906,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 18,
+    "rougeL_fmeasure": 0.37222222222222223,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 19,
+    "rougeL_fmeasure": 0.2787878787878788,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 20,
+    "rougeL_fmeasure": 0.41247002398081534,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 21,
+    "rougeL_fmeasure": 0.37681159420289856,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 22,
+    "rougeL_fmeasure": 0.3563218390804598,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 23,
+    "rougeL_fmeasure": 0.23239436619718312,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 24,
+    "rougeL_fmeasure": 0.4106666666666667,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 25,
+    "rougeL_fmeasure": 0.30042918454935624,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 26,
+    "rougeL_fmeasure": 0.3448275862068965,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 27,
+    "rougeL_fmeasure": 0.36633663366336633,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 28,
+    "rougeL_fmeasure": 0.46838407494145196,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 29,
+    "rougeL_fmeasure": 0.33333333333333337,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 30,
+    "rougeL_fmeasure": 0.35009310986964615,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 31,
+    "rougeL_fmeasure": 0.38899803536345773,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 32,
+    "rougeL_fmeasure": 0.3478260869565218,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 33,
+    "rougeL_fmeasure": 0.4052863436123348,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 34,
+    "rougeL_fmeasure": 0.4230769230769231,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 35,
+    "rougeL_fmeasure": 0.3440366972477064,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 36,
+    "rougeL_fmeasure": 0.37500000000000006,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 37,
+    "rougeL_fmeasure": 0.33451957295373663,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 38,
+    "rougeL_fmeasure": 0.39294710327455923,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 39,
+    "rougeL_fmeasure": 0.3647058823529412,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 40,
+    "rougeL_fmeasure": 0.3422459893048128,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 41,
+    "rougeL_fmeasure": 0.37052631578947365,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 42,
+    "rougeL_fmeasure": 0.43646408839779005,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 43,
+    "rougeL_fmeasure": 0.45454545454545453,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 44,
+    "rougeL_fmeasure": 0.41935483870967744,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 45,
+    "rougeL_fmeasure": 0.5606694560669456,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 46,
+    "rougeL_fmeasure": 0.3684210526315789,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 47,
+    "rougeL_fmeasure": 0.3298245614035088,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 48,
+    "rougeL_fmeasure": 0.3614457831325301,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 49,
+    "rougeL_fmeasure": 0.2885245901639344,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 50,
+    "rougeL_fmeasure": 0.4738461538461538,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 51,
+    "rougeL_fmeasure": 0.3533834586466165,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 52,
+    "rougeL_fmeasure": 0.368,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 53,
+    "rougeL_fmeasure": 0.3692946058091286,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 54,
+    "rougeL_fmeasure": 0.36974789915966394,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 55,
+    "rougeL_fmeasure": 0.4169184290030212,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 56,
+    "rougeL_fmeasure": 0.34146341463414637,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 57,
+    "rougeL_fmeasure": 0.2557781201848998,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 58,
+    "rougeL_fmeasure": 0.37988826815642457,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 59,
+    "rougeL_fmeasure": 0.22641509433962262,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 60,
+    "rougeL_fmeasure": 0.3371428571428572,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 61,
+    "rougeL_fmeasure": 0.42222222222222217,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 62,
+    "rougeL_fmeasure": 0.3392857142857143,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 63,
+    "rougeL_fmeasure": 0.41807909604519766,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 64,
+    "rougeL_fmeasure": 0.393681652490887,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 65,
+    "rougeL_fmeasure": 0.3944636678200692,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 66,
+    "rougeL_fmeasure": 0.3381995133819951,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 67,
+    "rougeL_fmeasure": 0.2745098039215686,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 68,
+    "rougeL_fmeasure": 0.380952380952381,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 69,
+    "rougeL_fmeasure": 0.3734643734643735,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 70,
+    "rougeL_fmeasure": 0.4235294117647059,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 71,
+    "rougeL_fmeasure": 0.3137254901960784,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 72,
+    "rougeL_fmeasure": 0.32156862745098036,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 73,
+    "rougeL_fmeasure": 0.3930131004366812,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 74,
+    "rougeL_fmeasure": 0.43010752688172044,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 75,
+    "rougeL_fmeasure": 0.2589928057553957,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 76,
+    "rougeL_fmeasure": 0.33613445378151263,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 77,
+    "rougeL_fmeasure": 0.3005181347150259,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 78,
+    "rougeL_fmeasure": 0.29347826086956524,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 79,
+    "rougeL_fmeasure": 0.28865979381443296,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 80,
+    "rougeL_fmeasure": 0.4340659340659341,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 81,
+    "rougeL_fmeasure": 0.3730569948186529,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 82,
+    "rougeL_fmeasure": 0.38759689922480617,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 83,
+    "rougeL_fmeasure": 0.23602484472049687,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 84,
+    "rougeL_fmeasure": 0.32588699080157685,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 85,
+    "rougeL_fmeasure": 0.3333333333333333,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 86,
+    "rougeL_fmeasure": 0.2631578947368421,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 87,
+    "rougeL_fmeasure": 0.39215686274509803,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 88,
+    "rougeL_fmeasure": 0.34939759036144574,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 89,
+    "rougeL_fmeasure": 0.02702702702702703,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 90,
+    "rougeL_fmeasure": 0.31666666666666665,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 91,
+    "rougeL_fmeasure": 0.2777777777777778,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 92,
+    "rougeL_fmeasure": 0.34670116429495473,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 93,
+    "rougeL_fmeasure": 0.2753623188405797,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 94,
+    "rougeL_fmeasure": 0.3478260869565217,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 95,
+    "rougeL_fmeasure": 0.3701657458563536,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 96,
+    "rougeL_fmeasure": 0.47297297297297297,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 97,
+    "rougeL_fmeasure": 0.30828025477707005,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 98,
+    "rougeL_fmeasure": 0.3770491803278689,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 99,
+    "rougeL_fmeasure": 0.34355828220858897,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 100,
+    "rougeL_fmeasure": 0.2307692307692308,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 101,
+    "rougeL_fmeasure": 0.2661596958174905,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 102,
+    "rougeL_fmeasure": 0.3709273182957394,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 103,
+    "rougeL_fmeasure": 0.21301775147928992,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 104,
+    "rougeL_fmeasure": 0.31034482758620685,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 105,
+    "rougeL_fmeasure": 0.3370786516853933,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 106,
+    "rougeL_fmeasure": 0.41847826086956524,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 107,
+    "rougeL_fmeasure": 0.4729729729729729,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 108,
+    "rougeL_fmeasure": 0.36363636363636365,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 109,
+    "rougeL_fmeasure": 0.24734982332155478,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 110,
+    "rougeL_fmeasure": 0.35135135135135137,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 111,
+    "rougeL_fmeasure": 0.4099099099099099,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 112,
+    "rougeL_fmeasure": 0.3968253968253968,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 113,
+    "rougeL_fmeasure": 0.35795454545454547,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 114,
+    "rougeL_fmeasure": 0.3468208092485549,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 115,
+    "rougeL_fmeasure": 0.39111111111111113,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 116,
+    "rougeL_fmeasure": 0.32999999999999996,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 117,
+    "rougeL_fmeasure": 0.24691358024691354,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 118,
+    "rougeL_fmeasure": 0.3911290322580645,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 119,
+    "rougeL_fmeasure": 0.3916913946587537,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 120,
+    "rougeL_fmeasure": 0.4,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 121,
+    "rougeL_fmeasure": 0.3835616438356165,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 122,
+    "rougeL_fmeasure": 0.32575757575757575,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 123,
+    "rougeL_fmeasure": 0.45595854922279794,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 124,
+    "rougeL_fmeasure": 0.324435318275154,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 125,
+    "rougeL_fmeasure": 0.4606060606060606,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 126,
+    "rougeL_fmeasure": 0.36448598130841126,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 127,
+    "rougeL_fmeasure": 0.3948220064724919,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 128,
+    "rougeL_fmeasure": 0.2780748663101604,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 129,
+    "rougeL_fmeasure": 0.372093023255814,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 130,
+    "rougeL_fmeasure": 0.3346007604562738,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 131,
+    "rougeL_fmeasure": 0.2785714285714286,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 132,
+    "rougeL_fmeasure": 0.2608695652173913,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 133,
+    "rougeL_fmeasure": 0.3552123552123552,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 134,
+    "rougeL_fmeasure": 0.329608938547486,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 135,
+    "rougeL_fmeasure": 0.3601895734597156,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 136,
+    "rougeL_fmeasure": 0.37068965517241376,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 137,
+    "rougeL_fmeasure": 0.34285714285714286,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 138,
+    "rougeL_fmeasure": 0.34931506849315064,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 139,
+    "rougeL_fmeasure": 0.38274932614555257,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 140,
+    "rougeL_fmeasure": 0.36885245901639346,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 141,
+    "rougeL_fmeasure": 0.27424749163879597,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 142,
+    "rougeL_fmeasure": 0.3761061946902655,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 143,
+    "rougeL_fmeasure": 0.4428571428571429,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 144,
+    "rougeL_fmeasure": 0.40816326530612246,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 145,
+    "rougeL_fmeasure": 0.5050505050505051,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 146,
+    "rougeL_fmeasure": 0.2992125984251969,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 147,
+    "rougeL_fmeasure": 0.3636363636363637,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 148,
+    "rougeL_fmeasure": 0.27129337539432175,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 149,
+    "rougeL_fmeasure": 0.2724014336917563,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 150,
+    "rougeL_fmeasure": 0.36507936507936506,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 151,
+    "rougeL_fmeasure": 0.39759036144578314,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 152,
+    "rougeL_fmeasure": 0.3512396694214876,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 153,
+    "rougeL_fmeasure": 0.31578947368421056,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 154,
+    "rougeL_fmeasure": 0.3523573200992556,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 155,
+    "rougeL_fmeasure": 0.3826530612244898,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 156,
+    "rougeL_fmeasure": 0.360655737704918,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 157,
+    "rougeL_fmeasure": 0.05405405405405406,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 158,
+    "rougeL_fmeasure": 0.3586206896551724,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 159,
+    "rougeL_fmeasure": 0.41498559077809805,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 160,
+    "rougeL_fmeasure": 0.362962962962963,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 161,
+    "rougeL_fmeasure": 0.28346456692913385,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 162,
+    "rougeL_fmeasure": 0.3445692883895131,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 163,
+    "rougeL_fmeasure": 0.36296296296296293,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 164,
+    "rougeL_fmeasure": 0.39024390243902435,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 165,
+    "rougeL_fmeasure": 0.375,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 166,
+    "rougeL_fmeasure": 0.3,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 167,
+    "rougeL_fmeasure": 0.3445867287543655,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 168,
+    "rougeL_fmeasure": 0.3782383419689119,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 169,
+    "rougeL_fmeasure": 0.38775510204081626,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 170,
+    "rougeL_fmeasure": 0.025974025974025972,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 171,
+    "rougeL_fmeasure": 0.3280423280423281,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 172,
+    "rougeL_fmeasure": 0.358974358974359,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 173,
+    "rougeL_fmeasure": 0.34010152284263956,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 174,
+    "rougeL_fmeasure": 0.3870967741935484,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 175,
+    "rougeL_fmeasure": 0.3669724770642202,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 176,
+    "rougeL_fmeasure": 0.3091787439613527,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 177,
+    "rougeL_fmeasure": 0.3350785340314136,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 178,
+    "rougeL_fmeasure": 0.3162393162393162,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 179,
+    "rougeL_fmeasure": 0.36111111111111116,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 180,
+    "rougeL_fmeasure": 0.29629629629629634,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 181,
+    "rougeL_fmeasure": 0.3555555555555555,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 182,
+    "rougeL_fmeasure": 0.18508997429305912,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 183,
+    "rougeL_fmeasure": 0.32432432432432434,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 184,
+    "rougeL_fmeasure": 0.3713733075435203,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 185,
+    "rougeL_fmeasure": 0.35714285714285715,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 186,
+    "rougeL_fmeasure": 0.3884297520661157,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 187,
+    "rougeL_fmeasure": 0.36363636363636365,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 188,
+    "rougeL_fmeasure": 0.36363636363636365,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 189,
+    "rougeL_fmeasure": 0.3436123348017621,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 190,
+    "rougeL_fmeasure": 0.3431635388739947,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 191,
+    "rougeL_fmeasure": 0.3160919540229885,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 192,
+    "rougeL_fmeasure": 0.421875,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 193,
+    "rougeL_fmeasure": 0.29118773946360155,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 194,
+    "rougeL_fmeasure": 0.33333333333333337,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 195,
+    "rougeL_fmeasure": 0.35374149659863946,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 196,
+    "rougeL_fmeasure": 0.3185840707964602,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 197,
+    "rougeL_fmeasure": 0.3055555555555555,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 198,
+    "rougeL_fmeasure": 0.33245382585751976,
+    "cosine_similarity": 0.0
+  },
+  {
+    "id": 199,
+    "rougeL_fmeasure": 0.23011844331641285,
+    "cosine_similarity": 0.0
+  }
+]
