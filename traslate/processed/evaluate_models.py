@@ -90,11 +90,10 @@ class RotatingGroqClient:
                 else:
                     raise e
                     
-        # 2. Nếu tất cả các key đều lỗi hoặc hết hạn ngạch đối với model chính,
-        # chúng ta sẽ chuyển sang dùng model dự phòng (llama-3.1-8b-instant) có hạn ngạch cực lớn
-        fallback_model = "llama-3.1-8b-instant"
-        print(f"\n[FALLBACK MODEL] Hết hạn mức với model chính {model}. Chuyển sang model dự phòng {fallback_model}...")
-        
+        # 2. Nếu model chính (Llama 4 Scout) hết hạn ngạch trên toàn bộ key,
+        # chúng ta sẽ chuyển sang model dự phòng 1: llama-3.3-70b-versatile
+        fallback_model_1 = "llama-3.3-70b-versatile"
+        print(f"\n[FALLBACK 1] Chuyển sang model dự phòng 1: {fallback_model_1}...")
         for _ in range(attempts):
             key = self.keys[self.current_idx]
             client_idx = self.current_idx
@@ -106,7 +105,7 @@ class RotatingGroqClient:
                     base_url="https://api.groq.com/openai/v1"
                 )
                 response = client.chat.completions.create(
-                    model=fallback_model,
+                    model=fallback_model_1,
                     messages=messages,
                     temperature=temperature,
                     max_tokens=max_tokens
@@ -115,20 +114,48 @@ class RotatingGroqClient:
             except Exception as e:
                 err_msg = str(e)
                 if "429" in err_msg or "quota" in err_msg.lower() or "limit" in err_msg.lower() or "rate_limit" in err_msg.lower():
-                    print(f"\n[SWAP KEY fallback] Groq Key #{client_idx + 1} bị giới hạn với model dự phòng {fallback_model}. Đang chuyển key...")
+                    print(f"\n[SWAP KEY fallback 1] Groq Key #{client_idx + 1} bị giới hạn với model {fallback_model_1}. Đang chuyển key...")
+                    continue
+                else:
+                    raise e
+
+        # 3. Nếu cả Llama 4 Scout và Llama 3.3 70B đều hết hạn ngạch,
+        # chúng ta sẽ chuyển sang model dự phòng 2: llama-3.1-8b-instant
+        fallback_model_2 = "llama-3.1-8b-instant"
+        print(f"\n[FALLBACK 2] Chuyển sang model dự phòng 2: {fallback_model_2}...")
+        for _ in range(attempts):
+            key = self.keys[self.current_idx]
+            client_idx = self.current_idx
+            self.current_idx = (self.current_idx + 1) % len(self.keys)
+            
+            try:
+                client = OpenAI(
+                    api_key=key,
+                    base_url="https://api.groq.com/openai/v1"
+                )
+                response = client.chat.completions.create(
+                    model=fallback_model_2,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens
+                )
+                return response
+            except Exception as e:
+                err_msg = str(e)
+                if "429" in err_msg or "quota" in err_msg.lower() or "limit" in err_msg.lower() or "rate_limit" in err_msg.lower():
+                    print(f"\n[SWAP KEY fallback 2] Groq Key #{client_idx + 1} bị giới hạn với model {fallback_model_2}. Đang chuyển key...")
                     continue
                 else:
                     raise e
                     
-        # 3. Nếu cả model dự phòng cũng hết hạn mức (rất hiếm khi xảy ra), ta mới chịu thua và sleep rồi thử lại
-        print("\nTất cả các key và model đều quá hạn mức. Chờ 15 giây...")
-        time.sleep(15)
+        # 4. Nếu toàn bộ model đều quá hạn mức, tạm thời nghỉ 20 giây và thử lại bằng Llama 70B
+        print("\nTất cả các key và model đều quá hạn mức. Chờ 20 giây...")
+        time.sleep(20)
         
-        # Thử lại lần cuối bằng key đầu tiên với model dự phòng
         key = self.keys[0]
         client = OpenAI(api_key=key, base_url="https://api.groq.com/openai/v1")
         return client.chat.completions.create(
-            model=fallback_model,
+            model=fallback_model_1,
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens
