@@ -318,7 +318,7 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
                 model=JUDGE_MODEL,
                 messages=[{"role": "user", "content": judge_prompt}],
                 temperature=0.0,
-                max_tokens=300
+                max_tokens=1024
             )
             response_text = response.choices[0].message.content
         else:
