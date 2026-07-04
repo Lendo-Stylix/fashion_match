@@ -120,8 +120,8 @@ class RotatingGroqClient:
                     raise e
 
         # 3. Nếu cả Llama 4 Scout và Llama 3.3 70B đều hết hạn ngạch,
-        # chúng ta sẽ chuyển sang model dự phòng 2: llama-3.1-8b-instant
-        fallback_model_2 = "llama-3.1-8b-instant"
+        # chúng ta sẽ chuyển sang model dự phòng 2: qwen/qwen3-32b (Qwen có quota hoàn toàn riêng biệt)
+        fallback_model_2 = "qwen/qwen3-32b"
         print(f"\n[FALLBACK 2] Chuyển sang model dự phòng 2: {fallback_model_2}...")
         for _ in range(attempts):
             key = self.keys[self.current_idx]
@@ -147,15 +147,44 @@ class RotatingGroqClient:
                     continue
                 else:
                     raise e
+
+        # 4. Nếu toàn bộ model trên đều hết hạn ngạch,
+        # chúng ta sẽ chuyển sang model dự phòng 3: llama-3.1-8b-instant
+        fallback_model_3 = "llama-3.1-8b-instant"
+        print(f"\n[FALLBACK 3] Chuyển sang model dự phòng 3: {fallback_model_3}...")
+        for _ in range(attempts):
+            key = self.keys[self.current_idx]
+            client_idx = self.current_idx
+            self.current_idx = (self.current_idx + 1) % len(self.keys)
+            
+            try:
+                client = OpenAI(
+                    api_key=key,
+                    base_url="https://api.groq.com/openai/v1"
+                )
+                response = client.chat.completions.create(
+                    model=fallback_model_3,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens
+                )
+                return response
+            except Exception as e:
+                err_msg = str(e)
+                if "429" in err_msg or "quota" in err_msg.lower() or "limit" in err_msg.lower() or "rate_limit" in err_msg.lower():
+                    print(f"\n[SWAP KEY fallback 3] Groq Key #{client_idx + 1} bị giới hạn với model {fallback_model_3}. Đang chuyển key...")
+                    continue
+                else:
+                    raise e
                     
-        # 4. Nếu toàn bộ model đều quá hạn mức, tạm thời nghỉ 20 giây và thử lại bằng Llama 70B
-        print("\nTất cả các key và model đều quá hạn mức. Chờ 20 giây...")
-        time.sleep(20)
+        # 5. Nếu toàn bộ model đều quá hạn mức, tạm thời nghỉ 25 giây và thử lại bằng Qwen
+        print("\nTất cả các key và model đều quá hạn mức. Chờ 25 giây...")
+        time.sleep(25)
         
         key = self.keys[0]
         client = OpenAI(api_key=key, base_url="https://api.groq.com/openai/v1")
         return client.chat.completions.create(
-            model=fallback_model_1,
+            model=fallback_model_2,
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens
@@ -302,8 +331,11 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
             
         # Loại bỏ tag <think>...</think> nếu có (đặc biệt đối với các model suy nghĩ của Qwen/DeepSeek)
         clean_text = response_text
-        if "<think>" in clean_text and "</think>" in clean_text:
-            clean_text = re.sub(r'<think>.*?</think>', '', clean_text, flags=re.DOTALL)
+        if "<think>" in clean_text:
+            if "</think>" in clean_text:
+                clean_text = re.sub(r'<think>.*?</think>', '', clean_text, flags=re.DOTALL)
+            else:
+                clean_text = re.sub(r'<think>.*', '', clean_text, flags=re.DOTALL)
             
         score_match = re.search(r'DIEM:\s*(\d+)', clean_text, re.IGNORECASE)
         reason_match = re.search(r'LY_DO:\s*(.*)', clean_text, re.DOTALL | re.IGNORECASE)
