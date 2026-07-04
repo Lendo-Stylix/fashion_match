@@ -23,7 +23,6 @@ JUDGE_PROVIDER = "groq"
 # 2. Chọn model muốn dùng làm Judge tương ứng với nhà cung cấp:
 # - Gemini: "gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"
 # - Anthropic: "claude-3-5-haiku-20241022", "claude-3-5-sonnet-20241022"
-# - OpenAI: "gpt-4o-mini", "gpt-4o"
 # - Groq: "llama-3.3-70b-versatile", "llama-3.1-8b-instant"
 JUDGE_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
@@ -31,7 +30,8 @@ LIMIT_SAMPLES = None
 
 # 4. Thời gian nghỉ giữa các request (giây) để tránh bị dính Rate Limit (429)
 # Với Groq Free Tier, giới hạn tối đa là 30 request/phút. Đặt 2.0 giây để đảm bảo luôn ở dưới giới hạn này.
-SLEEP_DELAY = 2.0
+# Nhờ cơ chế tự động xoay key, chúng ta có thể giảm thời gian chờ xuống 1.5 giây để chạy nhanh hơn
+SLEEP_DELAY = 1.5
 
 # 5. Chế độ mô phỏng (True để chạy thử không gọi API thực tế)
 MOCK_MODE = False
@@ -46,11 +46,57 @@ anthropic_client = anthropic.Anthropic()
 # Khởi tạo OpenAI Client
 openai_client = OpenAI()
 
-# Khởi tạo Groq Client (Sử dụng OpenAI SDK tương thích)
-groq_client = OpenAI(
-    api_key=os.environ.get("GROQ_API_KEY"),
-    base_url="https://api.groq.com/openai/v1"
-)
+# Cấu hình xoay vòng Groq API key để tránh bị Rate Limit / Quá hạn mức ngày (TPD)
+groq_keys = [
+    os.environ.get("GROQ_API_KEY"),
+    "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"
+]
+groq_keys = [k.strip() for k in groq_keys if k and k.strip()]
+
+class RotatingGroqClient:
+    def __init__(self, keys):
+        self.keys = keys
+        self.current_idx = 0
+        
+    def create_chat_completion(self, model, messages, temperature=0.0, max_tokens=300):
+        if not self.keys:
+            raise ValueError("Không tìm thấy GROQ_API_KEY trong file .env hoặc danh sách dự phòng")
+            
+        attempts = len(self.keys)
+        for try_num in range(5):  # Thử tối đa 5 lần quay vòng hết các key
+            for _ in range(attempts):
+                key = self.keys[self.current_idx]
+                client_idx = self.current_idx
+                # Chuyển sang key tiếp theo cho cuộc gọi sau (Round-robin)
+                self.current_idx = (self.current_idx + 1) % len(self.keys)
+                
+                try:
+                    client = OpenAI(
+                        api_key=key,
+                        base_url="https://api.groq.com/openai/v1"
+                    )
+                    response = client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        temperature=temperature,
+                        max_tokens=max_tokens
+                    )
+                    return response
+                except Exception as e:
+                    err_msg = str(e)
+                    if "429" in err_msg or "quota" in err_msg.lower() or "limit" in err_msg.lower() or "rate_limit" in err_msg.lower():
+                        print(f"\n[SWAP KEY] Groq Key #{client_idx + 1} bị giới hạn tần suất/hạn mức (429). Đang chuyển sang key tiếp theo...")
+                    else:
+                        print(f"Lỗi với Groq Key #{client_idx + 1}: {e}. Đang chuyển sang key tiếp theo...")
+            
+            # Nếu tất cả các key đều bị lỗi trong vòng này, chờ rồi thử lại
+            sleep_time = (try_num + 1) * 10
+            print(f"Tất cả các Groq API key đều bận hoặc hết hạn mức. Chờ {sleep_time} giây trước khi thử lại...")
+            time.sleep(sleep_time)
+            
+        raise RuntimeError("Tất cả các Groq API key đều lỗi hoặc quá hạn mức.")
+
+groq_client = RotatingGroqClient(groq_keys)
 
 # Cấu hình xoay vòng Gemini API key để tránh bị Rate Limit / Quá hạn mức
 gemini_keys = os.environ.get("GEMINI_API_KEY", "").split(",")
@@ -174,7 +220,7 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
             )
             response_text = response.choices[0].message.content
         elif JUDGE_PROVIDER == "groq":
-            response = groq_client.chat.completions.create(
+            response = groq_client.create_chat_completion(
                 model=JUDGE_MODEL,
                 messages=[{"role": "user", "content": judge_prompt}],
                 temperature=0.0,
