@@ -63,38 +63,76 @@ class RotatingGroqClient:
             raise ValueError("Không tìm thấy GROQ_API_KEY trong file .env hoặc danh sách dự phòng")
             
         attempts = len(self.keys)
-        for try_num in range(5):  # Thử tối đa 5 lần quay vòng hết các key
-            for _ in range(attempts):
-                key = self.keys[self.current_idx]
-                client_idx = self.current_idx
-                # Chuyển sang key tiếp theo cho cuộc gọi sau (Round-robin)
-                self.current_idx = (self.current_idx + 1) % len(self.keys)
-                
-                try:
-                    client = OpenAI(
-                        api_key=key,
-                        base_url="https://api.groq.com/openai/v1"
-                    )
-                    response = client.chat.completions.create(
-                        model=model,
-                        messages=messages,
-                        temperature=temperature,
-                        max_tokens=max_tokens
-                    )
-                    return response
-                except Exception as e:
-                    err_msg = str(e)
-                    if "429" in err_msg or "quota" in err_msg.lower() or "limit" in err_msg.lower() or "rate_limit" in err_msg.lower():
-                        print(f"\n[SWAP KEY] Groq Key #{client_idx + 1} bị giới hạn tần suất/hạn mức (429). Đang chuyển sang key tiếp theo...")
-                    else:
-                        print(f"Lỗi với Groq Key #{client_idx + 1}: {e}. Đang chuyển sang key tiếp theo...")
+        
+        # 1. Thử gọi model chính trước (meta-llama/llama-4-scout-17b-16e-instruct)
+        for _ in range(attempts):
+            key = self.keys[self.current_idx]
+            client_idx = self.current_idx
+            self.current_idx = (self.current_idx + 1) % len(self.keys)
             
-            # Nếu tất cả các key đều bị lỗi trong vòng này, chờ rồi thử lại
-            sleep_time = (try_num + 1) * 10
-            print(f"Tất cả các Groq API key đều bận hoặc hết hạn mức. Chờ {sleep_time} giây trước khi thử lại...")
-            time.sleep(sleep_time)
+            try:
+                client = OpenAI(
+                    api_key=key,
+                    base_url="https://api.groq.com/openai/v1"
+                )
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens
+                )
+                return response
+            except Exception as e:
+                err_msg = str(e)
+                if "429" in err_msg or "quota" in err_msg.lower() or "limit" in err_msg.lower() or "rate_limit" in err_msg.lower():
+                    print(f"\n[SWAP KEY] Groq Key #{client_idx + 1} bị giới hạn tần suất/hạn mức (429) cho model {model}. Đang chuyển key...")
+                    continue
+                else:
+                    raise e
+                    
+        # 2. Nếu tất cả các key đều lỗi hoặc hết hạn ngạch đối với model chính,
+        # chúng ta sẽ chuyển sang dùng model dự phòng (llama-3.1-8b-instant) có hạn ngạch cực lớn
+        fallback_model = "llama-3.1-8b-instant"
+        print(f"\n[FALLBACK MODEL] Hết hạn mức với model chính {model}. Chuyển sang model dự phòng {fallback_model}...")
+        
+        for _ in range(attempts):
+            key = self.keys[self.current_idx]
+            client_idx = self.current_idx
+            self.current_idx = (self.current_idx + 1) % len(self.keys)
             
-        raise RuntimeError("Tất cả các Groq API key đều lỗi hoặc quá hạn mức.")
+            try:
+                client = OpenAI(
+                    api_key=key,
+                    base_url="https://api.groq.com/openai/v1"
+                )
+                response = client.chat.completions.create(
+                    model=fallback_model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens
+                )
+                return response
+            except Exception as e:
+                err_msg = str(e)
+                if "429" in err_msg or "quota" in err_msg.lower() or "limit" in err_msg.lower() or "rate_limit" in err_msg.lower():
+                    print(f"\n[SWAP KEY fallback] Groq Key #{client_idx + 1} bị giới hạn với model dự phòng {fallback_model}. Đang chuyển key...")
+                    continue
+                else:
+                    raise e
+                    
+        # 3. Nếu cả model dự phòng cũng hết hạn mức (rất hiếm khi xảy ra), ta mới chịu thua và sleep rồi thử lại
+        print("\nTất cả các key và model đều quá hạn mức. Chờ 15 giây...")
+        time.sleep(15)
+        
+        # Thử lại lần cuối bằng key đầu tiên với model dự phòng
+        key = self.keys[0]
+        client = OpenAI(api_key=key, base_url="https://api.groq.com/openai/v1")
+        return client.chat.completions.create(
+            model=fallback_model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens
+        )
 
 groq_client = RotatingGroqClient(groq_keys)
 
