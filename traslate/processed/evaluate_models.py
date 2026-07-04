@@ -102,12 +102,14 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
         # Chế độ mô phỏng điểm số (từ 3 đến 5) dựa trên hash nội dung để kiểm tra giao diện
         import random
         random.seed(abs(hash(prompt)))
-        return random.randint(3, 5)
+        return random.randint(3, 5), "Đây là kết quả đánh giá mô phỏng ở chế độ MOCK_MODE."
 
     judge_prompt = f"""
-    Bạn là một Giám khảo thời trang khách quan. Hãy chấm điểm câu trả lời của AI từ 1 đến 5.
-    Chỉ trả về 1 CÒN SỐ DUY NHẤT từ 1 đến 5. Không giải thích hay nói gì thêm.
-    
+    Bạn là một Giám khảo thời trang khách quan. Hãy chấm điểm câu trả lời của AI từ 1 đến 5 và giải thích lý do ngắn gọn bằng tiếng Việt.
+    Hãy trả về kết quả theo định dạng chính xác như sau (thay thế phần nằm trong ngoặc vuông bằng kết quả của bạn):
+    DIEM: [Một con số nguyên duy nhất từ 1 đến 5]
+    LY_DO: [Giải thích ngắn gọn lý do chấm điểm bằng tiếng Việt, khoảng 1-2 câu]
+
     Yêu cầu của khách hàng: {prompt}
     
     Câu trả lời MẪU (Chuẩn): {reference_text}
@@ -116,7 +118,7 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
     
     Tiêu chí chấm (1-5):
     5 điểm: Hoàn hảo, bám sát các ý chính của câu trả lời mẫu, văn phong lịch sự, tư vấn chính xác. Chấp nhận và khuyến khích câu trả lời chi tiết, mở rộng hơn câu mẫu nếu đúng kiến thức thời trang.
-    4 điểm: Trả lời đúng trọng tâm nhưng văn phong quá dài dòng lan man hoặc thiếu một chút tinh tế.
+    4 điểm: Trả lời đúng trọng tâm nhưng văn phong chưa được tinh tế hoặc thiếu một chút sự sâu sắc.
     3 điểm: Trả lời được nhưng thiếu ý quan trọng hoặc có một số sai sót nhỏ so với mẫu.
     2 điểm: Trả lời sai kiến thức thời trang cơ bản hoặc bị ảo giác (hallucination) một phần.
     1 điểm: Hoàn toàn lạc đề, sinh ra text rác, bịa đặt, hoặc từ chối trả lời sai cách.
@@ -149,7 +151,7 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
                 contents=judge_prompt,
                 config=types.GenerateContentConfig(
                     temperature=0.0,
-                    max_output_tokens=100,
+                    max_output_tokens=300,
                     safety_settings=safety_settings
                 )
             )
@@ -157,9 +159,9 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
         elif JUDGE_PROVIDER == "anthropic":
             message = anthropic_client.messages.create(
                 model=JUDGE_MODEL,
-                max_tokens=100,
+                max_tokens=300,
                 temperature=0.0,
-                system="Bạn là một Giám khảo thời trang khó tính. Hãy trả lời theo yêu cầu một cách ngắn gọn nhất.",
+                system="Bạn là một Giám khảo thời trang khách quan, hãy chấm điểm và giải thích ngắn gọn.",
                 messages=[{"role": "user", "content": judge_prompt}]
             )
             response_text = message.content[0].text
@@ -168,7 +170,7 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
                 model=JUDGE_MODEL,
                 messages=[{"role": "user", "content": judge_prompt}],
                 temperature=0.0,
-                max_tokens=100
+                max_tokens=300
             )
             response_text = response.choices[0].message.content
         elif JUDGE_PROVIDER == "groq":
@@ -176,7 +178,7 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
                 model=JUDGE_MODEL,
                 messages=[{"role": "user", "content": judge_prompt}],
                 temperature=0.0,
-                max_tokens=100
+                max_tokens=300
             )
             response_text = response.choices[0].message.content
         else:
@@ -185,24 +187,30 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
         # Trích xuất số điểm từ câu trả lời của Judge
         if response_text is None:
             print("Cảnh báo: Câu trả lời bị chặn bởi bộ lọc an toàn (Safety Filter) hoặc không có nội dung.")
-            return 1
+            return 1, "Bị chặn bởi bộ lọc an toàn."
             
         # Loại bỏ tag <think>...</think> nếu có (đặc biệt đối với các model suy nghĩ của Qwen/DeepSeek)
         clean_text = response_text
         if "<think>" in clean_text and "</think>" in clean_text:
             clean_text = re.sub(r'<think>.*?</think>', '', clean_text, flags=re.DOTALL)
             
-        score_match = re.search(r'\d+', clean_text)
+        score_match = re.search(r'DIEM:\s*(\d+)', clean_text, re.IGNORECASE)
+        reason_match = re.search(r'LY_DO:\s*(.*)', clean_text, re.DOTALL | re.IGNORECASE)
+        
         if not score_match:
-            print(f"Cảnh báo: Không tìm thấy điểm số trong kết quả sạch: {clean_text} (Gốc: {response_text})")
-            return 1
+            # Fallback nếu không đúng format
+            num_match = re.search(r'\d+', clean_text)
+            score = int(num_match.group()) if num_match else 1
+            reason = clean_text.strip()
+        else:
+            score = int(score_match.group(1))
+            reason = reason_match.group(1).strip() if reason_match else ""
             
-        score = int(score_match.group())
         # Đảm bảo điểm nằm trong khoảng 1-5
-        return max(1, min(5, score))
+        return max(1, min(5, score)), reason
     except Exception as e:
         print(f"❌ Lỗi gọi API ({JUDGE_PROVIDER}): {e}")
-        return None # Trả về None để báo hiệu lỗi API hệ thống (hết token, lỗi key, mất mạng)
+        return None, None # Trả về None để báo hiệu lỗi API hệ thống (hết token, lỗi key, mất mạng)
 
 def evaluate_model_file(filepath, limit=None):
     """Chạy đánh giá cho 1 file kết quả, hỗ trợ resume từ checkpoint."""
@@ -259,7 +267,7 @@ def evaluate_model_file(filepath, limit=None):
         if not MOCK_MODE:
             time.sleep(SLEEP_DELAY)
         
-        judge_score = llm_as_a_judge(prompt, gen_text, ref_text)
+        judge_score, judge_reason = llm_as_a_judge(prompt, gen_text, ref_text)
         if judge_score is None:
             print(f"\n❌ Quá trình đánh giá bị dừng ở mẫu thứ {completed_samples + 1} do lỗi API hệ thống (hết token, lỗi key hoặc mất mạng).")
             print("Tiến trình đã được lưu an toàn đến mẫu trước đó. Điểm của mẫu lỗi hiện tại CHƯA bị lưu đè.")
@@ -268,6 +276,7 @@ def evaluate_model_file(filepath, limit=None):
             sys.exit(1)
             
         row['judge_score'] = judge_score
+        row['judge_reasoning'] = judge_reason
         total_judge_score += judge_score
         completed_samples += 1
         
