@@ -255,6 +255,10 @@ def evaluate_model_file(filepath, limit=None):
         print(f"  -> Tiếp tục chạy: Đã chấm {completed_samples}/{total_samples} mẫu trước đó.")
 
     for i, row in enumerate(data):
+        # Đảm bảo có trường id trong mỗi hàng
+        if 'id' not in row:
+            row['id'] = i
+            
         # Bỏ qua nếu đã được chấm điểm
         if 'judge_score' in row:
             continue
