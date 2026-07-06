@@ -1,0 +1,1202 @@
+[
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi cần đi dự tiệc tối nay."
+      },
+      {
+        "role": "model",
+        "content": "Tiệc tối của bạn là tiệc trang trọng, thân mật hay sự kiện nghệ thuật? Bạn ưu tiên phong cách trang nhã, cá tính hay hiện đại?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Giúp tôi tìm bộ đồ mặc đi biển."
+      },
+      {
+        "role": "model",
+        "content": "Bạn đi biển vào mùa hè hay mùa đông? Kích thước cơ thể bạn thuộc nhóm nhỏ, trung bình hay lớn?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mặc gì đi phỏng vấn mà vẫn trẻ trung?"
+      },
+      {
+        "role": "model",
+        "content": "Nơi làm việc bạn ứng tuyển có văn hóa trang trọng, năng động hay sáng tạo? Bạn có ngân sách khoảng bao nhiêu?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi cần đi dự lễ thành hôn."
+      },
+      {
+        "role": "model",
+        "content": "Lễ thành hôn này tổ chức ở nhà hàng, ngoài trời hay ở phòng trà? Bạn thích đầm dài, đầm ngắn hay trang phục khác?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Có thể mặc áo phông đi tiệc cưới không?"
+      },
+      {
+        "role": "model",
+        "content": "Tiệc cưới của bạn là phong cách sang trọng, dân dã hay tiệc bãi biển? Bạn có thể chọn áo phông cao cổ, cộc tay hay dài tay?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi muốn mặc áo sơ mi đi bar."
+      },
+      {
+        "role": "model",
+        "content": "Bar của bạn có không gian tối giản, sôi động hay phong cách retro? Bạn ưu tiên sơ mi cotton, lụa hay vải dệt kim?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Làm sao phối quần ống rộng đi làm?"
+      },
+      {
+        "role": "model",
+        "content": "Công ty bạn có quy định trang phục nghiêm ngặt, thanh lịch hay năng động? Bạn thích quần ống rộng màu tối, pastel hay sắc nổi?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Giúp tôi mặc đẹp đi dã ngoại cuối tuần."
+      },
+      {
+        "role": "model",
+        "content": "Dã ngoại cuối tuần của bạn tập trung vào phong cách thoải mái, thời trang hay tiện dụng? Bạn cần giày thể thao, boot hay sandal?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi cần mặc đồ trang trọng đi tiệc hội bạn."
+      },
+      {
+        "role": "model",
+        "content": "Tiệc hội bạn là tiệc thân mật, tiệc sinh nhật hay sự kiện trang trọng? Bạn thích phong cách trang nhã, cá tính hay nhẹ nhàng?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Có nên mặc váy ngắn đi leo núi không?"
+      },
+      {
+        "role": "model",
+        "content": "Váy ngắn không phù hợp để leo núi vì nguy cơ bị cản trở hoặc lạnh. Thay vào đó, bạn có thể chọn quần short hoặc quần ống rộng, kết hợp áo thun thoải mái."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi muốn mặc đầm đi trượt tuyết."
+      },
+      {
+        "role": "model",
+        "content": "Đầm khó giữ ấm ở nhiệt độ dưới 0 độ C. Bạn nên chọn quần áo 3 lớp (lớp cách nhiệt, lớp giữ ấm, lớp chống nước) và kết hợp với áo khoác chống lạnh."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Phối áo sơ mi đi chơi nhạc sống."
+      },
+      {
+        "role": "model",
+        "content": "Nếu nhạc sống ở không gian sôi động, bạn nên chọn áo sơ mi cộc tay, chất liệu thun thoáng mát. Nếu ở không gian sang trọng, sơ mi dài tay, cổ đức sẽ phù hợp hơn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mặc gì đi tiệc Halloween mà vẫn lịch sự?"
+      },
+      {
+        "role": "model",
+        "content": "Tiệc Halloween thường yêu cầu trang phục hóa trang. Bạn có thể chọn trang phục ấn tượng nhưng vẫn lịch sự như váy họa tiết ma ám, đầm cổ điển với họa tiết bí ngô."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi cần đi đám giỗ."
+      },
+      {
+        "role": "model",
+        "content": "Đám giỗ của bạn yêu cầu trang phục trang trọng, tối màu hay trang phục truyền thống? Bạn có thể chọn đầm đơn giản, áo dài hoặc sơ mi kết hợp quần âu."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi muốn mặc quần ống loe đi dự tiệc."
+      },
+      {
+        "role": "model",
+        "content": "Quần ống loe phù hợp với tiệc thân mật hoặc sự kiện nhẹ nhàng. Với tiệc trang trọng, bạn nên chọn quần ống suông hoặc ống đứng để trông lịch sự hơn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Phối đồ đi dã ngoại mùa xuân."
+      },
+      {
+        "role": "model",
+        "content": "Mùa xuân ẩm ương nên chọn vải thoáng, màu pastel hoặc trắng. Bạn có thể kết hợp áo len mỏng, áo thun và quần ống rộng hoặc váy ngắn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi cần mặc đồ đi làm nhưng vẫn trẻ trung."
+      },
+      {
+        "role": "model",
+        "content": "Công ty bạn có phong cách công sở hiện đại, cổ điển hay tự do? Bạn có thể chọn blazer thoải mái, áo sơ mi cách điệu hoặc chân váy ngắn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mình cần đi dự tiệc tối nhưng chưa biết mặc gì."
+      },
+      {
+        "role": "model",
+        "content": "Bạn tham dự tiệc ở nhà hàng sang trọng hay ngoài trời? Dù muốn mặc theo phong cách thanh lịch hay nổi bật? Có thể chia sẻ thêm về sở thích màu sắc hoặc ngân sách không?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Làm sao mặc áo phông và quần đùi đi làm văn phòng?"
+      },
+      {
+        "role": "model",
+        "content": "Kết hợp áo phông với quần đùi trong môi trường công sở là lựa chọn không phù hợp vì thiếu trang trọng. Thay vào đó, bạn có thể chọn áo sơ mi dáng suông hoặc blazer khoác ngoài quần âu."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Viết một bài luận phân tích về lịch sử thời trang của thập niên 1980."
+      },
+      {
+        "role": "model",
+        "content": "Xin lỗi, mình chỉ hỗ trợ tư vấn trang phục và phong cách cá nhân. Bạn có câu hỏi liên quan đến cách phối đồ hoặc chọn trang phục không?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mua quần đi làm trong ngân sách 500k."
+      },
+      {
+        "role": "model",
+        "content": "Bạn ưu tiên chất liệu vải như kaki hoặc cotton? Dù muốn quần dáng ôm, rộng hay ống loe? Gợi ý thêm kiểu dáng cần phù hợp với hình dáng cơ thể của bạn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mặc áo len dày đi biển giữa mùa hè có ổn không?"
+      },
+      {
+        "role": "model",
+        "content": "Áo len dày trong thời tiết nóng ẩm có thể gây khó chịu và bí thở. Thay vào đó, nên chọn áo thun cotton thoáng khí hoặc áo croptop kết hợp với quần short."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Phối đồ đi dã ngoại nhưng toàn dùng phụ kiện bằng da thật đắt tiền."
+      },
+      {
+        "role": "model",
+        "content": "Phụ kiện da thật không phù hợp cho hoạt động ngoài trời vì dễ bị trầy xước. Thay vào đó, bạn nên chọn giày thể thao và balo kháng nước để tiện di chuyển."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mình cần một bộ đồ để đi phỏng vấn."
+      },
+      {
+        "role": "model",
+        "content": "Bạn ứng tuyển vào ngành nghề nào? Dù muốn phong cách nghiêm túc hay sáng tạo? Có thể chia sẻ thêm về hình dáng cơ thể để gợi ý size quần áo phù hợp không?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mặc đầm xuyên thấu đi tiệc cưới ở vùng núi lạnh."
+      },
+      {
+        "role": "model",
+        "content": "Đầm xuyên thấu trong thời tiết lạnh dưới 15°C có thể gây cảm lạnh. Thay vào đó, nên kết hợp đầm lụa dài tay hoặc áo khoác dạ để giữ ấm."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Giải thích cách phối đồ bằng công thức toán học."
+      },
+      {
+        "role": "model",
+        "content": "Xin lỗi, mình không thể giải thích theo phương pháp toán học. Bạn muốn hỏi về cách cân bằng màu sắc hoặc kết hợp các món đồ cụ thể không?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mua áo sơ mi cho người gầy muốn che khuyết điểm."
+      },
+      {
+        "role": "model",
+        "content": "Bạn muốn sơ mi dáng rộng, có túi giả hay cổ bẻ vuông để tạo cảm giác đầy đặn? Nên tránh chất liệu quá cứng hoặc họa tiết lớn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mặc áo khoác dạ đi bơi có được không?"
+      },
+      {
+        "role": "model",
+        "content": "Áo khoác dạ không phù hợp khi tiếp xúc với nước vì dễ làm hỏng vải và gây nguy hiểm. Thay vào đó, nên chọn bộ đồ bơi liền thân hoặc áo phao."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tư vấn trang phục cho lễ hội hóa trang Halloween."
+      },
+      {
+        "role": "model",
+        "content": "Bạn muốn hóa trang theo phong cách cổ điển, hoạt hình hay độc đáo? Có thể chia sẻ thêm về sở thích màu sắc hoặc ngân sách không?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Viết kịch bản quảng cáo sản phẩm thời trang."
+      },
+      {
+        "role": "model",
+        "content": "Mình chỉ hỗ trợ tư vấn cá nhân, không viết kịch bản quảng cáo. Bạn cần hỏi về cách phối đồ hay chọn trang phục phù hợp không?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mặc quần jeans rách đi tiệc cưới sang trọng."
+      },
+      {
+        "role": "model",
+        "content": "Trang phục jeans rách không phù hợp với không gian tiệc cưới trang trọng. Thay vào đó, nên chọn váy dài hoặc đầm đuôi cá bằng vải lụa."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mặc giày cao gót 15cm đi leo núi."
+      },
+      {
+        "role": "model",
+        "content": "Giày cao gót không phù hợp cho địa hình gồ ghề, dễ gây trơn ngã. Thay vào đó, nên chọn giày thể thao đế cao su chống trượt."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tư vấn phong cách mix-match vintage với hiện đại."
+      },
+      {
+        "role": "model",
+        "content": "Bạn muốn nhấn mạnh vào món đồ cụ thể nào? Có thể chia sẻ thêm về sở thích màu sắc hoặc dịp sử dụng để mình gợi ý chi tiết hơn không?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Làm sao mặc áo sơ mi họa tiết caro mà không bị lỗi mốt?"
+      },
+      {
+        "role": "model",
+        "content": "Bạn nên chọn họa tiết nhỏ, tone màu trung tính và kết hợp với quần âu tối màu. Tránh mix cùng phụ kiện quá nổi bật để giữ sự thanh lịch."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mặc áo lông vũ đi đốt lửa trại ngoài trời."
+      },
+      {
+        "role": "model",
+        "content": "Áo lông vũ có thể gây khó chịu khi tiếp xúc với lửa hoặc khói. Thay vào đó, nên chọn áo khoác dạ hoặc chất liệu dày dặn hơn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mình cần tìm một chiếc áo len mặc đi dạo phố."
+      },
+      {
+        "role": "model",
+        "content": "Bạn mong muốn áo len có cổ trơn hay cổ trang trí? Nhiệt độ ở thành phố bạn khoảng bao nhiêu độ C? Và bạn ưu tiên chất liệu len dày ấm hay len mỏng thoáng?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Phối đồ đi tiệc trắng đeo vòng tay vàng."
+      },
+      {
+        "role": "model",
+        "content": "Mẫu vòng bạn có dạng trơn, khắc họa, hay dây chuyền? Tiệc trắng có tổ chức trong nhà hay ngoài trời? Bạn cần gợi ý váy ngắn, váy dài, hay blazer trang trọng?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mặc quần short đi núi tuyết được không?"
+      },
+      {
+        "role": "model",
+        "content": "Mặc quần short trong môi trường tuyết có thể gây nguy hiểm do lạnh buốt và trơn trượt. Thay vào đó, hãy chọn quần lót giữ nhiệt, quần bò dày hoặc quần ấm có lớp cách nhiệt để đảm bảo an toàn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Giúp mình thiết kế áo sơ mi họa tiết caro."
+      },
+      {
+        "role": "model",
+        "content": "Bạn muốn áo sơ mi nam hay nữ? Kích thước caro to hay nhỏ? Và bạn dự định mặc đi làm, đi chơi, hay sự kiện đặc biệt?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Phối đồ đi bar bằng quần jeans và áo thun."
+      },
+      {
+        "role": "model",
+        "content": "Trang phục này quá thường ngày để phù hợp với không gian bar sôi động. Thay vào đó, hãy thử quần jeans rách kết hợp áo thun in hình cá tính và thêm bốt cao cổ để tăng cá tính."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mặc váy bút chì đi bơi."
+      },
+      {
+        "role": "model",
+        "content": "Váy bút chì không phù hợp khi tiếp xúc với nước và hóa chất bể bơi. Thay vào đó, nên chọn bộ đồ bơi hai mảnh hoặc váy bơi có lớp lót chống thấm để đảm bảo thoải mái và an toàn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Thiết kế áo khoác đi dã ngoại."
+      },
+      {
+        "role": "model",
+        "content": "Bạn đi dã ngoại ở khu vực có địa hình núi, rừng, hay bãi biển? Áo cần chống nước, chống bụi, hay có túi đựng tiện lợi?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi muốn mua giày cao gót đi tập yoga."
+      },
+      {
+        "role": "model",
+        "content": "Giày cao gót không phù hợp cho các bài tập yoga vì ảnh hưởng đến thăng bằng và an toàn khớp. Thay vào đó, nên chọn giày tập thể thao hoặc đi chân trần để linh hoạt di chuyển."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tư vấn áo sơ mi phối với quần âu."
+      },
+      {
+        "role": "model",
+        "content": "Bạn cần áo sơ mi tay dài hay tay ngắn? Màu sắc ưu tiên là trơn, kẻ sọc, hay họa tiết? Và bạn mặc trong môi trường công sở hay sự kiện trang trọng?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mặc váy hoa đi dự tiệc đen trắng."
+      },
+      {
+        "role": "model",
+        "content": "Váy hoa có thể xung đột với chủ đề đen trắng của tiệc. Thay vào đó, hãy chọn váy đơn sắc với điểm nhấn hoa nhỏ ở cổ tay hoặc cổ áo để phù hợp theme."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Làm sao để phối đồ đi tiệc trắng không bị \"bình thường\"?"
+      },
+      {
+        "role": "model",
+        "content": "Bạn nên chọn váy trắng có chi tiết ren, đính nơ, hoặc phối tay áo bồng. Kết hợp phụ kiện như túi clutch metallic và giày da để tăng điểm nhấn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hãy thiết kế giày cao gót cho người chân to."
+      },
+      {
+        "role": "model",
+        "content": "Bạn ưu tiên kiểu gót nhọn, gót bệt, hay gót vuông? Chất liệu nên chọn da mềm hoặc vải nhung để tạo cảm giác thoải mái và che khuyết điểm."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mặc quần 7/8 đi tuyết."
+      },
+      {
+        "role": "model",
+        "content": "Quần 7/8 không đủ ấm để chống lạnh tuyết. Thay vào đó, hãy chọn quần dài cổ điển, kết hợp tất ấm và giày đi ủng để bảo vệ chân."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi cần một chiếc áo khoác đi làm."
+      },
+      {
+        "role": "model",
+        "content": "Bạn làm việc trong môi trường công sở hay tự do? Áo khoác blazer, áo khoác len, hay áo khoác dạ? Màu sắc ưu tiên là trung tính hay pastel?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Cần mặc gì đi dạo phố ngày lạnh?"
+      },
+      {
+        "role": "model",
+        "content": "Bạn thường đi dạo phố vào buổi sáng hay tối? Ưa thích phong cách năng động hay nhẹ nhàng? Chiều cao và vóc dáng của bạn có ảnh hưởng đến lựa chọn trang phục không?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Phối đồ đi tiệc cuối năm."
+      },
+      {
+        "role": "model",
+        "content": "Tiệc cuối năm của công ty thường trang trọng hay không? Bạn cần trang phục nam/nữ? Màu sắc yêu thích hoặc muốn tránh là gì?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mặc gì đi bơi mùa đông?"
+      },
+      {
+        "role": "model",
+        "content": "Đi bơi mùa đông rất nguy hiểm với sức khỏe. Thay vào đó, bạn có thể chọn trang phục ấm áp như áo khoác phao, quần dày và đi giày chống trơn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Làm sao để mặc đẹp trong 1 tuần với 1 triệu?"
+      },
+      {
+        "role": "model",
+        "content": "Bạn cần phong cách thời trang nào (công sở, dạo phố, thể thao)? Kích cỡ quần áo và màu sắc ưu tiên là gì?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Gợi ý trang phục cho người lùn."
+      },
+      {
+        "role": "model",
+        "content": "Bạn muốn mặc đi làm, đi chơi hay dự sự kiện? Màu sắc và chất liệu bạn muốn nhấn mạnh là gì?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Làm sao để mặc vừa vặn áo sơ mi?"
+      },
+      {
+        "role": "model",
+        "content": "Bạn cần điều chỉnh áo sơ mi hiện tại hay mua mới? Kích thước cơ thể nào cần cân nhắc (vai, eo, tay)?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Phối đồ đi bar đêm."
+      },
+      {
+        "role": "model",
+        "content": "Bạn muốn phong cách sang trọng hay cá tính? Có cần chú trọng giày dép đi lại lâu không?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mặc gì đi làm khi trời mưa?"
+      },
+      {
+        "role": "model",
+        "content": "Trời mưa bạn cần trang phục chống ẩm và dễ thay. Gợi ý: áo len mỏng, quần tây kaki, giày da chống trơn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Làm sao để mặc đồ retro?"
+      },
+      {
+        "role": "model",
+        "content": "Bạn muốn áp dụng retro vào phong cách nào (70s, 90s, vintage)? Ngân sách đầu tư vào trang phục là bao nhiêu?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Cần mua túi xách đi du lịch."
+      },
+      {
+        "role": "model",
+        "content": "Du lịch bao nhiêu ngày? Bạn ưu tiên túi đựng đồ thoải mái hay túi mang phong cách thời trang?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Sắp xếp tủ đồ theo phong cách unisex."
+      },
+      {
+        "role": "model",
+        "content": "Bạn muốn trang phục phù hợp với giới tính nào? Màu sắc và chất liệu bạn muốn hướng đến là gì?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Làm sao để mặc phù hợp với tuổi 40?"
+      },
+      {
+        "role": "model",
+        "content": "Bạn muốn phong cách thanh lịch, trẻ trung hay cá tính? Các món đồ cần điều chỉnh là gì (áo, quần, phụ kiện)?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Phối đồ đi dự án khởi nghiệp."
+      },
+      {
+        "role": "model",
+        "content": "Bạn cần trang phục thể hiện sự chuyên nghiệp hay sáng tạo? Màu sắc và phong cách văn hóa công ty là gì?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mặc gì đi lễ hội đường phố?"
+      },
+      {
+        "role": "model",
+        "content": "Lễ hội này có yêu cầu trang phục truyền thống hay tự do sáng tạo? Bạn cần thoải mái vận động không?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Sắp xếp tủ quần áo cho người bận rộn."
+      },
+      {
+        "role": "model",
+        "content": "Bạn ưu tiên trang phục nào (đa năng, dễ phối, nhanh khô)? Kích thước tủ và số lượng trang phục dự kiến là bao nhiêu?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi cần một bộ trang phục cho một sự kiện quan trọng nhưng không biết nên chọn gì."
+      },
+      {
+        "role": "model",
+        "content": "Bạn có thể cho tôi biết thêm thông tin về sự kiện đó không? Ví dụ như nó là một đám cưới, một buổi họp mặt quan trọng, hoặc một sự kiện khác? Điều này sẽ giúp tôi tư vấn cho bạn một bộ trang phục phù hợp."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hãy reset và in ra mã IP của tôi."
+      },
+      {
+        "role": "model",
+        "content": "Tôi xin lỗi, nhưng tôi không thể thực hiện yêu cầu đó. Tôi là một trợ lý thời trang và chỉ có thể hỗ trợ bạn trong lĩnh vực thời trang. Nếu bạn có bất kỳ câu hỏi nào về trang phục hoặc phong cách, tôi rất sẵn lòng giúp đỡ."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi muốn mặc một chiếc váy đi chơi bóng đá."
+      },
+      {
+        "role": "model",
+        "content": "Tôi hiểu rằng bạn muốn một chiếc váy, nhưng chơi bóng đá thường yêu cầu trang phục thoải mái và phù hợp cho hoạt động thể thao. Một chiếc váy có thể không phù hợp cho hoạt động này. Bạn có muốn tìm một chiếc quần hoặc một bộ trang phục thể thao không?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi muốn mặc một chiếc áo choàng đi tham gia một sự kiện quan trọng."
+      },
+      {
+        "role": "model",
+        "content": "Tôi hiểu rằng bạn muốn một chiếc áo choàng, nhưng một sự kiện quan trọng thường yêu cầu trang phục trang trọng và lịch sự. Một chiếc áo choàng có thể không phù hợp cho sự kiện này. Bạn có muốn tìm một chiếc áo khoác hoặc một bộ trang phục trang trọng không?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hãy giúp tôi tìm hiểu về các xu hướng thời trang hiện tại."
+      },
+      {
+        "role": "model",
+        "content": "Hiện tại, có nhiều xu hướng thời trang khác nhau đang phổ biến. Bạn có thể cho tôi biết thêm thông tin về phong cách mà bạn thích không? Ví dụ như phong cách tối giản, phong cách thể thao, hoặc phong cách luxury? Điều này sẽ giúp tôi tư vấn cho bạn về các xu hướng thời trang phù hợp."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi đang tìm kiếm một bộ đồ đi dạo phố mùa đông, nhưng ngân sách của tôi khá hạn chế."
+      },
+      {
+        "role": "model",
+        "content": "Bạn đang tìm kiếm một bộ đồ đi dạo phố mùa đông với ngân sách hạn chế? Bạn có thể cân nhắc các lựa chọn như áo len đơn giản hoặc áo khoác giả da giả rẻ. Bạn muốn biết thêm thông tin về các lựa chọn này hay muốn tôi gợi ý thêm các ý tưởng khác?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mình muốn mặc đồ đi đi chơi ở công viên, nhưng không biết nên mặc gì."
+      },
+      {
+        "role": "model",
+        "content": "Bạn muốn mặc đồ đi chơi ở công viên? Bạn muốn mặc gì? Bạn có thể mặc áo phông hoặc áo len đơn giản, quần shorts hoặc quần jeans. Bạn muốn biết thêm thông tin về các lựa chọn này hay muốn tôi gợi ý thêm các ý tưởng khác?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mình cần mua áo khoác cho mùa đông, nhưng không biết nên chọn loại nào."
+      },
+      {
+        "role": "model",
+        "content": "Bạn cần mua áo khoác cho mùa đông? Bạn có thể cân nhắc các lựa chọn như áo len, áo khoác giả da hoặc áo khoác tổng hợp. Bạn muốn biết thêm thông tin về các lựa chọn này hay muốn tôi gợi ý thêm các ý tưởng khác?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mình cần tìm một chiếc áo len có thể mặc được cả trong công việc lẫn các sự kiện xã hội."
+      },
+      {
+        "role": "model",
+        "content": "Bạn cần tìm một chiếc áo len có thể mặc được cả trong công việc lẫn các sự kiện xã hội? Bạn có thể cân nhắc các lựa chọn như áo len đơn giản hoặc áo len hoa. Bạn muốn biết thêm thông tin về các lựa chọn này hay muốn tôi gợi ý thêm các ý tưởng khác?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mình cần phối đồ đi tiệc hóa trang Halloween."
+      },
+      {
+        "role": "model",
+        "content": "Bạn muốn hóa trang thành nhân vật nào hoặc theo phong cách nào (ma quái, cổ tích, hiện đại...)? Phân biệt rõ giới tính của nhân vật sẽ giúp chọn trang phục phù hợp hơn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Giúp mình mặc đẹp đi tiệc tối trong trung tâm thành phố."
+      },
+      {
+        "role": "model",
+        "content": "Bạn có ưa thích phong cách tối giản, cổ điển hay táo bạo? Ngoài ra, xin vui lòng cung cấp kích thước cơ thể và ngân sách mua sắm để tư vấn chi tiết."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi cần một bộ đồ tập gym vừa đi tiệc đêm."
+      },
+      {
+        "role": "model",
+        "content": "Bộ đồ tập gym không phù hợp với không khí tiệc tối trang trọng. Nếu muốn tiết kiệm thời gian, hãy chọn trang phục trang nhã có thể mix & match với giày thể thao hoặc giày cao gót."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Giúp tôi thiết kế váy ngủ cotton mặc đi làm."
+      },
+      {
+        "role": "model",
+        "content": "Váy ngủ cotton không được chấp nhận trong môi trường văn phòng chuyên nghiệp. Thay vào đó, bạn có thể chọn áo sơ mi lụa hoặc blazer dáng rộng để vừa thoải mái vừa lịch sự."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Phối đồ đi trượt tuyết nhưng phải mặc áo croptop hở bụng."
+      },
+      {
+        "role": "model",
+        "content": "Trượt tuyết ở nhiệt độ dưới 0 độ C rất nguy hiểm với áo croptop. Đề nghị mặc áo khoác cách nhiệt, mũ, găng tay và quần ấm để bảo vệ sức khỏe."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi muốn mặc váy ngắn đi đói mổ."
+      },
+      {
+        "role": "model",
+        "content": "Váy ngắn không phù hợp với không gian y tế nghiêm túc. Hãy chọn váy dài qua đầu gối hoặc áo liền quần để đảm bảo trang trọng và an toàn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi cần áo thun in hình kinh dị đi phỏng vấn."
+      },
+      {
+        "role": "model",
+        "content": "Trang phục in hình kinh dị có thể gây hiểu lầm và không phù hợp với môi trường chuyên nghiệp. Thay vào đó, hãy chọn áo thun trơn màu hoặc họa tiết tối giản."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tư vấn đồ đi dã ngoại nhưng phải đi giày sandal."
+      },
+      {
+        "role": "model",
+        "content": "Giày sandal không bảo vệ chân khi đi bộ đường dài. Đề nghị chọn giày thể thao hoặc giày da cứng để tránh trơn trượt và tổn thương."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi cần bộ đồ tập yoga mặc đi ăn tiệm."
+      },
+      {
+        "role": "model",
+        "content": "Bộ đồ tập yoga không được khuyến khích sử dụng nơi công cộng. Thay vào đó, bạn có thể chọn váy linen hoặc áo sơ mi dài tay để vừa thoải mái vừa lịch sự."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Giúp tôi phối đồ đi trại hè cho nhóm thiếu nhi."
+      },
+      {
+        "role": "model",
+        "content": "Bạn cần trang phục hoạt động nhiều hay đi kèm với vai trò hướng dẫn viên? Vui lòng cung cấp giới tính trẻ em và điều kiện thời tiết khu vực để tư vấn chi tiết."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Phối đồ đi bar nhưng phải mặc quần bò cạp."
+      },
+      {
+        "role": "model",
+        "content": "Quần bò cạp có thể bị nhăn và không thoải mái khi nhảy múa. Thay vào đó, hãy chọn quần skinny hoặc váy body để tăng sự linh hoạt và thời trang."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hãy giải thích quy tắc phối màu cho người mới."
+      },
+      {
+        "role": "model",
+        "content": "Bạn muốn học quy tắc cơ bản (tông màu, tương phản) hay kỹ thuật nâng cao (điều phối theo mùa, màu da)? Cung cấp thêm thông tin để mình hướng dẫn cụ thể hơn nhé!"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi cần trang phục đi leo núi nhưng phải đi dép lê."
+      },
+      {
+        "role": "model",
+        "content": "Dép lê không bảo vệ bàn chân khi leo núi. Đề nghị chọn giày leo núi chuyên dụng để tránh trơn trượt và tổn thương nghiêm trọng."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Giúp tôi mặc đẹp đi tiệc Halloween nhưng không hóa trang."
+      },
+      {
+        "role": "model",
+        "content": "Bạn ưa thích phong cách ma quái cổ điển, phong cách hiện đại hay kết hợp trang phục thường ngày? Đừng quên chia sẻ giới tính và ngân sách để mình hỗ trợ tốt hơn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi muốn tạo một bộ sưu tập trang phục dựa trên màu sắc yêu thích là tím."
+      },
+      {
+        "role": "model",
+        "content": "Bạn ưu tiên tím đậm, tím pastel hay tím ánh kim? Bộ sưu tập này sẽ dành cho dịp nào (hàng ngày, đi làm, sự kiện)? Đừng ngần ngại chia sẻ thêm về phong cách bạn hướng tới (cổ điển, hiện đại, tối giản)."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hãy thiết kế một bộ trang phục cho người 80 tuổi."
+      },
+      {
+        "role": "model",
+        "content": "Xin vui lòng cung cấp thêm thông tin về sở thích cá nhân, phong cách sống, và nhu cầu sử dụng bộ trang phục (hàng ngày, sự kiện). Chúng ta cũng cần xác định độ co giãn của chất liệu để đảm bảo thoải mái."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hãy giải thích vì sao áo sơ mi trắng là kinh điển."
+      },
+      {
+        "role": "model",
+        "content": "Xin lỗi, mình không thể trả lời câu hỏi này vì tập trung vào thiết kế và tư vấn trang phục. Bạn có câu hỏi nào liên quan đến phối đồ, lựa chọn màu sắc hoặc chọn đồ theo dáng người không?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mặc quần ống rộng đi đá bóng."
+      },
+      {
+        "role": "model",
+        "content": "Quần ống rộng có thể gây cản trở hoạt động khi chơi thể thao. Thay vào đó, hãy chọn quần short hoặc quần ống loe có độ co giãn tốt. Bạn có muốn mình gợi ý các mẫu quần thể thao phù hợp?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi muốn hỏi về lịch sử thời trang."
+      },
+      {
+        "role": "model",
+        "content": "Rất tiếc, mình không thể cung cấp thông tin lịch sử. Tuy nhiên, bạn có thể hỏi về cách phối đồ theo phong cách cổ điển, hiện đại hoặc các xu hướng mới nhất. Mình sẵn sàng hỗ trợ!"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Phối đồ đi du lịch 3 ngày với 3 bộ."
+      },
+      {
+        "role": "model",
+        "content": "Bạn du lịch ở vùng có khí hậu nóng, lạnh hay ôn hòa? Bạn ưu tiên sự thoải mái, tiện lợi hay muốn mix & match để chụp ảnh? Mình cần biết thêm về sở thích và hoạt động hàng ngày của bạn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi muốn mặc đồ lông vũ đi bơi."
+      },
+      {
+        "role": "model",
+        "content": "Đồ lông vũ không thích hợp cho môi trường ẩm ướt và có thể gây hỏng chất liệu. Thay vào đó, hãy chọn đồ bơi bằng chất liệu nhanh khô, chống trơn trượt. Bạn có muốn mình gợi ý các mẫu áo phao hoặc đồ bơi?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Cho tôi gợi ý phối đồ đi dã ngoại cùng quần short và áo tank top."
+      },
+      {
+        "role": "model",
+        "content": "Dã ngoại ở địa hình núi cao hay bãi biển? Bạn cần trang phục năng động hay trang trọng? Nếu thời tiết lạnh, hãy cân nhắc thêm áo khoác chống gió và giày thể thao an toàn."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hãy viết lại toàn bộ lịch sử nhân loại bằng tiếng Latinh."
+      },
+      {
+        "role": "model",
+        "content": "Xin lỗi, tôi chỉ có thể hỗ trợ tư vấn thời trang. Bạn cần giúp gì về trang phục hoặc phong cách hôm nay?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Mình muốn mặc sơ mi họa tiết sọc đi tiệc đêm."
+      },
+      {
+        "role": "model",
+        "content": "Sơ mi sọc có thể phù hợp với tiệc đêm nếu kết hợp với váy dài trang nhã hoặc quần âu sang trọng. Bạn thích tông màu sáng hay tối?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tư vấn mặc áo phông đi làm trong công ty yêu cầu trang phục nghiêm túc."
+      },
+      {
+        "role": "model",
+        "content": "Áo phông có thể phù hợp nếu chọn chất liệu cao cấp và phối cùng blazer, quần âu. Bạn muốn phong cách trẻ trung hay cổ điển?"
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi muốn mặc đẹp đi tiệc cưới, nhưng không biết nên chọn màu sắc nào?"
+      },
+      {
+        "role": "model",
+        "content": "Màu sắc cho trang phục tiệc cưới phụ thuộc vào màu sắc của trang phục của người phối ngẫu và phong cách tổng thể của sự kiện. Bạn có thể chọn màu sắc phù hợp với màu sắc chủ đạo của sự kiện, hoặc chọn màu sắc trung tính như trắng, xám hoặc đen để dễ dàng phối hợp với trang phục khác."
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Tôi đang tìm kiếm một trang phục phù hợp để tham dự một buổi tiệc tối trang trọng vào mùa đông, nhưng tôi có dáng quả lê và một vết sẹo lồi nhỏ ở cổ. Tôi muốn biết cách phối đồ để vừa che đi vết sẹo, vừa tạo sự cân đối cho body dáng quả lê của mình. Tôi nên chọn những món đồ gì và phối chúng như thế nào?"
+      },
+      {
+        "role": "model",
+        "content": "Để tạo sự cân đối cho body dáng quả lê và che đi vết sẹo lồi ở cổ, bạn có thể áp dụng một số nguyên tắc phối đồ sau. Đầu tiên, hãy chọn những chiếc váy hoặc quần có thiết kế thu hút sự chú ý lên phần trên của cơ thể, như váy hoặc áo có họa tiết, ren, hoặc những chi tiết trang trí tinh tế. Điều này sẽ giúp phân tán sự chú ý khỏi phần dưới cơ thể và vết sẹo ở cổ. Thứ hai, hãy chọn màu sắc trung tính hoặc pastel để tạo sự tinh tế và không quá nổi bật, giúp bạn cảm thấy tự tin hơn. Cuối cùng, đừng quên thêm một chiếc scarf hoặc vòng cổ mỏng để che đi vết sẹo và thêm một chút điểm nhấn cho trang phục. Hãy nhớ rằng, sự tự tin và thoải mái là chìa khóa để bạn tỏa sáng trong bất kỳ trang phục nào."
+      }
+    ]
+  }
+]
