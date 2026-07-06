@@ -148,10 +148,41 @@ artifacts and are not required for retrieval.
 
 ## Stylist conversation corpus (`stylist/`)
 
-Selected JSONL/CSV conversation data used to LoRA-fine-tune the Qwen3-VL stylist,
-distilled from the fashion catalog above. Kept small (a handful of files); the
-heavy Kaggle run infra, checkpoints, and wheelhouses are local-only and
-intentionally **not** synced here.
+Conversation data used to LoRA-fine-tune the Qwen3-VL stylist. The heavy Kaggle
+run infra, checkpoints, and wheelhouses are local-only and intentionally **not**
+synced here; only the actual SFT corpus is published.
+
+### Distilled fine-tune dataset (canonical, retrieval-grounded)
+
+```text
+stylist/fine_tune/runs/stylist_grounded_v2/
+  final_bundle_gptoss_2800_merged_core8800/
+    train.jsonl     # 11256 examples (~14.5 MB)
+    eval.jsonl      #   344 examples
+    manifest.json   # task/source counts
+  merged_source_gptoss_2800_core8800/
+    manifest.json   # records the 2 source files merged
+```
+
+This is the final SFT bundle. It merges a retrieval-grounded GPT-OSS-teacher
+distillation (`gptoss_2800_all_accepted.jsonl`, 2800 grounded dialogues) with
+the knowledge core (`stylist_distilled_qwen35_under10k/train.jsonl`, 8800 rows)
+into **11600 total examples** stratified to 11256 train / 344 eval. Task
+breakdown (from `manifest.json`): 7200 `stylist_knowledge` + 2800
+`grounded_generated` (900 tool_calling_grounded, 700 recommend_explain_grounded,
+350 ask_missing_info_grounded, 300 body_fit_grounded, 250 no_result_or_relax,
+150 polite_decline_anti_hallucination, 150 multi_turn_grounded) + 1600
+`behavioral_synthetic` (tool_calling, ask_missing_info, recommend_explain,
+multi_turn, polite_decline, body_analysis, edge_case). Every tool-call row uses
+the canonical `<tool_call>...<tool_call>` / `...` wire
+format locked in `src/outfitmatch/stylist/tools.py` (enum args from `vocab.py`).
+
+### Earlier distilled corpora (kept for traceability)
+
+- `stylist_distilled_qwen35_under10k/` — pre-ground distilled corpus (~10k knowledge rows) reused as the knowledge core above.
+- `stylist_distilled_behavioral/` — behavioral / tool-call synthetic seeds.
+- `kaggle_qlora_token3_t4_qwen/kaggle_dataset/` — packing set used for one Kaggle QLoRA run.
+- `stylist_knowledge/finetuning_data_fashion_knowledge.csv` — raw knowledge source table.
 
 ## Reports / quality audits (`reports/`)
 
