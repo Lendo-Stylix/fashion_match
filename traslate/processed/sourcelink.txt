@@ -1,0 +1,261 @@
+{
+  "2_occasions_and_dress_codes": {
+    "office_wear": {
+      "suggested_keywords": ["Office wear dress code", "business professional vs business casual", "smart-casual office attire"],
+      "urls": [
+	https://www.whowhatwear.com/smart-casual-dress-code
+	https://voguenthreads.com/blogs/blog/british-gentlemans-guide-to-business-casual
+	https://vogue.sg/how-to-dress-for-work-this-summer/]
+    },
+    "wedding_and_evening": {
+      "suggested_keywords": ["Wedding guest dress code", "formal evening wear", "cocktail attire"],
+      "urls": [
+	https://theweddingnotebook.com/inspire/fashion-and-beauty/deciphering-the-wedding-guest-dress-code
+	https://www.harpersbazaar.com/uk/fashion/shopping/a62826751/cocktail-dress-code/
+	https://www.harpersbazaar.com/fashion/trends/g42827562/cocktail-attire-for-women/]
+    },
+    "weekend_casual": {
+      "suggested_keywords": ["Casual chic", "elevated casual style", "weekend wardrobe"],
+      "urls": [
+	https://www.whowhatwear.com/fashion/basics/mindful-capsule-wardrobe-2025
+	https://www.bootlegger.com/blog-trending-now/elevated-casual.html
+	https://www.slam.com/blogs/slam-stories/casual-chic-summer-outfit-2025]
+    },
+    "sporty_athleisure": {
+      "suggested_keywords": ["Athleisure styling", "sporty chic outfits"],
+      "urls": [
+	https://www.elle.vn/xu-huong-thoi-trang/4-cach-phoi-quan-the-thao-cho-co-nang-yeu-thich-phong-cach-sporty-chic/
+	https://lecoqsportif.com.vn/blogs/news/athleisure-la-gi-vi-sao-phong-cach-sport-chic-len-ngoi-nam-2026
+	https://elleuzbekistan.com/en/sporty-chic/]
+    },
+    "beach_and_resort": {
+      "suggested_keywords": ["Beachwear styling", "resort wear"],
+      "urls": [
+	https://www.elle.com/fashion/shopping/a70772271/best-resort-wear-brands-women/
+	https://www.harpersbazaar.com/fashion/trends/g71746183/best-beach-cover-ups-2026/
+	https://oracleoftime.com/beachwear-for-men-achieve-that-laidback-look/]
+    },
+    "after_work_transition": {
+      "suggested_keywords": ["Day-to-night outfit transition", "after work outfit"],
+      "urls": [
+	https://www.harpersbazaar.com/fashion/trends/a71293882/spring-summer-transitional-outfits-2026/
+	https://www.creaturesofhabit.in/blogs/news/how-to-transition-your-t-shirts-from-day-to-night-styling-tips-for-men
+	https://stylingdrop.com/day-to-night-dressing/]
+    }
+  },
+
+  "7_fashion_concepts_and_philosophies": {
+    "capsule_wardrobe": {
+      "suggested_keywords": ["Capsule wardrobe guide"],
+      "urls": [
+	https://www.whowhatwear.com/uk/how-to-capsule-wardrobe
+	https://www.harpersbazaar.com/uk/fashion/a41978744/capsule-dressing-advice/
+	https://www.harpersbazaar.com/uk/fashion/shopping/a29204515/how-to-build-capsule-wardrobe/]
+    },
+    "timeless_fashion": {
+      "suggested_keywords": ["Timeless fashion principles"],
+      "urls": [
+	https://www.whowhatwear.com/fashion/shopping/timeless-wardrobe-advice
+	https://www.whowhatwear.com/how-to-look-timeless
+	https://www.elle.com/uk/fashion/trends/a62463649/carolyn-bessette-kennedy-timeless-style/]
+    },
+    "sustainable_fashion": {
+      "suggested_keywords": ["Sustainable fashion practices"],
+      "urls": [
+	https://www.harpersbazaar.com/uk/fashion/shopping/a41158/how-to-be-sustainable-fashion/
+	https://www.elle.com/uk/fashion/a29887/sustainable-fashion-how-to-shop-more-ethically/
+	https://hespokestyle.com/sustainable-wardrobe-menswear/]
+    },
+    "parisian_chic_and_minimalism": {
+      "suggested_keywords": ["Parisian chic styling", "minimalist wardrobe"],
+      "urls": [
+	https://www.whowhatwear.com/fashion/shopping/french-girl-transitional-wardrobe-2026
+	https://www.mrporter.com/en-ca/journal/fashion/how-to-dress-like-a-parisian-536552
+	https://www.elle.com/fashion/shopping/a61738823/french-fashion-essentials/]
+    },
+    "layering": {
+      "suggested_keywords": ["Clothing layering guide", "layering techniques"],
+      "urls": [
+	https://www.harpersbazaar.com/fashion/trends/a62544329/best-layering-clothes-outfits/
+	https://www.whowhatwear.com/uk/layering-clothes
+	https://www.mrporter.com/en-ca/journal/fashion/how-to-layer-clothes-25105698]
+    },
+    "outfit_transition": {
+      "suggested_keywords": ["Outfit transition styling"],
+      "urls": [
+	https://www.harpersbazaar.com/fashion/trends/a71293882/spring-summer-transitional-outfits-2026/
+	https://www.mrporter.com/en-hk/journal/fashion/lightweight-coats-jackets-spring-2021-1672864
+	https://www.whowhatwear.com/fashion/shopping/winter-to-spring-transitional-capsule-wardrobe-2026]
+    }
+  },
+
+  "3_clothing_categories": {
+    "tops_and_outerwear": {
+      "suggested_keywords": ["Classic outerwear styles", "blazer styling", "shirt fits"],
+      "urls": [
+	https://www.mrporter.com/en-nl/journal/fashion/blazers-for-men-25432260
+	https://www.harpersbazaar.com/uk/fashion/a70309573/best-blazer-outfit-ideas-for-women/
+	https://www.elle.com/uk/fashion/what-to-wear/a63406997/how-to-style-a-blazer/]
+    },
+    "bottoms": {
+      "suggested_keywords": ["Denim fits guide", "trouser tailoring", "wide-leg styling"],
+      "urls": [
+	https://www.whowhatwear.com/types-of-jean-fits
+	https://www.mrporter.com/en-jp/journal/lifestyle/trousers-pants-fit-men-25417410
+	https://www.whowhatwear.com/uk/tag/wide-leg-jeans
+	]
+    },
+    "dresses_and_skirts": {
+      "suggested_keywords": ["Timeless dress styles", "skirt silhouettes"],
+      "urls": [
+	https://www.whowhatwear.com/uk/types-of-dresses
+	https://www.harpersbazaar.com/uk/fashion/shopping/a69795660/best-little-black-dresses-2025/
+	https://www.whowhatwear.com/tops-with-skirts-fall]
+    }
+  },
+
+  "11_recommendation_patterns_and_safety": {
+    "safety_recommendations": {
+      "suggested_keywords": ["Safe clothing recommendations", "weather appropriate clothing"],
+      "urls": [
+	https://www.whowhatwear.com/fashion/shopping/winter-to-spring-transitional-capsule-wardrobe-2026
+	https://www.harpersbazaar.com/fashion/trends/a71293882/spring-summer-transitional-outfits-2026/
+	https://www.mrporter.com/en-sa/journal/fashion/packing-guide-summer-25519290]
+    },
+    "clarifying_customer_needs": {
+      "suggested_keywords": ["Fashion consultation questions", "clothing recommendation workflow"],
+      "urls": [
+	https://www.mrporter.com/en-au/journal/fashion/personal-style-25002900
+	https://www.harpersbazaar.com/uk/fashion/shopping/a33146/how-to-detox-your-wardrobe/
+	https://www.whowhatwear.com/fashion/shopping/luxury-capsule-wardrobe-spring]
+    },
+    "refusing_out_of_scope_requests": {
+      "suggested_keywords": ["Prompt injection refusal", "domain-specific assistant behavior"],
+      "urls": [
+	https://learn.microsoft.com/en-us/security/zero-trust/sfi/defend-indirect-prompt-injection
+	https://www.rtinsights.com/domain-specific-llms-how-to-make-ai-useful-for-your-business/
+	https://arxiv.org/pdf/2601.17911]
+    }
+  },
+
+  "9_fashion_styles": {
+    "business_formal": {
+      "suggested_keywords": ["Business formal attire"],
+      "urls": []
+    },
+    "business_casual": {
+      "suggested_keywords": ["Business casual outfits"],
+      "urls": []
+    },
+    "smart_casual": {
+      "suggested_keywords": ["Smart casual guide"],
+      "urls": []
+    },
+    "casual_chic": {
+      "suggested_keywords": ["Casual chic outfits"],
+      "urls": []
+    },
+    "athleisure_sporty_chic": {
+      "suggested_keywords": ["Athleisure styling"],
+      "urls": []
+    },
+    "vintage_classic": {
+      "suggested_keywords": ["Vintage fashion styling", "classic wardrobe"],
+      "urls": []
+    }
+  },
+
+  "10_tailoring_and_garment_construction": {
+    "fit_and_tailoring": {
+      "suggested_keywords": ["Garment fit guide", "tailoring basics"],
+      "urls": []
+    },
+    "silhouette": {
+      "suggested_keywords": ["Fashion silhouettes", "clothing proportions"],
+      "urls": []
+    },
+    "construction_quality": {
+      "suggested_keywords": ["Suit construction", "garment quality indicators"],
+      "urls": []
+    }
+  },
+
+  "4_accessories_and_footwear": {
+    "footwear": {
+      "suggested_keywords": ["Classic footwear essentials", "formal vs casual shoes"],
+      "urls": []
+    },
+    "accessories": {
+      "suggested_keywords": ["Fashion accessories styling", "classic handbags", "jewelry styling"],
+      "urls": []
+    }
+  },
+
+  "5_fabrics_and_materials": {
+    "natural_fabrics": {
+      "suggested_keywords": ["Natural fabrics in fashion", "wool grades", "silk vs cotton"],
+      "urls": []
+    },
+    "common_fabrics": {
+      "suggested_keywords": ["Denim guide", "Tencel properties", "stretch fabrics"],
+      "urls": []
+    },
+    "technical_fabrics": {
+      "suggested_keywords": ["Waterproof breathable fabrics", "thermal clothing technology"],
+      "urls": []
+    },
+    "sustainable_materials": {
+      "suggested_keywords": ["Sustainable fabrics", "eco-friendly fashion materials"],
+      "urls": []
+    }
+  },
+
+  "6_color_theory_and_patterns": {
+    "color_theory": {
+      "suggested_keywords": ["Fashion color theory", "neutral color palette"],
+      "urls": []
+    },
+    "patterns": {
+      "suggested_keywords": ["Classic fashion patterns", "pattern matching"],
+      "urls": []
+    }
+  },
+
+  "1_body_shapes_and_proportions": {
+    "pear_body_shape": {
+      "suggested_keywords": ["Pear body shape styling", "styling for wide hips", "bottom-heavy figure rules"],
+      "urls": []
+    },
+    "apple_body_shape": {
+      "suggested_keywords": ["Apple body shape outfits", "styling for midsection weight"],
+      "urls": []
+    },
+    "inverted_triangle_body_shape": {
+      "suggested_keywords": ["Inverted triangle body shape", "broad shoulders styling tips"],
+      "urls": []
+    },
+    "body_proportions_and_balance": {
+      "suggested_keywords": ["Body proportions in fashion", "balancing body silhouette"],
+      "urls": []
+    }
+  },
+
+  "8_seasons_and_weather": {
+    "cold_winter": {
+      "suggested_keywords": ["Winter layering", "cold weather outfits"],
+      "urls": []
+    },
+    "hot_summer": {
+      "suggested_keywords": ["Summer styling", "breathable fabrics"],
+      "urls": []
+    },
+    "rainy_season": {
+      "suggested_keywords": ["Waterproof fashion", "rainy day outfits"],
+      "urls": []
+    },
+    "transitional_weather": {
+      "suggested_keywords": ["Transitional weather outfits"],
+      "urls": []
+    }
+  }
+}
