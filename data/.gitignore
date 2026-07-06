@@ -1,1 +1,5 @@
-/raw
+# Local-only scratch — NOT part of the VN Fashion dataset.
+# Most actual ignore rules for data/ live in the repo-root .gitignore.
+# These two were missed by the root rules and must stay ignored here.
+/.cache/
+/tmp_kaggle_output_probe/
