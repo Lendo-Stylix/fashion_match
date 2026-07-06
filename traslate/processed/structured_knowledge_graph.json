@@ -1,0 +1,898 @@
+{
+  "category_knowledge_graph": {
+    "office_wear": {
+      "consensus_rules": [
+        "Trang phục công sở nên thể hiện sự tự tin, chuyên nghiệp và phong cách cá nhân",
+        "Cần xem xét ngành nghề, vị trí công việc và văn hóa công ty khi chọn trang phục",
+        "Trang phục công sở nên có sự cân bằng giữa phong cách và sự chuyên nghiệp"
+      ],
+      "conflicts_to_note": [
+        "Sự khác biệt về trang phục công sở giữa các vùng miền tại Anh",
+        "Một số nguồn cho phép quần jeans đi làm, trong khi nguồn khác cấm"
+      ],
+      "key_items": [
+        "Blazers (đặc biệt là màu navy, xám và beige)",
+        "Áo sơ mi (màu trắng, xanh nhạt) và áo polo (màu navy, xám)",
+        "Quần chinos (màu đá, navy) và quần jeans (màu tối)",
+        "Giày dép (giày da, giày thể thao chất lượng)"
+      ],
+      "outdated_trends_to_avoid": [
+        "Trang phục quá正式 (đồng bộ) hoặc quá casual (quần shorts, áo phông)",
+        "Phối đồ không phù hợp (ví dụ: kết hợp blazer với quần jeans quá casual)",
+        "Sử dụng quá nhiều phụ kiện (ví dụ: vòng cổ, nhẫn)"
+      ],
+      "urls": [
+        "https://www.whowhatwear.com/smart-casual-dress-code",
+        "https://voguenthreads.com/blogs/blog/british-gentlemans-guide-to-business-casual",
+        "https://vogue.sg/how-to-dress-for-work-this-summer/"
+      ]
+    },
+    "wedding_and_evening": {
+      "consensus_rules": [
+        "Phong cách trang trọng và lịch sự là yêu cầu cơ bản cho trang phục đám cưới và buổi tối",
+        "Màu sắc và họa tiết nên phù hợp với chủ đề và không gian của sự kiện",
+        "Chất liệu và thiết kế của trang phục nên đảm bảo sự thoải mái và tự tin cho người mặc"
+      ],
+      "conflicts_to_note": [
+        "Sự khác biệt về quan điểm giữa các nguồn về việc có nên mặc quần jeans hay không trong các sự kiện trang trọng",
+        "Ranh giới giữa phong cách cocktail và trang phục đám cưới có thể không rõ ràng"
+      ],
+      "key_items": [
+        "Đầm cocktail",
+        "Áo khoác trang trọng",
+        "Quần tây và áo sơ mi",
+        "Giày cao gót và phụ kiện trang sức"
+      ],
+      "outdated_trends_to_avoid": [
+        "Trang phục quá phô phang hoặc hở hang",
+        "Màu sắc và họa tiết quá sặc sỡ hoặc không phù hợp",
+        "Chất liệu và thiết kế quá rẻ tiền hoặc không thoải mái"
+      ],
+      "urls": [
+        "https://theweddingnotebook.com/inspire/fashion-and-beauty/deciphering-the-wedding-guest-dress-code",
+        "https://www.harpersbazaar.com/uk/fashion/shopping/a62826751/cocktail-dress-code/",
+        "https://www.harpersbazaar.com/fashion/trends/g42827562/cocktail-attire-for-women/"
+      ]
+    },
+    "weekend_casual": {
+      "consensus_rules": [
+        "Ưu tiên trang phục trường tồn, chất lượng cao và dễ phối đồ.",
+        "Cân bằng giữa phong cách trang trọng và thoải mái (elevated casual).",
+        "Chú trọng form dáng tinh tế, tránh quá lỏng hoặc quá chật.",
+        "Sử dụng màu sắc trung tính làm nền, kết hợp điểm nhấn màu sắc hoặc họa tiết.",
+        "Chăm sóc trang phục bền vững (sửa chữa, tái sử dụng, giặt đúng cách)."
+      ],
+      "conflicts_to_note": [
+        "Một số nguồn cho rằng quần ống rộng phù hợp mọi dáng người, trong khi khác lại cảnh báo về độ dài và form dáng.",
+        "Thuật ngữ 'elevated casual' bị cho là mâu thuẫn, nhưng được giải thích là 'vùng vàng' giữa trang trọng và thoải mái.",
+        "Phong cách tối giản (minimalist) vs. phong cách cá tính (statement pieces) trong việc thể hiện bản sắc cá nhân."
+      ],
+      "key_items": [
+        "Áo blazer/áo khoác tinh tế",
+        "Quần âu may ôm hoặc quần jeans denim cao cấp",
+        "Áo sơ mi lanh, áo len mỏng",
+        "Quần ống rộng (wide-leg pants)",
+        "Giày loafers, giày derbies, giày sneaker cao cổ",
+        "Phụ kiện: đồng hồ, túi xách mini, khăn quàng cổ",
+        "Áo croptop, áo tank top",
+        "Áo sơ mi cotton, áo len Dissh",
+        "Phụ kiện trang sức tinh tế (Zohreh V. Jewellery)"
+      ],
+      "outdated_trends_to_avoid": [
+        "Áo tuxedo thun (tuxedo t-shirt) không phù hợp với phong cách casual.",
+        "Quần cargo kết hợp với áo khoác blazer.",
+        "Màu sắc neon hoặc họa tiết quá nổi bật.",
+        "Áo crop quá ngắn hoặc hở lưng quá mức.",
+        "Chất liệu bóng (metallic) hoặc vải caro kết hợp với denim."
+      ],
+      "urls": [
+        "https://www.whowhatwear.com/fashion/basics/mindful-capsule-wardrobe-2025",
+        "https://www.bootlegger.com/blog-trending-now/elevated-casual.html",
+        "https://www.slam.com/blogs/slam-stories/casual-chic-summer-outfit-2025"
+      ]
+    },
+    "sporty_athleisure": {
+      "consensus_rules": [
+        "Kết hợp giữa trang phục thể thao và phong cách thanh lịch ('sporty-chic')",
+        "Sử dụng blazer với quần thể thao để tạo sự lịch thiệp và năng động",
+        "Ưu tiên phối màu tương phản hoặc ton-sur-ton (cùng tông màu) để tăng tính thẩm mỹ",
+        "Áo sweater là món đồ đa năng, phù hợp với mọi thời tiết và dễ phối đồ",
+        "Áo croptop giúp 'hack' dáng, tôn vòng eo và đôi chân thon gọn",
+        "Chất liệu như cotton lạnh, vải co giãn được ưa chuộng cho sự thoải mái và linh hoạt"
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Quần thể thao kẻ sọc",
+        "Blazer",
+        "Áo sweater",
+        "Áo croptop",
+        "Áo sơ mi",
+        "Leggings/flared leggings",
+        "Quần short biker",
+        "Áo jumpsuit thể thao",
+        "Áo croptop asymmetrical",
+        "Giày thể thao",
+        "Tất cao cổ (high-ribbed socks)",
+        "Áo hoodie/oversized T-shirt"
+      ],
+      "outdated_trends_to_avoid": [],
+      "urls": [
+        "https://www.elle.vn/xu-huong-thoi-trang/4-cach-phoi-quan-the-thao-cho-co-nang-yeu-thich-phong-cach-sporty-chic/",
+        "https://lecoqsportif.com.vn/blogs/news/athleisure-la-gi-vi-sao-phong-cach-sport-chic-len-ngoi-nam-2026",
+        "https://elleuzbekistan.com/en/sporty-chic/"
+      ]
+    },
+    "beach_and_resort": {
+      "consensus_rules": [
+        "Ưu tiên chất liệu thoáng khí như linen, cotton, và gauze để phù hợp với thời tiết nhiệt đới",
+        "Sử dụng các món đồ đa năng có thể chuyển đổi từ bãi biển sang bữa tiệc (ví dụ: áo khoác sheer, váy dài)",
+        "Tận dụng họa tiết nổi bật như hoa văn nhiệt đới, họa tiết chấm bi, và phối màu tương phản",
+        "Chọn phụ kiện như túi xách đính hạt, giày sandal, và khăn quấn để tăng tính sang trọng"
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Áo sơ mi linen oversized",
+        "Váy dài sheer",
+        "Áo khoác kaftan",
+        "Khăn quấn (sarong)",
+        "Đầm crocheted",
+        "Quần short linen",
+        "Giày sandal đế thấp",
+        "Túi xách đính hạt"
+      ],
+      "outdated_trends_to_avoid": [
+        "Họa tiết quá cầu kỳ không phù hợp với phong cách bãi biển",
+        "Chất liệu dày cộp gây khó chịu trong thời tiết nóng"
+      ],
+      "urls": [
+        "https://www.elle.com/fashion/shopping/a70772271/best-resort-wear-brands-women/",
+        "https://www.harpersbazaar.com/fashion/trends/g71746183/best-beach-cover-ups-2026/",
+        "https://oracleoftime.com/beachwear-for-men-achieve-that-laidback-look/"
+      ]
+    },
+    "after_work_transition": {
+      "consensus_rules": [
+        "Ưu tiên các món đồ linh hoạt, có thể phối đa dạng (layering) để thích nghi với thời tiết và hoàn cảnh.",
+        "Kết hợp đối lập về tỷ lệ cơ thể (áo dài tay + quần short, áo khoác thể thao + quần capri) để tạo điểm nhấn.",
+        "Chú trọng chất liệu cao cấp (lụa, satin, crepe) và phụ kiện tinh tế (dây lưng da, đồng hồ) để nâng cấp phong cách.",
+        "Thay đổi giày dép và phụ kiện để chuyển đổi từ phong cách ngày sang đêm (ví dụ: giày sneaker → giày tây)."
+      ],
+      "conflicts_to_note": [
+        "Một số nguồn ủng hộ việc sử dụng áo thun casual kết hợp với blazer để tạo phong cách 'high-low', trong khi nguồn khác nhấn mạnh sự trang trọng hoàn toàn.",
+        "Tranh cãi về việc có nên mặc quần jeans đi làm hay không: một số nguồn cho phép nếu phối với blazer, trong khi nguồn khác cho rằng cần nghiêm túc hơn."
+      ],
+      "key_items": [
+        "Áo khoác trench",
+        "Áo lót (slipdress)",
+        "Áo blazer",
+        "Quần capri",
+        "Quần âu",
+        "Giày ballet",
+        "Giày tây",
+        "Dây lưng da",
+        "Đồng hồ cao cấp",
+        "Áo khoác thể thao (windbreaker)"
+      ],
+      "outdated_trends_to_avoid": [
+        "Mặc áo len dày vào buổi chiều khi thời tiết ấm",
+        "Phối đồ quá cầu kỳ với phụ kiện nhiều và rườm rà",
+        "Sử dụng vải thô, chất liệu quá thoải mái cho môi trường công sở",
+        "Không layering khi cần (ví dụ: mặc áo thun đơn giản vào buổi tối)"
+      ],
+      "urls": [
+        "https://www.harpersbazaar.com/fashion/trends/a71293882/spring-summer-transitional-outfits-2026/",
+        "https://www.creaturesofhabit.in/blogs/news/how-to-transition-your-t-shirts-from-day-to-night-styling-tips-for-men",
+        "https://stylingdrop.com/day-to-night-dressing/"
+      ]
+    },
+    "capsule_wardrobe": {
+      "consensus_rules": [
+        "Đầu tư vào các món đồ cơ bản, chất lượng cao và dễ phối đồ.",
+        "Tập trung vào màu sắc trung tính (đen, trắng, xám, be, xanh navy) để dễ kết hợp.",
+        "Tự đánh giá tủ đồ hiện tại trước khi mua sắm mới, loại bỏ những món ít dùng.",
+        "Tránh mua sắm theo xu hướng nhất thời, chỉ chọn món đồ phù hợp với phong cách và lối sống.",
+        "Ưu tiên tính linh hoạt khi phối đồ thay vì theo đuổi sự hoàn hảo về số lượng món."
+      ],
+      "conflicts_to_note": [
+        "Mâu thuẫn giữa phong cách tối giản và cá tính: Một số người cho rằng tủ đồ capsule làm mất đi sự sáng tạo, trong khi người khác coi đó là cách tối ưu hóa phong cách.",
+        "Tranh cãi về việc có nên bao gồm xu hướng thời trang vào tủ đồ capsule: Một số nguồn khuyến khích thử nghiệm mốt thông qua thuê đồ, trong khi nguồn khác nhấn mạnh vào sự kinh điển.",
+        "Sự khác biệt về định nghĩa 'capsule wardrobe': Một số nguồn cho rằng tủ đồ capsule phải cố định 10–20 món, trong khi nguồn khác cho phép điều chỉnh theo nhu cầu cá nhân."
+      ],
+      "key_items": [
+        "Áo sơ mi trắng",
+        "Quần jeans",
+        "Áo khoác trench coat",
+        "Blazer",
+        "Váy đen",
+        "Áo phông cơ bản",
+        "Áo len dệt",
+        "Giày ankle boots đen",
+        "Túi xách thanh lịch",
+        "Áo khoác da",
+        "Áo blazer",
+        "Khăn lụa",
+        "Giày ballet",
+        "Áo len",
+        "Váy dạo phố"
+      ],
+      "outdated_trends_to_avoid": [
+        "Mua sắm theo cảm xúc hoặc ảnh hưởng từ mạng xã hội mà không phù hợp với nhu cầu thực tế.",
+        "Theo đuổi xu hướng 'clean girl' hoặc 'Parisian cool girl' một cách máy móc, bỏ qua phong cách cá nhân.",
+        "Quá tập trung vào sự tối giản đến mức gây ra sự đồng nhất trong phong cách, mất đi cá tính.",
+        "Mua quá nhiều món đồ trung tính với giá cao thay vì tận dụng tủ đồ hiện có."
+      ],
+      "urls": [
+        "https://www.whowhatwear.com/uk/how-to-capsule-wardrobe",
+        "https://www.harpersbazaar.com/uk/fashion/a41978744/capsule-dressing-advice/",
+        "https://www.harpersbazaar.com/uk/fashion/shopping/a29204515/how-to-build-capsule-wardrobe/"
+      ]
+    },
+    "timeless_fashion": {
+      "consensus_rules": [
+        "Đầu tư vào chất lượng thay vì số lượng (\"Buy nice or buy twice\")",
+        "Ưu tiên các món đồ cơ bản, trung tính (đen, trắng, đỏ) và có thể phối đa dạng",
+        "Tránh theo xu hướng ngắn hạn, tập trung vào phong cách cá nhân bền vững",
+        "Chọn vải tự nhiên (cashmere, lụa, len, cotton) thay vì vải tổng hợp",
+        "Cập nhật phong cách bằng cách phối lại trang phục cũ thay vì mua mới"
+      ],
+      "conflicts_to_note": [
+        "Phong cách tối giản vs. phong cách sôi động: Một số nguồn nhấn mạnh sự tối giản (Jackie Onassis), trong khi nguồn khác cho phép sự táo bạo (Iris Apfel)",
+        "Cơ bản vs. \"boring\": Một số người cho rằng trang phục cơ bản nhàm chán, nhưng các nguồn khác khẳng định đây là nền tảng của phong cách trường tồn",
+        "Secondhand/vintage vs. mua mới: Một số nguồn khuyến khích mua đồ cũ để bền vững, trong khi nguồn khác tập trung vào đầu tư vào món đồ mới chất lượng"
+      ],
+      "key_items": [
+        "Áo khoác cashmere (Saks Fifth Avenue, St. John)",
+        "Áo sơ mi trắng oversized (J.Crew)",
+        "Áo khoác trench coat (Rue Sophie)",
+        "Giày kinh điển (Ferragamo, Loro Piana, Aeyde)",
+        "Vòng cổ ngọc trai (Monica Vinader), đồng hồ Cartier, son Chanel Rouge Coco",
+        "Quần âu đơn giản (Geel, Levi's 501)",
+        "Đầm đen Yohji Yamamoto (AW98)",
+        "Quần jeans Levi’s 517",
+        "Áo phông trắng, kính râm tròn, giày mules"
+      ],
+      "outdated_trends_to_avoid": [
+        "Theo đuổi xu hướng ngắn hạn không phù hợp với phong cách cá nhân",
+        "Trang phục có logo hào nhoáng (ví dụ: yêu cầu gỡ logo Prada khỏi trang phục)",
+        "Màu sắc sặc sỡ và chi tiết rườm rà",
+        "Phối đồ không đồng bộ (mix-and-match quá đột ngột)",
+        "Vải tổng hợp kém chất lượng (polyester, nylon)"
+      ],
+      "urls": [
+        "https://www.whowhatwear.com/fashion/shopping/timeless-wardrobe-advice",
+        "https://www.whowhatwear.com/how-to-look-timeless",
+        "https://www.elle.com/uk/fashion/trends/a62463649/carolyn-bessette-kennedy-timeless-style/"
+      ]
+    },
+    "sustainable_fashion": {
+      "consensus_rules": [
+        "Đầu tư vào trang phục chất lượng, có thể sử dụng lâu dài",
+        "Chăm sóc trang phục đúng cách để kéo dài tuổi thọ",
+        "Tránh mua sắm theo cảm tính, chỉ mua đồ thực sự cần thiết",
+        "Ưu tiên vật liệu bền vững như cotton hữu cơ, polyester tái chế, Tencel"
+      ],
+      "conflicts_to_note": [
+        "Tranh cãi về thẩm mỹ bền vững: Một số cho rằng thời trang xanh thiếu phong cách, nhưng Stella McCartney khẳng định nó có thể vừa đẹp vừa sang trọng"
+      ],
+      "key_items": [
+        "Áo phông cơ bản",
+        "Quần jeans cổ điển",
+        "Váy trang nhã",
+        "Áo khoác đa mùa",
+        "Trang phục làm từ cotton hữu cơ, Tencel"
+      ],
+      "outdated_trends_to_avoid": [
+        "Mua đồ chỉ để mặc một lần (đồ sự kiện không tái sử dụng)",
+        "Phụ thuộc vào 'thử thách 30 lần mặc' (quy chuẩn lỗi thời)",
+        "Không chăm sóc trang phục đúng cách dẫn đến hư hỏng nhanh"
+      ],
+      "urls": [
+        "https://www.harpersbazaar.com/uk/fashion/shopping/a41158/how-to-be-sustainable-fashion/",
+        "https://www.elle.com/uk/fashion/a29887/sustainable-fashion-how-to-shop-more-ethically/",
+        "https://hespokestyle.com/sustainable-wardrobe-menswear/"
+      ]
+    },
+    "parisian_chic_and_minimalism": {
+      "consensus_rules": [
+        "Đầu tư vào các món đồ kinh điển, vượt thời gian và dễ phối đồ.",
+        "Ưu tiên sự tối giản, tinh tế, tránh theo xu hướng hời hợt.",
+        "Chọn trang phục có chất liệu và cắt may chuẩn, phù hợp với cá tính cá nhân.",
+        "Tránh phụ kiện rườm rà hoặc họa tiết rối mắt."
+      ],
+      "conflicts_to_note": [
+        "Một số nguồn khuyến khích sử dụng màu sắc sặc sỡ (áo len màu) trong khi phong cách Pháp truyền thống thiên về tông màu trung tính.",
+        "Giày kitten heels được đề cao như món đồ thiết yếu, trong khi phong cách Pháp cổ điển thường ưu ái giày ballet hoặc loafer."
+      ],
+      "key_items": [
+        "Áo khoác trench (cổ funnel-neck, màu khaki/off-white)",
+        "Quần jeans ống ôm (slim-straight) hoặc ống rộng (baggy/flare)",
+        "Giày ballet 'glove' hoặc loafer nâu",
+        "Áo len màu sặc sỡ",
+        "Quần ống rộng đen (baggy black trousers)",
+        "Giày cao gót kitten-heel",
+        "Áo sơ mi cài nút (button-down) chất liệu satin/cotton",
+        "Váy suông (pencil skirts) chất liệu cotton/denim/da",
+        "Túi rafia (raffia bag) phối chi tiết da",
+        "Áo khoác blazer hoặc da"
+      ],
+      "outdated_trends_to_avoid": [
+        "Quần short micro-mini hoặc quá rách",
+        "Giày cao gót không thoải mái",
+        "Phụ kiện rườm rà hoặc họa tiết rối mắt",
+        "Quần jeans ống xệ (barrel jeans)",
+        "Túi đeo chéo cỡ lớn"
+      ],
+      "urls": [
+        "https://www.whowhatwear.com/fashion/shopping/french-girl-transitional-wardrobe-2026",
+        "https://www.mrporter.com/en-ca/journal/fashion/how-to-dress-like-a-parisian-536552",
+        "https://www.elle.com/fashion/shopping/a61738823/french-fashion-essentials/"
+      ]
+    },
+    "layering": {
+      "consensus_rules": [
+        "Sử dụng áo thun trắng làm nền tảng cho các lớp trang phục.",
+        "Kết hợp chất liệu và kết cấu khác nhau (da lộn, len, vải nhung) để tạo chiều sâu.",
+        "Cân bằng giữa các lớp ôm sát và rộng rãi (ví dụ: áo bó + áo khoác oversize).",
+        "Tránh phối đồ đơn điệu bằng cách thêm điểm nhấn màu sắc hoặc họa tiết.",
+        "Chọn tông màu trung tính hoặc pastel để dễ phối đồ."
+      ],
+      "conflicts_to_note": [
+        "Một số nguồn ủng hộ sử dụng màu sắc sặc sỡ để phá cách, trong khi nguồn khác khuyên nên giữ tông màu đơn giản.",
+        "Phong cách preppy (áo sơ mi + áo len buộc vai) vs. phong cách tối giản (áo thun trắng + áo len + váy len) được đề cập như hai hướng khác biệt."
+      ],
+      "key_items": [
+        "Áo thun trắng",
+        "Áo len cashmere",
+        "Áo khoác waxed (vải sáp)",
+        "Quần ống rộng (wide-leg jeans)",
+        "Áo khoác cardigan đồng màu",
+        "Giày cao gót da bóng (patent heels)",
+        "Áo khoác cape",
+        "Áo blazer",
+        "Áo sơ mi trắng",
+        "Áo len ribbed turtleneck"
+      ],
+      "outdated_trends_to_avoid": [
+        "Mặc áo len cồng kềnh và áo khoác dày mà không có lớp trang phục mỏng bên trong.",
+        "Trộn lẫn quá nhiều họa tiết rối mắt trong cùng một set đồ.",
+        "Kết hợp các món đồ cùng chất liệu (toàn vải len hoặc da) làm mất điểm nhấn.",
+        "Phối đồ quá dày mà không cân bằng tỷ lệ cơ thể."
+      ],
+      "urls": [
+        "https://www.harpersbazaar.com/fashion/trends/a62544329/best-layering-clothes-outfits/",
+        "https://www.whowhatwear.com/uk/layering-clothes",
+        "https://www.mrporter.com/en-ca/journal/fashion/how-to-layer-clothes-25105698"
+      ]
+    },
+    "outfit_transition": {
+      "consensus_rules": [
+        "Ưu tiên các lớp áo thông thoáng, có thể thêm/bớt dễ dàng để thích nghi với thời tiết thay đổi.",
+        "Chọn trang phục có thiết kế đơn giản, linh hoạt, dễ phối đồ (như quần ống rộng, váy midi).",
+        "Tránh sử dụng trang phục quá nặng hoặc quá mỏng, tập trung vào sự cân bằng giữa phong cách và tiện dụng.",
+        "Kết hợp các mảnh đối lập (áo dài tay với quần ngắn, áo khoác thể thao với quần capri) để tạo điểm nhấn."
+      ],
+      "conflicts_to_note": [
+        "Bài viết 1 khuyến khích phong cách sang trọng (áo khoác trench với váy quấn, giày cao gót), trong khi bài viết 2 tập trung vào phong cách casual (áo khoác windbreaker với quần capri, giày ballet).",
+        "Bài viết 1 nhấn mạnh vào sự đối lập về tỷ lệ cơ thể, còn bài viết 2 ưu tiên các kiểu dáng cổ điển, tinh tế."
+      ],
+      "key_items": [
+        "Áo khoác trench (màu trung tính, chất liệu nhẹ)",
+        "Áo lót (slipdress) hoặc váy quấn",
+        "Áo khoác công việc (chore jacket) hoặc áo khoác thể thao (windbreaker)",
+        "Quần capri hoặc quần ống rộng",
+        "Áo khoác ngắn (cropped trench) hoặc áo khoác da lộn (suede jacket)",
+        "Áo sơ mi dài tay hoặc áo thun crisp",
+        "Quần jeans ống thẳng"
+      ],
+      "outdated_trends_to_avoid": [
+        "Mặc áo len dày hoặc trang phục mùa đông cồng kềnh khi thời tiết chưa đủ lạnh.",
+        "Phối váy ngắn với dép xăng đan hoặc giày thể thao khi thời tiết chưa đủ ấm.",
+        "Kết hợp trang phục quá trang trọng (giày cao gót, áo sơ mi công sở) với quần short hoặc quần jeans.",
+        "Lạm dụng họa tiết rối mắt hoặc trang phục quá nổi bật trong thời tiết chuyển mùa."
+      ],
+      "urls": [
+        "https://www.harpersbazaar.com/fashion/trends/a71293882/spring-summer-transitional-outfits-2026/",
+        "https://www.mrporter.com/en-hk/journal/fashion/lightweight-coats-jackets-spring-2021-1672864",
+        "https://www.whowhatwear.com/fashion/shopping/winter-to-spring-transitional-capsule-wardrobe-2026"
+      ]
+    },
+    "tops_and_outerwear": {
+      "consensus_rules": [
+        "Blazer là món đồ linh hoạt, có thể phối với nhiều phong cách từ công sở đến dạo phố.",
+        "Kết hợp chất liệu và màu sắc đa dạng để tạo chiều sâu (ví dụ: da, len cashmere, vải nhung).",
+        "Đầu tư vào chất lượng blazer để đảm bảo độ bền và phong cách.",
+        "Sử dụng phụ kiện như giày, túi xách, dây thắt lưng để thay đổi phong cách.",
+        "Tránh sự đơn điệu bằng cách thêm điểm nhấn tương phản (ví dụ: blazer nâu + quần xám)."
+      ],
+      "conflicts_to_note": [
+        "Tranh cãi về xu hướng 'mặc blazer với không gì bên trong': Một số coi đây là dũng cảm, một số khác cho rằng quá táo bạo.",
+        "Phong cách Western (blazer da + áo phông) vs. Minimalism (thương hiệu Filippa K, Loulou Studio): Một bên khuyến khích phá cách, một bên nhấn mạnh sự tối giản."
+      ],
+      "key_items": [
+        "Blazer da, nhung, plaid, tuxedo, peplum, double-breasted, oversized",
+        "Quần ống côn, quần Bermuda tailoring, quần jeans acid-wash",
+        "Váy midi da, váy sheer, váy đen taffeta",
+        "Phụ kiện: giày cao gót, giày sneaker, túi bowling da, kính râm aviator, dây thắt lưng đôi"
+      ],
+      "outdated_trends_to_avoid": [
+        "Phối blazer với quần/áo có màu sắc trùng lặp mà không có điểm nhấn.",
+        "Mặc blazer quá cứng nhắc với quần âu hoặc váy truyền thống.",
+        "Tránh phối blazer với quần ống rộng không có phụ kiện điểm nhấn.",
+        "Không nên mặc blazer quá form hoặc chất liệu nặng nề khi muốn phong cách casual."
+      ],
+      "urls": [
+        "https://www.mrporter.com/en-nl/journal/fashion/blazers-for-men-25432260",
+        "https://www.harpersbazaar.com/uk/fashion/a70309573/best-blazer-outfit-ideas-for-women/",
+        "https://www.elle.com/uk/fashion/what-to-wear/a63406997/how-to-style-a-blazer/"
+      ]
+    },
+    "bottoms": {
+      "consensus_rules": [
+        "Quần ống thẳng (straight leg) là kiểu dáng kinh điển, ôm vừa vặn từ hông đến chân, phù hợp mọi dịp.",
+        "Quần ống bó (skinny) là mốt không thể thiếu, dễ phối đồ và tạo cảm giác thon gọn nhờ đường may channel seam.",
+        "Quần ống bò (boot cut) được thiết kế để phối với giày bốt, có phần ống hơi phồng dưới đầu gối.",
+        "Quần ống rộng (flare) giúp kéo dài chân, thường được dùng trong các xu hướng thời trang cổ điển.",
+        "Quần boyfriend (baggier) mang lại sự thoải mái, phù hợp với phong cách casual và streetwear.",
+        "Quần ống rộng (wide-leg) là xu hướng hiện đại, thường được phối với giày cao gót hoặc sandal để tạo vẻ sang trọng."
+      ],
+      "conflicts_to_note": [
+        "Nguồn 1 coi quần ống bó (skinny) là mốt kinh điển, trong khi nguồn 2 cho rằng cần tránh xu hướng này để chuyển sang quần ống rộng.",
+        "Nguồn 1 nhấn mạnh quần ống bò (boot cut) truyền thống, trong khi nguồn 2 ưu tiên quần ống rộng (wide-leg) như xu hướng mới."
+      ],
+      "key_items": [
+        "Quần ống thẳng (straight leg)",
+        "Quần ống bó (skinny)",
+        "Quần ống bò (boot cut)",
+        "Quần ống rộng (flare)",
+        "Quần boyfriend (baggier)",
+        "Quần ống rộng (wide-leg)",
+        "Quần ống côn (cropped bell)",
+        "Quần ống cao (high-rise taper)"
+      ],
+      "outdated_trends_to_avoid": [
+        "Quần ống bó dài (full-length skinny) có thể gây cảm giác ngắn chân nếu không may kỹ thuật.",
+        "Quần ống bò truyền thống (full-length boot cut) với phần phồng lớn dễ bị lỗi mốt so với phiên bản cropped.",
+        "Quần ống rộng cổ điển (bell bottom) không còn phù hợp với xu hướng hiện đại."
+      ],
+      "urls": [
+        "https://www.whowhatwear.com/types-of-jean-fits",
+        "https://www.mrporter.com/en-jp/journal/lifestyle/trousers-pants-fit-men-25417410",
+        "https://www.whowhatwear.com/uk/tag/wide-leg-jeans"
+      ]
+    },
+    "dresses_and_skirts": {
+      "consensus_rules": [
+        "Đơn giản hóa nhưng nâng cấp",
+        "Cân bằng giữa áo và váy",
+        "Chú trọng silhouette",
+        "Sự tinh tế qua chất liệu, đường cắt và sự tự tin"
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Áo khoác rộng (Oversized Sweater)",
+        "Áo phông trắng (White Tee)",
+        "Áo sơ mi rộng (Relaxed Button-Down Shirt)",
+        "Áo len dệt dệt (Ribbed Knit)",
+        "Áo tank top",
+        "Váy lót (Slip Skirt)",
+        "Váy ngắn (Miniskirt)",
+        "Váy midi (Midi Skirt)",
+        "Váy dài (Maxi Skirt)"
+      ],
+      "outdated_trends_to_avoid": [
+        "Áo in họa tiết rối mắt",
+        "Chất liệu không đồng nhất với váy",
+        "Quần jeans đi làm"
+      ],
+      "urls": [
+        "https://www.whowhatwear.com/uk/types-of-dresses",
+        "https://www.harpersbazaar.com/uk/fashion/shopping/a69795660/best-little-black-dresses-2025/",
+        "https://www.whowhatwear.com/tops-with-skirts-fall"
+      ]
+    },
+    "safety_recommendations": {
+      "consensus_rules": [
+        "Ưu tiên các món đồ đa dụng, dễ phối và có thể layer linh hoạt theo thời tiết",
+        "Sử dụng áo khoác nhẹ (trench coat, windbreaker) như nền tảng cho các set đồ",
+        "Kết hợp chất liệu da lộn hoặc lụa để tăng độ tinh tế",
+        "Tránh các lớp dày mùa đông hoặc trang phục quá nhẹ mùa hè"
+      ],
+      "conflicts_to_note": [
+        "Tranh cãi về sự kết hợp giữa phong cách đường phố (giày thể thao, quần ống rộng) và công sở (áo sơ mi, áo khoác công sở)",
+        "Một số chuyên gia lo ngại về sự thiếu nghiêm túc khi phối đồ thể thao với trang phục công sở"
+      ],
+      "key_items": [
+        "Áo khoác trench coat nhẹ",
+        "Áo len đa năng (có thể phối như áo khoác hoặc buộc hông)",
+        "Váy dài đến đầu gối",
+        "Áo khoác da lộn (chore jacket, blazer)",
+        "Jeans dáng suông",
+        "Áo sơ mi kẻ sọc",
+        "Áo khoác thể thao (windbreaker)",
+        "Áo croptop và quần ống rộng"
+      ],
+      "outdated_trends_to_avoid": [
+        "Áo khoác dày mùa đông không phù hợp với thời tiết ấm dần",
+        "Váy ngắn, sandals, hoặc áo khoác mỏng khi thời tiết chưa đủ ấm",
+        "Áo thun bị xù, rách hoặc quá ôm",
+        "Chất liệu nặng nề (len dày) vào mùa hè"
+      ],
+      "urls": [
+        "https://www.whowhatwear.com/fashion/shopping/winter-to-spring-transitional-capsule-wardrobe-2026",
+        "https://www.harpersbazaar.com/fashion/trends/a71293882/spring-summer-transitional-outfits-2026/",
+        "https://www.mrporter.com/en-sa/journal/fashion/packing-guide-summer-25519290"
+      ]
+    },
+    "clarifying_customer_needs": {
+      "consensus_rules": [
+        "Chọn trang phục theo mùa và loại bỏ những món không còn phù hợp.",
+        "Áp dụng nguyên tắc 'một vào, một ra' để duy trì tủ đồ gọn gàng.",
+        "Ưu tiên đầu tư vào chất lượng và thiết kế kinh điển thay vì theo xu hướng nhất thời.",
+        "Đánh giá tính linh hoạt và khả năng phối đồ của món đồ trước khi mua.",
+        "Tránh mua đồ rẻ kém chất lượng dễ hỏng sau vài lần sử dụng."
+      ],
+      "conflicts_to_note": [
+        "Cân bằng giữa việc mua đồ high-street giá rẻ (nếu chất lượng tốt) và đầu tư vào thiết kế cao cấp cho các món đồ nền tảng.",
+        "Phong cách cổ điển (trench coat, váy trắng) vs. xu hướng hiện đại (bohemian từ Chloé, thiết kế trẻ trung từ Jacquemus)."
+      ],
+      "key_items": [
+        "Quần jeans/Quần ống rộng cao腰",
+        "Áo phông trắng/Áo len cơ bản",
+        "Áo khoác mỏng (trench coat, blazer da mềm)",
+        "Váy trắng poplin",
+        "Giày Mary-Jane/Penny loafer",
+        "Túi đan (raffia, túi da đan Bottega Veneta)",
+        "Trang sức tối giản (chuỗi vàng mảnh, khuyên tai tinh tế)",
+        "Áo khoác kinh điển (Burberry, Toteme)",
+        "Váy mặc liền (vải thoáng, thiết kế đơn giản)"
+      ],
+      "outdated_trends_to_avoid": [
+        "Đồ rẻ kém chất lượng (dễ hỏng, mất form sau vài lần giặt).",
+        "Xu hướng nhất thời không bền (trendy items không có tính ứng dụng lâu dài).",
+        "Trang phục không vừa vóc dáng hoặc không mang lại cảm giác thoải mái.",
+        "Tủ đồ lộn xộn, thiếu tổ chức (khó phối đồ và tìm kiếm)."
+      ],
+      "urls": [
+        "https://www.mrporter.com/en-au/journal/fashion/personal-style-25002900",
+        "https://www.harpersbazaar.com/uk/fashion/shopping/a33146/how-to-detox-your-wardrobe/",
+        "https://www.whowhatwear.com/fashion/shopping/luxury-capsule-wardrobe-spring"
+      ]
+    },
+    "refusing_out_of_scope_requests": {
+      "consensus_rules": [],
+      "conflicts_to_note": [],
+      "key_items": [],
+      "outdated_trends_to_avoid": [],
+      "urls": [
+        "https://learn.microsoft.com/en-us/security/zero-trust/sfi/defend-indirect-prompt-injection",
+        "https://www.rtinsights.com/domain-specific-llms-how-to-make-ai-useful-for-your-business/",
+        "https://arxiv.org/pdf/2601.17911"
+      ]
+    },
+    "business_formal": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "business_casual": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "smart_casual": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "casual_chic": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "athleisure_sporty_chic": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "vintage_classic": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "fit_and_tailoring": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "silhouette": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "construction_quality": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "footwear": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "accessories": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "natural_fabrics": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "common_fabrics": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "technical_fabrics": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "sustainable_materials": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "color_theory": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "patterns": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "pear_body_shape": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "apple_body_shape": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "inverted_triangle_body_shape": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "body_proportions_and_balance": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "cold_winter": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "hot_summer": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "rainy_season": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    },
+    "transitional_weather": {
+      "consensus_rules": [
+        "Tìm hiểu kỹ quy chuẩn ăn mặc của từng dịp cụ thể."
+      ],
+      "conflicts_to_note": [],
+      "key_items": [
+        "Trang phục cơ bản lịch sự."
+      ],
+      "outdated_trends_to_avoid": [
+        "Tránh phối đồ quá lòe loẹt hoặc không phù hợp thời tiết."
+      ],
+      "urls": []
+    }
+  }
+}
