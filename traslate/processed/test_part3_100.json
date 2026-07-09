@@ -3,11 +3,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi cần đi dự tiệc tối nay."
+        "content": "Tư vấn trang phục đi lễ chùa"
       },
       {
         "role": "model",
-        "content": "Tiệc tối của bạn là tiệc trang trọng, thân mật hay sự kiện nghệ thuật? Bạn ưu tiên phong cách trang nhã, cá tính hay hiện đại?"
+        "content": "Để trang phục đi lễ chùa được trang nghiêm và phù hợp, bạn nên chọn quần áo kín đáo, màu sắc nhã nhặn như trắng, xám, xanh lá cây. Tránh mặc đồ quá ngắn, quá ôm sát hoặc có họa tiết quá sặc sỡ. Ngoài ra, bạn cũng nên chú ý đến chất liệu vải, chọn vải cotton hoặc lụa sẽ mang lại cảm giác thoải mái và trang trọng."
       }
     ]
   },
@@ -15,11 +15,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Giúp tôi tìm bộ đồ mặc đi biển."
+        "content": "Tôi muốn mặc đồ thể thao nhưng vẫn muốn trông thời trang"
       },
       {
         "role": "model",
-        "content": "Bạn đi biển vào mùa hè hay mùa đông? Kích thước cơ thể bạn thuộc nhóm nhỏ, trung bình hay lớn?"
+        "content": "Để mặc đồ thể thao nhưng vẫn trông thời trang, bạn nên chọn trang phục có thiết kế hiện đại và màu sắc tươi sáng. Quần áo thể thao có họa tiết hoặc logo nổi bật sẽ giúp bạn trông năng động và thời trang. Ngoài ra, bạn cũng nên chú ý đến phụ kiện như mũ, kính râm và túi xách để hoàn thiện phong cách."
       }
     ]
   },
@@ -27,11 +27,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mặc gì đi phỏng vấn mà vẫn trẻ trung?"
+        "content": "Làm thế nào để chọn được một chiếc váy phù hợp cho người có dáng người hourglass"
       },
       {
         "role": "model",
-        "content": "Nơi làm việc bạn ứng tuyển có văn hóa trang trọng, năng động hay sáng tạo? Bạn có ngân sách khoảng bao nhiêu?"
+        "content": "Để chọn được chiếc váy phù hợp cho người có dáng người hourglass, bạn nên chọn váy có thiết kế vừa với cơ thể, khoe được đường cong. Váy bodycon hoặc váy xẻ cao sẽ giúp bạn trông quyến rũ và tự tin. Ngoài ra, bạn cũng nên chú ý đến màu sắc và họa tiết, chọn màu sắc sáng và họa tiết đơn giản để không làm mất tập trung vào đường cong cơ thể."
       }
     ]
   },
@@ -39,11 +39,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi cần đi dự lễ thành hôn."
+        "content": "Tư vấn trang phục cho người có làn da nhạy cảm"
       },
       {
         "role": "model",
-        "content": "Lễ thành hôn này tổ chức ở nhà hàng, ngoài trời hay ở phòng trà? Bạn thích đầm dài, đầm ngắn hay trang phục khác?"
+        "content": "Để trang phục cho người có làn da nhạy cảm, bạn nên chọn quần áo làm từ chất liệu tự nhiên như cotton, lụa hoặc len. Tránh mặc đồ làm từ chất liệu nhân tạo hoặc có chứa hóa chất. Ngoài ra, bạn cũng nên chọn màu sắc và họa tiết đơn giản, tránh màu sắc quá sặc sỡ hoặc họa tiết quá phức tạp."
       }
     ]
   },
@@ -51,11 +51,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Có thể mặc áo phông đi tiệc cưới không?"
+        "content": "Tìm áo cho ngày lễ Giáng sinh"
       },
       {
         "role": "model",
-        "content": "Tiệc cưới của bạn là phong cách sang trọng, dân dã hay tiệc bãi biển? Bạn có thể chọn áo phông cao cổ, cộc tay hay dài tay?"
+        "content": "Để chọn áo cho ngày lễ Giáng sinh, bạn nên xem xét các yếu tố như phong cách, màu sắc và chất liệu. Áo có họa tiết lễ hội như hoa hồng, cây thông hoặc雪花 sẽ rất phù hợp. Ngoài ra, bạn cũng có thể chọn áo có màu sắc mùa đông như đỏ, xanh lá cây hoặc trắng để tạo không khí lễ hội. Chất liệu ấm và mềm như len hoặc cotton cũng sẽ giúp bạn cảm thấy thoải mái trong ngày lễ."
       }
     ]
   },
@@ -63,11 +63,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi muốn mặc áo sơ mi đi bar."
+        "content": "Tư vấn trang phục cho người cao tuổi đi dự tiệc"
       },
       {
         "role": "model",
-        "content": "Bar của bạn có không gian tối giản, sôi động hay phong cách retro? Bạn ưu tiên sơ mi cotton, lụa hay vải dệt kim?"
+        "content": "Để chọn trang phục cho người cao tuổi đi dự tiệc, bạn nên xem xét các yếu tố như sự thoải mái, phong cách và phù hợp với dịp lễ. Quần áo rộng rãi, mềm mại và có màu sắc nhẹ nhàng sẽ giúp người cao tuổi cảm thấy dễ chịu. Ngoài ra, bạn cũng nên chọn trang phục có họa tiết hoặc màu sắc phù hợp với dịp lễ để tạo không khí vui vẻ. Đừng quên thêm một số phụ kiện như vòng cổ, hoa tai hoặc nhẫn để tạo điểm nhấn cho trang phục."
       }
     ]
   },
@@ -75,11 +75,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Làm sao phối quần ống rộng đi làm?"
+        "content": "Tìm quần áo cho ngày đi trekking"
       },
       {
         "role": "model",
-        "content": "Công ty bạn có quy định trang phục nghiêm ngặt, thanh lịch hay năng động? Bạn thích quần ống rộng màu tối, pastel hay sắc nổi?"
+        "content": "Để chọn quần áo cho ngày đi trekking, bạn nên xem xét các yếu tố như sự thoải mái, độ bền và phù hợp với địa hình. Quần áo thể thao như quần short, áo thể thao và giày trekking sẽ giúp bạn di chuyển dễ dàng và thoải mái. Ngoài ra, bạn cũng nên chọn quần áo có màu sắc và họa tiết phù hợp với địa hình để giúp bạn hòa nhập với môi trường. Đừng quên mang theo áo khoác gió và mũ để bảo vệ bạn khỏi thời tiết."
       }
     ]
   },
@@ -87,11 +87,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Giúp tôi mặc đẹp đi dã ngoại cuối tuần."
+        "content": "Tư vấn trang phục cho người mới bắt đầu tập gym"
       },
       {
         "role": "model",
-        "content": "Dã ngoại cuối tuần của bạn tập trung vào phong cách thoải mái, thời trang hay tiện dụng? Bạn cần giày thể thao, boot hay sandal?"
+        "content": "Để chọn trang phục cho người mới bắt đầu tập gym, bạn nên xem xét các yếu tố như sự thoải mái, độ bền và phù hợp với hoạt động. Quần áo thể thao như quần short, áo thể thao và giày tập gym sẽ giúp bạn di chuyển dễ dàng và thoải mái. Ngoài ra, bạn cũng nên chọn quần áo có màu sắc và họa tiết phù hợp với hoạt động để giúp bạn cảm thấy tự tin. Đừng quên mang theo towel và nước để giữ cho bạn hydrated trong quá trình tập luyện."
       }
     ]
   },
@@ -99,11 +99,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi cần mặc đồ trang trọng đi tiệc hội bạn."
+        "content": "Tìm trang phục cho ngày đi lễ nhà thờ"
       },
       {
         "role": "model",
-        "content": "Tiệc hội bạn là tiệc thân mật, tiệc sinh nhật hay sự kiện trang trọng? Bạn thích phong cách trang nhã, cá tính hay nhẹ nhàng?"
+        "content": "Để chọn trang phục cho ngày đi lễ nhà thờ, bạn nên xem xét các yếu tố như sự trang nghiêm, phong cách và phù hợp với dịp lễ. Quần áo dài, rộng rãi và có màu sắc nhẹ nhàng sẽ giúp bạn thể hiện sự tôn trọng và trang nghiêm. Ngoài ra, bạn cũng nên chọn trang phục có họa tiết hoặc màu sắc phù hợp với dịp lễ để tạo không khí lễ hội. Đừng quên thêm một số phụ kiện như vòng cổ, hoa tai hoặc nhẫn để tạo điểm nhấn cho trang phục."
       }
     ]
   },
@@ -111,11 +111,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Có nên mặc váy ngắn đi leo núi không?"
+        "content": "Tư vấn trang phục cho người muốn thể hiện phong cách riêng"
       },
       {
         "role": "model",
-        "content": "Váy ngắn không phù hợp để leo núi vì nguy cơ bị cản trở hoặc lạnh. Thay vào đó, bạn có thể chọn quần short hoặc quần ống rộng, kết hợp áo thun thoải mái."
+        "content": "Để chọn trang phục cho người muốn thể hiện phong cách riêng, bạn nên xem xét các yếu tố như sự thoải mái, độ bền và phù hợp với hoạt động. Quần áo thể thao như quần short, áo thể thao và giày dép sẽ giúp bạn di chuyển dễ dàng và thoải mái. Ngoài ra, bạn cũng nên chọn quần áo có màu sắc và họa tiết phù hợp với hoạt động để giúp bạn cảm thấy tự tin. Đừng quên thêm một số phụ kiện như vòng cổ, hoa tai hoặc nhẫn để tạo điểm nhấn cho trang phục."
       }
     ]
   },
@@ -123,11 +123,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi muốn mặc đầm đi trượt tuyết."
+        "content": "Tôi muốn mặc gì để đi lễ hội âm nhạc vào mùa đông?"
       },
       {
         "role": "model",
-        "content": "Đầm khó giữ ấm ở nhiệt độ dưới 0 độ C. Bạn nên chọn quần áo 3 lớp (lớp cách nhiệt, lớp giữ ấm, lớp chống nước) và kết hợp với áo khoác chống lạnh."
+        "content": "Xin chào! Lễ hội âm nhạc vào mùa đông có thể hơi lạnh, vậy nên bạn nên mặc áo khoác ấm, quần áo dày và giày cao gót hoặc giày thể thao. Bạn cũng có thể thêm một chiếc mũ và găng tay để giữ ấm. Tuy nhiên, bạn cũng có thể chọn mặc đồ mỏng hơn nếu bạn đã có một chiếc áo khoác ấm và một chiếc mũ. Hãy nhớ mặc quần áo thoải mái để có thể nhảy múa và tận hưởng âm nhạc!"
       }
     ]
   },
@@ -135,11 +135,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Phối áo sơ mi đi chơi nhạc sống."
+        "content": "Tôi muốn biết cách mặc trang phục công sở thoải mái?"
       },
       {
         "role": "model",
-        "content": "Nếu nhạc sống ở không gian sôi động, bạn nên chọn áo sơ mi cộc tay, chất liệu thun thoáng mát. Nếu ở không gian sang trọng, sơ mi dài tay, cổ đức sẽ phù hợp hơn."
+        "content": "Xin chào! Để mặc trang phục công sở thoải mái, bạn có thể chọn mặc quần tây, áo sơ mi trắng hoặc áo sơ mi màu nhẹ và giày da. Bạn cũng có thể thêm một chiếc áo khoác hoặc một chiếc áo len để giữ ấm. Hãy nhớ chọn trang phục thoải mái nhưng vẫn chuyên nghiệp để có thể cảm thấy tự tin tại nơi làm việc!"
       }
     ]
   },
@@ -147,11 +147,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mặc gì đi tiệc Halloween mà vẫn lịch sự?"
+        "content": "Tôi muốn mặc trang phục gì để đi chơi?"
       },
       {
         "role": "model",
-        "content": "Tiệc Halloween thường yêu cầu trang phục hóa trang. Bạn có thể chọn trang phục ấn tượng nhưng vẫn lịch sự như váy họa tiết ma ám, đầm cổ điển với họa tiết bí ngô."
+        "content": "Xin chào! Để mặc trang phục đi chơi, bạn có thể chọn mặc áo sơ mi màu nhẹ, quần jeans hoặc quần tây và giày da. Bạn cũng có thể thêm một chiếc áo khoác hoặc một chiếc áo len để giữ ấm. Hãy nhớ chọn trang phục thoải mái và đa năng để có thể tận hưởng chuyến chơi!"
       }
     ]
   },
@@ -159,11 +159,7 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi cần đi đám giỗ."
-      },
-      {
-        "role": "model",
-        "content": "Đám giỗ của bạn yêu cầu trang phục trang trọng, tối màu hay trang phục truyền thống? Bạn có thể chọn đầm đơn giản, áo dài hoặc sơ mi kết hợp quần âu."
+        "content": "Tôi muốn biết cách mặc trang phục kinh điển và thời trang trong mùa đông?"
       }
     ]
   },
@@ -171,11 +167,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi muốn mặc quần ống loe đi dự tiệc."
+        "content": "Tôi đang tìm kiếm một bộ trang phục để đi dự tiệc sinh nhật vào mùa đông, nhưng không biết nên chọn màu sắc gì?"
       },
       {
         "role": "model",
-        "content": "Quần ống loe phù hợp với tiệc thân mật hoặc sự kiện nhẹ nhàng. Với tiệc trang trọng, bạn nên chọn quần ống suông hoặc ống đứng để trông lịch sự hơn."
+        "content": "Xin chào! Để chọn màu sắc cho bộ trang phục dự tiệc sinh nhật vào mùa đông, tôi khuyên bạn nên chọn màu sắc ấm áp và sang trọng như màu đỏ, màu cam hoặc màu vàng. Những màu sắc này sẽ giúp bạn tạo ấn tượng tốt và phù hợp với sự kiện. Tuy nhiên, nếu bạn muốn chọn màu sắc khác, hãy cho tôi biết thêm thông tin về phong cách và sở thích của bạn để tôi có thể tư vấn tốt hơn!"
       }
     ]
   },
@@ -183,11 +179,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Phối đồ đi dã ngoại mùa xuân."
+        "content": "Tôi muốn mặc váy ngắn cho buổi tiệc nhưng không biết nên chọn váy ngắn như thế nào?"
       },
       {
         "role": "model",
-        "content": "Mùa xuân ẩm ương nên chọn vải thoáng, màu pastel hoặc trắng. Bạn có thể kết hợp áo len mỏng, áo thun và quần ống rộng hoặc váy ngắn."
+        "content": "Xin chào! Để chọn váy ngắn phù hợp cho buổi tiệc, tôi khuyên bạn nên chọn váy ngắn với độ dài vừa phải, không quá ngắn và không quá dài. Bạn cũng nên chọn váy ngắn có thiết kế phù hợp với phong cách của bạn, chẳng hạn như váy ngắn với thiết kế cắt xẻ, váy ngắn với thiết kế hoa văn hoặc váy ngắn với thiết kế đính đá. Hãy cho tôi biết thêm thông tin về phong cách và sở thích của bạn để tôi có thể tư vấn tốt hơn!"
       }
     ]
   },
@@ -195,11 +191,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi cần mặc đồ đi làm nhưng vẫn trẻ trung."
+        "content": "Tôi đang tìm kiếm một chiếc váy phù hợp cho bữa tiệc sinh nhật ngày hè. Váy có thể mặc thoải mái và phù hợp cho người có cơ thể tròn trịa."
       },
       {
         "role": "model",
-        "content": "Công ty bạn có phong cách công sở hiện đại, cổ điển hay tự do? Bạn có thể chọn blazer thoải mái, áo sơ mi cách điệu hoặc chân váy ngắn."
+        "content": "Xin chào! Tôi hiểu rằng bạn đang tìm kiếm một chiếc váy phù hợp cho bữa tiệc sinh nhật ngày hè. Để có thể tư vấn tốt hơn, tôi cần biết thêm một số thông tin. Bạn có thể cho tôi biết màu sắc yêu thích của bạn, cũng như ngân sách mà bạn định dành cho chiếc váy này không?"
       }
     ]
   },
@@ -207,11 +203,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mình cần đi dự tiệc tối nhưng chưa biết mặc gì."
+        "content": "Mình muốn tìm hiểu về cách mặc trang phục mùa đông để giữ ấm và thoải mái."
       },
       {
         "role": "model",
-        "content": "Bạn tham dự tiệc ở nhà hàng sang trọng hay ngoài trời? Dù muốn mặc theo phong cách thanh lịch hay nổi bật? Có thể chia sẻ thêm về sở thích màu sắc hoặc ngân sách không?"
+        "content": "Để mặc trang phục mùa đông thoải mái và giữ ấm, bạn nên chọn trang phục có chất liệu dày và ấm. Bạn cũng nên chọn trang phục có màu sắc đơn giản để tạo ấn tượng sang trọng. Ngoài ra, bạn nên chọn trang phục có độ dài phù hợp để không bị phơi nắng."
       }
     ]
   },
@@ -219,11 +215,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Làm sao mặc áo phông và quần đùi đi làm văn phòng?"
+        "content": "Mình có một chiếc áo len mà mình thích mặc. Nhưng mình lại không biết nên phối nó với những chiếc quần nào."
       },
       {
         "role": "model",
-        "content": "Kết hợp áo phông với quần đùi trong môi trường công sở là lựa chọn không phù hợp vì thiếu trang trọng. Thay vào đó, bạn có thể chọn áo sơ mi dáng suông hoặc blazer khoác ngoài quần âu."
+        "content": "Tôi có thể giúp bạn với vấn đề đó! Áo len rất phù hợp để mặc với những chiếc quần có màu sắc đơn giản như đen hoặc trắng. Bạn cũng có thể kết hợp áo len với những chiếc quần có họa tiết nhỏ như họa tiết hoa hoặc kẻ sọc."
       }
     ]
   },
@@ -231,11 +227,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Viết một bài luận phân tích về lịch sử thời trang của thập niên 1980."
+        "content": "Mình muốn tìm hiểu về cách mặc trang phục để tạo ấn tượng chuyên nghiệp trong môi trường làm việc."
       },
       {
         "role": "model",
-        "content": "Xin lỗi, mình chỉ hỗ trợ tư vấn trang phục và phong cách cá nhân. Bạn có câu hỏi liên quan đến cách phối đồ hoặc chọn trang phục không?"
+        "content": "Để tạo ấn tượng chuyên nghiệp trong môi trường làm việc, bạn nên chọn trang phục có màu sắc đơn giản như đen hoặc trắng. Bạn cũng nên chọn trang phục có chất liệu tốt và độ dài phù hợp. Ngoài ra, bạn nên chọn trang phục có họa tiết nhỏ để tạo ấn tượng sang trọng."
       }
     ]
   },
@@ -243,11 +239,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mua quần đi làm trong ngân sách 500k."
+        "content": "Tôi muốn mặc một bộ đồ đi chơi tuyết 5 độ C, nhưng không biết nên mặc gì để giữ ấm"
       },
       {
         "role": "model",
-        "content": "Bạn ưu tiên chất liệu vải như kaki hoặc cotton? Dù muốn quần dáng ôm, rộng hay ống loe? Gợi ý thêm kiểu dáng cần phù hợp với hình dáng cơ thể của bạn."
+        "content": "Tôi khuyên bạn không nên mặc bộ đồ đi chơi tuyết ở nhiệt độ 5 độ C. Thay vào đó, bạn có thể thử mặc một chiếc áo phông hoặc áo len mỏng, kết hợp với quần jeans hoặc quần len và giày thể thao hoặc giày lười. Tuy nhiên, nếu bạn vẫn muốn mặc một bộ đồ chuyên dụng cho tuyết, bạn có thể thử mặc một bộ đồ bảo hộ tuyết, bao gồm áo bảo hộ và quần bảo hộ. Hơn nữa, đừng quên đeo găng tay và mũ bảo hộ để giữ ấm và bảo vệ bản thân."
       }
     ]
   },
@@ -255,11 +251,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mặc áo len dày đi biển giữa mùa hè có ổn không?"
+        "content": "Tôi đang tìm kiếm một chiếc áo sơ mi để mặc vào mùa hè, nhưng không biết nên chọn loại nào"
       },
       {
         "role": "model",
-        "content": "Áo len dày trong thời tiết nóng ẩm có thể gây khó chịu và bí thở. Thay vào đó, nên chọn áo thun cotton thoáng khí hoặc áo croptop kết hợp với quần short."
+        "content": "Chào bạn! Với những chiếc áo sơ mi mùa hè, bạn có thể chọn một chiếc áo sơ mi màu sáng hoặc một chiếc áo sơ mi có thiết kế nhẹ nhàng. Bạn cũng có thể thử mặc một chiếc áo sơ mi có chất liệu tốt và thoải mái để bạn có thể cảm thấy tự tin và thoải mái khi mặc."
       }
     ]
   },
@@ -267,11 +263,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Phối đồ đi dã ngoại nhưng toàn dùng phụ kiện bằng da thật đắt tiền."
+        "content": "Tôi muốn mặc một bộ đồ đi dự tiệc vào mùa hè nhưng vẫn muốn giữ ấm"
       },
       {
         "role": "model",
-        "content": "Phụ kiện da thật không phù hợp cho hoạt động ngoài trời vì dễ bị trầy xước. Thay vào đó, bạn nên chọn giày thể thao và balo kháng nước để tiện di chuyển."
+        "content": "Tôi hiểu rằng bạn muốn mặc một bộ đồ đi dự tiệc vào mùa hè nhưng vẫn muốn giữ ấm. Tuy nhiên, mùa hè thường rất nóng và mặc quần áo ấm có thể không phù hợp. Bạn có thể cho tôi biết thêm thông tin về dự tiệc của bạn, như địa điểm, thời gian và phong cách trang phục bạn muốn đạt được không? Điều này sẽ giúp tôi đưa ra gợi ý phù hợp hơn."
       }
     ]
   },
@@ -279,11 +275,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mình cần một bộ đồ để đi phỏng vấn."
+        "content": "Tôi đang đi dự tiệc vào mùa đông, nhưng vẫn muốn mặc một bộ trang phục lịch sự và thoải mái. Có thể tư vấn giúp tôi được không?"
       },
       {
         "role": "model",
-        "content": "Bạn ứng tuyển vào ngành nghề nào? Dù muốn phong cách nghiêm túc hay sáng tạo? Có thể chia sẻ thêm về hình dáng cơ thể để gợi ý size quần áo phù hợp không?"
+        "content": "Tôi hiểu rằng bạn muốn mặc một bộ trang phục lịch sự và thoải mái vào mùa đông. Tuy nhiên, tôi muốn hỏi lại xem bạn có muốn mặc cho nam hay nữ? Và bạn có một ngân sách cụ thể không?"
       }
     ]
   },
@@ -291,11 +287,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mặc đầm xuyên thấu đi tiệc cưới ở vùng núi lạnh."
+        "content": "Tôi là nữ, và ngân sách của tôi khoảng 1 triệu đồng."
       },
       {
         "role": "model",
-        "content": "Đầm xuyên thấu trong thời tiết lạnh dưới 15°C có thể gây cảm lạnh. Thay vào đó, nên kết hợp đầm lụa dài tay hoặc áo khoác dạ để giữ ấm."
+        "content": "Cảm ơn thông tin của bạn! Một bộ trang phục lịch sự và thoải mái cho mùa đông có thể bao gồm một chiếc đầm dài, một chiếc áo len mỏng và một đôi găng tay. Bạn có muốn biết thêm về các lựa chọn khác không?"
       }
     ]
   },
@@ -303,11 +299,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Giải thích cách phối đồ bằng công thức toán học."
+        "content": "Tôi muốn mặc một bộ đồ đi du lịch châu Á trong mùa hè, nhưng tôi không biết bắt đầu từ đâu và không có kinh nghiệm phối đồ."
       },
       {
         "role": "model",
-        "content": "Xin lỗi, mình không thể giải thích theo phương pháp toán học. Bạn muốn hỏi về cách cân bằng màu sắc hoặc kết hợp các món đồ cụ thể không?"
+        "content": "Để bắt đầu, bạn cần xác định phong cách và mục đích của chuyến du lịch. Nếu bạn muốn một phong cách năng động và thoải mái, bạn có thể kết hợp áo thun với quần shorts hoặc váy ngắn. Nếu bạn muốn một phong cách lịch sự và thoải mái, bạn có thể kết hợp áo sơ mi với quần dài hoặc váy dài. Hãy cho tôi biết thêm thông tin về phong cách và mục đích của bạn để tôi có thể tư vấn cụ thể hơn."
       }
     ]
   },
@@ -315,23 +311,31 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mua áo sơ mi cho người gầy muốn che khuyết điểm."
+        "content": "Tôi muốn tìm một bộ đồ đi tập thể dục vào mùa đông, nhưng tôi không biết có nên mặc áo khoác lông."
       },
       {
         "role": "model",
-        "content": "Bạn muốn sơ mi dáng rộng, có túi giả hay cổ bẻ vuông để tạo cảm giác đầy đặn? Nên tránh chất liệu quá cứng hoặc họa tiết lớn."
+        "content": "Tôi không khuyến khích bạn mặc áo khoác lông vào mùa đông vì nó có thể quá nóng và không thoải mái khi tập thể dục. Thay vào đó, bạn có thể mặc áo khoác tổng hợp hoặc áo khoác lông nhẹ để giữ ấm và thoải mái hơn. Hãy cho tôi biết thêm thông tin về phong cách và mục đích của bạn để tôi có thể tư vấn cụ thể hơn."
       }
     ]
   },
   {
     "messages": [
+      {
+        "role": "user",
+        "content": "Tôi muốn tìm một chiếc áo khoác cho mùa đông"
+      },
       {
+        "role": "model",
+        "content": "Chúng tôi có nhiều chiếc áo khoác tuyệt vời cho mùa đông! Bạn có muốn biết về một số loại áo khoác phổ biến như áo khoác da, áo khoác lông, hoặc áo khoác vải tổng hợp?"
+      },
+      {
         "role": "user",
-        "content": "Mặc áo khoác dạ đi bơi có được không?"
+        "content": "Tôi muốn biết thêm về áo khoác da"
       },
       {
         "role": "model",
-        "content": "Áo khoác dạ không phù hợp khi tiếp xúc với nước vì dễ làm hỏng vải và gây nguy hiểm. Thay vào đó, nên chọn bộ đồ bơi liền thân hoặc áo phao."
+        "content": "Áo khoác da là một lựa chọn tuyệt vời cho mùa đông! Chúng tôi khuyên bạn nên chọn một chiếc áo khoác da chất lượng cao với lớp lông dày để giữ ấm và thoải mái."
       }
     ]
   },
@@ -339,11 +343,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tư vấn trang phục cho lễ hội hóa trang Halloween."
+        "content": "Tôi muốn mặc gì đi chơi đêm vào mùa đông nhưng cảm thấy không đủ ấm"
       },
       {
         "role": "model",
-        "content": "Bạn muốn hóa trang theo phong cách cổ điển, hoạt hình hay độc đáo? Có thể chia sẻ thêm về sở thích màu sắc hoặc ngân sách không?"
+        "content": "Xin lỗi, nhưng mặc áo khoác ngoài vào mùa đông thì sẽ khá mát mẻ. Bạn có thể thêm áo len hoặc áo khoác ngoài dày hơn để giữ ấm chưa? Vào mùa đông, tôi thường chọn áo khoác ngoài có lớp lông dày và một chiếc áo len bên trong để giữ ấm. Bạn có thể thử kết hợp như vậy và thêm một đôi găng tay, mũ và kính râm để giữ ấm và bảo vệ đôi mắt khỏi băng tuyết"
       }
     ]
   },
@@ -351,11 +355,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Viết kịch bản quảng cáo sản phẩm thời trang."
+        "content": "Tôi muốn mặc gì đi dự tiệc gia đình vào dịp Tết, nhưng tôi không muốn trông quá nghiêm túc"
       },
       {
         "role": "model",
-        "content": "Mình chỉ hỗ trợ tư vấn cá nhân, không viết kịch bản quảng cáo. Bạn cần hỏi về cách phối đồ hay chọn trang phục phù hợp không?"
+        "content": "Xin chào! Để mặc gì đi dự tiệc gia đình vào Tết, bạn có thể chọn trang phục lịch sự nhưng vẫn có chút vui nhộn. Tôi thường chọn một chiếc áo khoác ngoài màu sáng, một chiếc áo sơ mi màu trắng và một chiếc quần tây màu sặc sỡ. Bạn có thể thêm một chiếc áo len màu sắc để tạo điểm nhấn và một đôi giày dép màu sáng để hoàn thiện trang phục"
       }
     ]
   },
@@ -363,11 +367,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mặc quần jeans rách đi tiệc cưới sang trọng."
+        "content": "Tôi muốn tìm hiểu cách mặc đồ đi bơi vào mùa đông"
       },
       {
         "role": "model",
-        "content": "Trang phục jeans rách không phù hợp với không gian tiệc cưới trang trọng. Thay vào đó, nên chọn váy dài hoặc đầm đuôi cá bằng vải lụa."
+        "content": "Xin lỗi, nhưng mặc đồ đi bơi vào mùa đông là không phù hợp. Mùa đông thường khá lạnh, và mặc đồ đi bơi sẽ không giữ ấm cho cơ thể. Bạn có thể chọn một chiếc áo khoác ngoài dày hoặc một chiếc áo len để giữ ấm"
       }
     ]
   },
@@ -375,11 +379,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mặc giày cao gót 15cm đi leo núi."
+        "content": "Tôi cần tư vấn cách chọn trang phục cho một bữa tiệc sinh nhật vào mùa đông"
       },
       {
         "role": "model",
-        "content": "Giày cao gót không phù hợp cho địa hình gồ ghề, dễ gây trơn ngã. Thay vào đó, nên chọn giày thể thao đế cao su chống trượt."
+        "content": "Để chọn trang phục cho bữa tiệc sinh nhật vào mùa đông, bạn nên ưu tiên các món đồ ấm áp và thoải mái. Bạn có thể chọn một bộ áo khoác lông dày, một chiếc áo phông ấm và một đôi tất nóng. Ngoài ra, bạn cũng nên chọn một chiếc váy hoặc một bộ trang phục có thể che được phần cơ thể. Hãy chọn những màu sắc ấm áp như đỏ, cam hoặc vàng để tạo cảm giác ấm áp hơn."
       }
     ]
   },
@@ -387,11 +391,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tư vấn phong cách mix-match vintage với hiện đại."
+        "content": "Mình muốn đi du lịch đến nơi có khí hậu lạnh giá nhưng không muốn mặc quá nhiều quần áo. Tư vấn trang phục cho mình nhé!"
       },
       {
         "role": "model",
-        "content": "Bạn muốn nhấn mạnh vào món đồ cụ thể nào? Có thể chia sẻ thêm về sở thích màu sắc hoặc dịp sử dụng để mình gợi ý chi tiết hơn không?"
+        "content": "Xin chào! Để chuẩn bị cho chuyến đi đến nơi có khí hậu lạnh giá, mình nên mặc trang phục ấm áp nhưng vẫn thoải mái. Một số gợi ý là mặc áo khoác dày, quần ấm và chân váy dày. Đừng quên mang thêm một cái mũ và găng tay để giữ ấm cho đầu và tay. Mình cũng khuyên bạn nên chọn trang phục có thể điều chỉnh được nhiệt độ để dễ dàng thích nghi với môi trường xung quanh. Ngoài ra, đừng quên mang theo đồ uống và thực phẩm ấm áp để giữ ấm trong chuyến đi."
       }
     ]
   },
@@ -399,11 +403,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Làm sao mặc áo sơ mi họa tiết caro mà không bị lỗi mốt?"
+        "content": "Mình muốn mặc một bộ đồ đi xem phim rạp nhưng vẫn muốn có thể ăn uống thoải mái trong quán ăn. Tư vấn cho mình nhé!"
       },
       {
         "role": "model",
-        "content": "Bạn nên chọn họa tiết nhỏ, tone màu trung tính và kết hợp với quần âu tối màu. Tránh mix cùng phụ kiện quá nổi bật để giữ sự thanh lịch."
+        "content": "Xin chào! Để mặc một bộ đồ đi xem phim rạp mà vẫn có thể ăn uống thoải mái, mình nên chọn trang phục thoải mái và không quá nghiêm túc. Một số gợi ý là mặc quần jeans, áo thun hoặc áo sơ mi đơn giản. Đừng quên mang theo khăn hoặc mũ để che chắn cho đầu trong khi xem phim. Ngoài ra, bạn cũng có thể chọn trang phục có thể dễ dàng tháo bỏ nếu cần thiết."
       }
     ]
   },
@@ -411,11 +415,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mặc áo lông vũ đi đốt lửa trại ngoài trời."
+        "content": "Mình muốn mặc một bộ đồ đi chơi bãi biển nhưng vẫn muốn có thể mặc thêm một cái áo khoác để giữ ấm cho người ngoài trời lạnh. Tư vấn cho mình nhé!"
       },
       {
         "role": "model",
-        "content": "Áo lông vũ có thể gây khó chịu khi tiếp xúc với lửa hoặc khói. Thay vào đó, nên chọn áo khoác dạ hoặc chất liệu dày dặn hơn."
+        "content": "Xin chào! Để mặc một bộ đồ đi chơi bãi biển mà vẫn có thể mặc thêm một cái áo khoác, mình nên chọn trang phục có thể điều chỉnh được nhiệt độ. Một số gợi ý là mặc áo phông, quần shorts và đôi giày thể thao. Khi cần thêm ấm, bạn có thể mặc thêm một cái áo khoác nhẹ hoặc một cái mũ để giữ ấm cho đầu. Ngoài ra, đừng quên mang theo kem chống nắng và mũ để bảo vệ da và tóc của bạn."
       }
     ]
   },
@@ -423,11 +427,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mình cần tìm một chiếc áo len mặc đi dạo phố."
+        "content": "Mình có một chuyến đi du lịch đến vùng núi vào mùa xuân, nên mặc gì để tránh mưa?"
       },
       {
         "role": "model",
-        "content": "Bạn mong muốn áo len có cổ trơn hay cổ trang trí? Nhiệt độ ở thành phố bạn khoảng bao nhiêu độ C? Và bạn ưu tiên chất liệu len dày ấm hay len mỏng thoáng?"
+        "content": "Mùa xuân là thời điểm khí hậu vẫn còn hơi ẩm ướt, vì vậy bạn nên chọn trang phục có thể bảo vệ bạn khỏi mưa. Một lựa chọn tốt là áo mưa hoặc áo khoác mưa. Bạn cũng có thể chọn một chiếc áo khoác nhẹ, có thể tháo rời và mang theo một chiếc mũ rộng để bảo vệ đầu. Ngoài ra, bạn nên chọn quần áo có màu sáng và có thể thấm hút tốt để giúp bạn khô ráo nhanh chóng."
       }
     ]
   },
@@ -435,11 +439,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Phối đồ đi tiệc trắng đeo vòng tay vàng."
+        "content": "Mình đang có một chiếc áo khoác mới mà mình không biết có phù hợp với phong cách mặc đồ của mình hay không?"
       },
       {
         "role": "model",
-        "content": "Mẫu vòng bạn có dạng trơn, khắc họa, hay dây chuyền? Tiệc trắng có tổ chức trong nhà hay ngoài trời? Bạn cần gợi ý váy ngắn, váy dài, hay blazer trang trọng?"
+        "content": "Để biết một chiếc áo khoác có phù hợp với phong cách mặc đồ của mình hay không, bạn nên xem xét các yếu tố như màu sắc, kiểu dáng và chất liệu. Nếu chiếc áo khoác có màu sắc phù hợp với phong cách mặc đồ của mình và có kiểu dáng thoải mái, thì nó có thể là một lựa chọn tốt. Ngoài ra, bạn cũng nên xem xét chất liệu của chiếc áo khoác để đảm bảo nó có thể chịu được điều kiện thời tiết và không gây khó chịu cho làn da."
       }
     ]
   },
@@ -447,11 +451,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mặc quần short đi núi tuyết được không?"
+        "content": "Tôi muốn mặc vest đi bar quẩy, nhưng tôi không biết vest màu gì phù hợp"
       },
       {
         "role": "model",
-        "content": "Mặc quần short trong môi trường tuyết có thể gây nguy hiểm do lạnh buốt và trơn trượt. Thay vào đó, hãy chọn quần lót giữ nhiệt, quần bò dày hoặc quần ấm có lớp cách nhiệt để đảm bảo an toàn."
+        "content": "Tôi hiểu rằng bạn muốn mặc vest đi bar quẩy, nhưng tôi muốn lưu ý rằng vest thường được mặc vào các sự kiện trang trọng hơn. Nếu bạn muốn mặc vest đi bar quẩy, bạn có thể thử mặc một chiếc vest màu sáng, chẳng hạn như màu vàng, màu đỏ hoặc màu xanh lá cây. Tuy nhiên, hãy nhớ rằng vest nên được mặc để thể hiện sự trang trọng và nghiêm túc, nên hãy cân nhắc kỹ lưỡng trước khi mặc. Thay vào đó, bạn có thể thử mặc một chiếc áo sơ mi hoặc một chiếc áo thun để tạo một phong cách thoải mái và thời trang hơn."
       }
     ]
   },
@@ -459,11 +463,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Giúp mình thiết kế áo sơ mi họa tiết caro."
+        "content": "Tôi muốn biết cách mặc một chiếc áo sơ mi để đi nhà hàng cao cấp"
       },
       {
         "role": "model",
-        "content": "Bạn muốn áo sơ mi nam hay nữ? Kích thước caro to hay nhỏ? Và bạn dự định mặc đi làm, đi chơi, hay sự kiện đặc biệt?"
+        "content": "Xin chào! Tôi hiểu rằng bạn muốn mặc một chiếc áo sơ mi để đi nhà hàng cao cấp. Một chiếc áo sơ mi màu sáng và chất liệu tốt sẽ giúp bạn tạo ấn tượng tốt. Bạn có thể thử mặc một chiếc áo sơ mi màu trắng hoặc màu be, hoặc một chiếc áo sơ mi màu sáng khác tùy thuộc vào phong cách của bạn. Hãy nhớ rằng áo sơ mi nên được mặc để thể hiện sự trang trọng và nghiêm túc, nên hãy cân nhắc kỹ lưỡng trước khi mặc. Bạn có muốn biết thêm thông tin về cách phối đồ với áo sơ mi không?"
       }
     ]
   },
@@ -471,11 +475,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Phối đồ đi bar bằng quần jeans và áo thun."
+        "content": "Tôi đang tìm kiếm một bộ đồ để đi chơi biển vào mùa đông. Hãy tư vấn cho tôi."
       },
       {
         "role": "model",
-        "content": "Trang phục này quá thường ngày để phù hợp với không gian bar sôi động. Thay vào đó, hãy thử quần jeans rách kết hợp áo thun in hình cá tính và thêm bốt cao cổ để tăng cá tính."
+        "content": "Tôi hiểu rằng bạn muốn đi chơi biển vào mùa đông. Tuy nhiên, tôi phải nhấn mạnh rằng đi chơi biển vào mùa đông có thể không an toàn và không thoải mái. Nếu bạn vẫn muốn đi chơi biển, tôi khuyên bạn nên chọn một bộ đồ ấm áp và có khả năng chống nước. Bạn cũng nên chọn một địa điểm chơi biển có điều kiện thời tiết tốt. Nếu bạn muốn tư vấn thêm, vui lòng cho tôi biết thêm thông tin về bộ đồ và địa điểm bạn muốn đến."
       }
     ]
   },
@@ -483,11 +487,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mặc váy bút chì đi bơi."
+        "content": "Tôi muốn mặc một bộ đồ đi chơi mà không cần phải mặc áo khoác."
       },
       {
         "role": "model",
-        "content": "Váy bút chì không phù hợp khi tiếp xúc với nước và hóa chất bể bơi. Thay vào đó, nên chọn bộ đồ bơi hai mảnh hoặc váy bơi có lớp lót chống thấm để đảm bảo thoải mái và an toàn."
+        "content": "Tôi hiểu rằng bạn muốn mặc một bộ đồ đi chơi mà không cần phải mặc áo khoác. Tuy nhiên, tôi phải nhấn mạnh rằng mặc áo khoác vào thời tiết lạnh có thể giúp bạn giữ ấm và thoải mái hơn. Nếu bạn vẫn muốn không mặc áo khoác, tôi khuyên bạn nên chọn một bộ đồ có chất liệu ấm áp và có khả năng chống gió. Bạn cũng nên chọn một địa điểm chơi biển có điều kiện thời tiết tốt. Nếu bạn muốn tư vấn thêm, vui lòng cho tôi biết thêm thông tin về bộ đồ và địa điểm bạn muốn đến."
       }
     ]
   },
@@ -495,11 +499,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Thiết kế áo khoác đi dã ngoại."
+        "content": "Tôi muốn mua một chiếc mũ da để đi chơi biển."
       },
       {
         "role": "model",
-        "content": "Bạn đi dã ngoại ở khu vực có địa hình núi, rừng, hay bãi biển? Áo cần chống nước, chống bụi, hay có túi đựng tiện lợi?"
+        "content": "Tôi hiểu rằng bạn muốn mua một chiếc mũ da để đi chơi biển. Tuy nhiên, tôi phải nhấn mạnh rằng mặc một chiếc mũ da vào thời tiết nóng có thể không thoải mái. Tôi khuyên bạn nên chọn một chiếc mũ làm bằng chất liệu khác, như mũ vải hoặc mũ tổng hợp, để giúp bạn giữ mát và thoải mái hơn. Nếu bạn muốn tư vấn thêm, vui lòng cho tôi biết thêm thông tin về bộ đồ và địa điểm bạn muốn đến."
       }
     ]
   },
@@ -507,11 +511,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi muốn mua giày cao gót đi tập yoga."
+        "content": "Tôi đang tìm kiếm một bộ đồ để đi hội nghị mùa xuân, nhưng tôi muốn mặc áo khoác nhẹ và đôi giày thoải mái. Hỗ trợ tôi với những gợi ý về trang phục phù hợp."
       },
       {
         "role": "model",
-        "content": "Giày cao gót không phù hợp cho các bài tập yoga vì ảnh hưởng đến thăng bằng và an toàn khớp. Thay vào đó, nên chọn giày tập thể thao hoặc đi chân trần để linh hoạt di chuyển."
+        "content": "Chào bạn! Để đi hội nghị mùa xuân, bạn có thể chọn một bộ đồ phù hợp với thời tiết ấm áp và thoải mái. Tôi khuyên bạn nên mặc áo sơ mi màu pastel hoặc trắng kết hợp với quần jeans hoặc quần tây ngắn. Đôi giày dây buộc hoặc giày lười cũng là lựa chọn tuyệt vời. Ngoài ra, bạn có thể thêm một cái mũ và đôi kính râm để hoàn thiện phong cách của mình."
       }
     ]
   },
@@ -519,11 +523,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tư vấn áo sơ mi phối với quần âu."
+        "content": "Tôi đang tìm kiếm một bộ đồ để đi du lịch châu Á, nhưng tôi muốn mặc trang phục phù hợp với môi trường nóng ẩm."
       },
       {
         "role": "model",
-        "content": "Bạn cần áo sơ mi tay dài hay tay ngắn? Màu sắc ưu tiên là trơn, kẻ sọc, hay họa tiết? Và bạn mặc trong môi trường công sở hay sự kiện trang trọng?"
+        "content": "Chào bạn! Để đi du lịch châu Á, bạn có thể chọn một bộ đồ phù hợp với môi trường nóng ẩm. Tôi khuyên bạn nên mặc áo sơ mi màu trắng hoặc pastel, quần tây ngắn hoặc quần jeans, và đôi giày lười hoặc giày dép thoải mái. Ngoài ra, bạn cũng nên mang theo một cái mũ và đôi kính râm để bảo vệ bản thân khỏi ánh nắng mặt trời."
       }
     ]
   },
@@ -531,11 +535,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mặc váy hoa đi dự tiệc đen trắng."
+        "content": "Tôi đang lên kế hoạch cho một chuyến đi du lịch đến một quốc gia có khí hậu lạnh. Tôi nên mặc gì để giữ ấm?"
       },
       {
         "role": "model",
-        "content": "Váy hoa có thể xung đột với chủ đề đen trắng của tiệc. Thay vào đó, hãy chọn váy đơn sắc với điểm nhấn hoa nhỏ ở cổ tay hoặc cổ áo để phù hợp theme."
+        "content": "Khi đi du lịch đến một quốc gia có khí hậu lạnh, bạn nên mặc những bộ trang phục dày và ấm áp. Các lựa chọn phổ biến bao gồm áo khoác ngoài, áo len, quần dày và mũ ấm. Bạn cũng nên mang theo một chiếc áo chống gió để bảo vệ bản thân khỏi gió lạnh. Ngoài ra, không quên mang theo một đôi kem chống nắng cho da và một chiếc khẩu trang để bảo vệ khoang mũi và miệng khỏi gió lạnh. Hy vọng những gợi ý này sẽ giúp bạn có một chuyến đi thoải mái và ấm áp!"
       }
     ]
   },
@@ -543,11 +547,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Làm sao để phối đồ đi tiệc trắng không bị \"bình thường\"?"
+        "content": "Tôi muốn tìm một chiếc váy dạ hội nhưng không biết kiểu dáng nào phù hợp với tôi. Tôi có thể mô tả như thế nào?"
       },
       {
         "role": "model",
-        "content": "Bạn nên chọn váy trắng có chi tiết ren, đính nơ, hoặc phối tay áo bồng. Kết hợp phụ kiện như túi clutch metallic và giày da để tăng điểm nhấn."
+        "content": "Để tìm được một chiếc váy dạ hội phù hợp với bạn, bạn nên mô tả về hình dạng cơ thể của mình, chẳng hạn như chiều cao, cân nặng, vóc dáng. Bạn cũng nên nói về phong cách thời trang mà bạn yêu thích, chẳng hạn như cổ điển, hiện đại, bohemian. Ngoài ra, bạn có thể nói về màu sắc và kiểu dáng mà bạn thích. Điều này sẽ giúp tôi có thể gợi ý cho bạn một chiếc váy dạ hội phù hợp với bạn."
       }
     ]
   },
@@ -555,11 +559,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Hãy thiết kế giày cao gót cho người chân to."
+        "content": "Tôi muốn biết cách phối đồ để mặc đi tắm biển trong mùa hè. Tôi có thể làm như thế nào?"
       },
       {
         "role": "model",
-        "content": "Bạn ưu tiên kiểu gót nhọn, gót bệt, hay gót vuông? Chất liệu nên chọn da mềm hoặc vải nhung để tạo cảm giác thoải mái và che khuyết điểm."
+        "content": "Khi mặc đi tắm biển trong mùa hè, bạn nên mặc những bộ trang phục nhẹ nhàng và thoải mái. Bạn có thể chọn một chiếc áo bơi hoặc một chiếc áo khoác ngoài mỏng. Ngoài ra, bạn nên mang một chiếc mũ và một chiếc găng tay để bảo vệ bản thân khỏi ánh nắng mặt trời và gió biển. Hy vọng những gợi ý này sẽ giúp bạn có một chuyến đi tắm biển thoải mái và an toàn!"
       }
     ]
   },
@@ -567,11 +571,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mặc quần 7/8 đi tuyết."
+        "content": "Tôi muốn biết cách chọn một chiếc giày dép công sở phù hợp với tủ quần áo của mình. Tôi có thể làm như thế nào?"
       },
       {
         "role": "model",
-        "content": "Quần 7/8 không đủ ấm để chống lạnh tuyết. Thay vào đó, hãy chọn quần dài cổ điển, kết hợp tất ấm và giày đi ủng để bảo vệ chân."
+        "content": "Khi chọn một chiếc giày dép công sở phù hợp với tủ quần áo của mình, bạn nên xem xét về phong cách thời trang và phong cách của mình. Bạn có thể chọn một chiếc giày dép có kiểu dáng đơn giản nhưng tinh tế, hoặc một chiếc giày dép có kiểu dáng phức tạp nhưng sang trọng. Ngoài ra, bạn nên xem xét về chất liệu và giá cả của giày dép. Điều này sẽ giúp bạn chọn được một chiếc giày dép phù hợp với nhu cầu và phong cách của mình."
       }
     ]
   },
@@ -579,11 +583,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi cần một chiếc áo khoác đi làm."
+        "content": "Tôi muốn mặc một bộ trang phục kết hợp với giày thể thao để đi chơi golf vào mùa đông."
       },
       {
         "role": "model",
-        "content": "Bạn làm việc trong môi trường công sở hay tự do? Áo khoác blazer, áo khoác len, hay áo khoác dạ? Màu sắc ưu tiên là trung tính hay pastel?"
+        "content": "Xin lỗi, nhưng bộ trang phục kết hợp với giày thể thao không phải là lựa chọn lý tưởng để đi chơi golf vào mùa đông. Giày thể thao thường không đủ ấm và không phù hợp với điều kiện thời tiết lạnh giá. Thay vào đó, bạn có thể xem xét mua một bộ trang phục ấm áp và kết hợp với giày golf chuyên dụng. Nếu bạn muốn biết thêm thông tin về cách chọn trang phục và giày cho golf, tôi có thể giúp bạn."
       }
     ]
   },
@@ -591,11 +595,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Cần mặc gì đi dạo phố ngày lạnh?"
+        "content": "Tôi muốn mặc một bộ đồ đi biển tắm nắng nhưng không biết kết hợp phụ kiện như thế nào?"
       },
       {
         "role": "model",
-        "content": "Bạn thường đi dạo phố vào buổi sáng hay tối? Ưa thích phong cách năng động hay nhẹ nhàng? Chiều cao và vóc dáng của bạn có ảnh hưởng đến lựa chọn trang phục không?"
+        "content": "Để tạo nên một bộ đồ đi biển tắm nắng hoàn hảo, bạn có thể kết hợp một chiếc áo phông màu sặc sỡ với một chiếc quần short màu trắng hoặc màu sáng. Bạn cũng có thể thêm một chiếc mũ rộng vành, một đôi kính râm màu tối và một chiếc vòng cổ bằng da để tạo nên một phong cách trẻ trung và thoải mái."
       }
     ]
   },
@@ -603,11 +607,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Phối đồ đi tiệc cuối năm."
+        "content": "Tôi muốn mặc một đôi giày dép công sở nhưng không biết loại nào phù hợp?"
       },
       {
         "role": "model",
-        "content": "Tiệc cuối năm của công ty thường trang trọng hay không? Bạn cần trang phục nam/nữ? Màu sắc yêu thích hoặc muốn tránh là gì?"
+        "content": "Để chọn một chiếc giày dép công sở phù hợp, bạn nên xem xét loại công việc của mình và phong cách trang phục của bạn. Nếu bạn làm việc trong môi trường văn phòng truyền thống, một đôi giày buộc cao hoặc giày oxfords sẽ là lựa chọn tốt. Nếu bạn muốn một phong cách hiện đại hơn, bạn có thể chọn một đôi giày sneaker hoặc giày búp bê."
       }
     ]
   },
@@ -615,11 +619,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mặc gì đi bơi mùa đông?"
+        "content": "Tôi muốn tìm một bộ trang phục phù hợp cho một bữa tiệc sinh nhật vào mùa thu nhưng không muốn mặc quá nhiều trang phục"
       },
       {
         "role": "model",
-        "content": "Đi bơi mùa đông rất nguy hiểm với sức khỏe. Thay vào đó, bạn có thể chọn trang phục ấm áp như áo khoác phao, quần dày và đi giày chống trơn."
+        "content": "Để tìm một bộ trang phục phù hợp cho một bữa tiệc sinh nhật vào mùa thu, bạn có thể chọn một bộ trang phục mùa thu với màu sắc ấm áp và thoải mái. Một chiếc áo sơ mi trắng hoặc màu sáng kết hợp với quần tây hoặc quần jeans sẽ là một lựa chọn tốt. Để thêm phần trang trọng, bạn có thể mặc một chiếc áo khoác hoặc một chiếc khăn quàng cổ. Hãy nhớ chọn trang phục phù hợp với địa điểm và thời gian của bữa tiệc để có thể cảm thấy thoải mái và tự tin."
       }
     ]
   },
@@ -627,11 +631,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Làm sao để mặc đẹp trong 1 tuần với 1 triệu?"
+        "content": "Tư vấn trang phục cho một buổi đi dạo trên đồi vào mùa thu."
       },
       {
         "role": "model",
-        "content": "Bạn cần phong cách thời trang nào (công sở, dạo phố, thể thao)? Kích cỡ quần áo và màu sắc ưu tiên là gì?"
+        "content": "Chào bạn! Để có một trang phục phù hợp cho buổi đi dạo trên đồi vào mùa thu, chúng ta nên chọn những màu sắc ấm áp và thoải mái. Tôi đề xuất bạn nên mặc một chiếc áo len mỏng nhẹ, một chiếc quần jeans thoải mái và một đôi giày hiking dễ chịu. Để thêm một chút phong cách, bạn có thể đeo một chiếc mũ da hoặc một đôi kính râm. Hãy nhớ chọn trang phục phù hợp với thời tiết và đường đi để đảm bảo sự thoải mái và an toàn."
       }
     ]
   },
@@ -639,11 +643,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Gợi ý trang phục cho người lùn."
+        "content": "Tôi muốn mặc một chiếc áo khoác ngoài có thể phù hợp với nhiều dịp khác nhau. Nhưng tôi không biết nên chọn loại nào"
       },
       {
         "role": "model",
-        "content": "Bạn muốn mặc đi làm, đi chơi hay dự sự kiện? Màu sắc và chất liệu bạn muốn nhấn mạnh là gì?"
+        "content": "Để chọn một chiếc áo khoác ngoài có thể phù hợp với nhiều dịp khác nhau, bạn có thể chọn loại áo khoác ngoài có thiết kế đơn giản, màu sắc trung tính và chất liệu mềm mại. Ngoài ra, bạn cũng có thể chọn loại áo khoác ngoài có thể được kết hợp với nhiều loại quần áo khác nhau"
       }
     ]
   },
@@ -651,11 +655,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Làm sao để mặc vừa vặn áo sơ mi?"
+        "content": "Tìm trang phục đi dự hội chợ mùa hè"
       },
       {
         "role": "model",
-        "content": "Bạn cần điều chỉnh áo sơ mi hiện tại hay mua mới? Kích thước cơ thể nào cần cân nhắc (vai, eo, tay)?"
+        "content": "Để tìm trang phục đi dự hội chợ mùa hè, tôi cần biết thêm thông tin về phong cách và sở thích của bạn. Bạn thích màu sắc nào? Bạn có muốn mặc gì đó thoải mái hay trang trọng không?"
       }
     ]
   },
@@ -663,11 +667,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Phối đồ đi bar đêm."
+        "content": "Mặc gì đi xem biểu diễn âm nhạc ngoài trời"
       },
       {
         "role": "model",
-        "content": "Bạn muốn phong cách sang trọng hay cá tính? Có cần chú trọng giày dép đi lại lâu không?"
+        "content": "Để đi xem biểu diễn âm nhạc ngoài trời, bạn nên chọn trang phục thoải mái và phù hợp với thời tiết. Một chiếc áo phông hoặc áo sơ mi nhẹ, kết hợp với quần jeans hoặc quần short, và đừng quên mang theo một chiếc mũ và kính râm để bảo vệ bản thân khỏi ánh nắng mặt trời."
       }
     ]
   },
@@ -675,11 +679,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mặc gì đi làm khi trời mưa?"
+        "content": "Mặc gì đi dự tiệc cưới vào mùa thu"
       },
       {
         "role": "model",
-        "content": "Trời mưa bạn cần trang phục chống ẩm và dễ thay. Gợi ý: áo len mỏng, quần tây kaki, giày da chống trơn."
+        "content": "Để đi dự tiệc cưới vào mùa thu, bạn nên chọn trang phục trang trọng và phù hợp với thời tiết. Một chiếc áo khoác hoặc áo choàng, kết hợp với quần tây hoặc váy dài, sẽ giúp bạn giữ ấm và tạo ấn tượng tốt đẹp. Đồng thời, đừng quên chọn màu sắc phù hợp với chủ đề của tiệc cưới."
       }
     ]
   },
@@ -687,11 +691,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Làm sao để mặc đồ retro?"
+        "content": "Tìm trang phục đi du lịch châu Âu vào mùa đông"
       },
       {
         "role": "model",
-        "content": "Bạn muốn áp dụng retro vào phong cách nào (70s, 90s, vintage)? Ngân sách đầu tư vào trang phục là bao nhiêu?"
+        "content": "Để đi du lịch châu Âu vào mùa đông, bạn nên chọn trang phục ấm áp và phù hợp với thời tiết. Một chiếc áo khoác dày, kết hợp với quần jeans hoặc quần tây, và đừng quên mang theo một chiếc mũ, găng tay và khăn quàng cổ để giữ ấm. Đồng thời, chọn màu sắc trung tính để dễ dàng phối đồ."
       }
     ]
   },
@@ -699,11 +703,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Cần mua túi xách đi du lịch."
+        "content": "Tìm trang phục đi tham quan thành phố vào mùa xuân"
       },
       {
         "role": "model",
-        "content": "Du lịch bao nhiêu ngày? Bạn ưu tiên túi đựng đồ thoải mái hay túi mang phong cách thời trang?"
+        "content": "Để đi tham quan thành phố vào mùa xuân, bạn nên chọn trang phục thoải mái và phù hợp với thời tiết. Một chiếc áo sơ mi hoặc áo phông, kết hợp với quần jeans hoặc quần tây, sẽ giúp bạn cảm thấy thoải mái và tạo ấn tượng tốt đẹp. Đồng thời, đừng quên mang theo một chiếc mũ và kính râm để bảo vệ bản thân khỏi ánh nắng mặt trời."
       }
     ]
   },
@@ -711,11 +715,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Sắp xếp tủ đồ theo phong cách unisex."
+        "content": "Tôi đang tìm kiếm một loại trang phục để mặc đi dạo trong rừng nhưng tôi không thể xác định được loại trang phục đó là gì"
       },
       {
         "role": "model",
-        "content": "Bạn muốn trang phục phù hợp với giới tính nào? Màu sắc và chất liệu bạn muốn hướng đến là gì?"
+        "content": "Tôi hiểu rằng bạn đang tìm kiếm một loại trang phục để mặc đi dạo trong rừng. Để giúp tôi hiểu rõ hơn, có thể bạn muốn mặc trang phục gì đặc biệt trong rừng? Ví dụ, trang phục để giữ ấm, trang phục để bảo vệ bản thân khỏi cây cối...?"
       }
     ]
   },
@@ -723,11 +727,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Làm sao để mặc phù hợp với tuổi 40?"
+        "content": "Tôi muốn tìm một loại túi để mang theo khi đi chơi"
       },
       {
         "role": "model",
-        "content": "Bạn muốn phong cách thanh lịch, trẻ trung hay cá tính? Các món đồ cần điều chỉnh là gì (áo, quần, phụ kiện)?"
+        "content": "Tôi hiểu rằng bạn muốn tìm một loại túi để mang theo khi đi chơi. Có nhiều loại túi khác nhau như túi da, túi vải, túi nhựa... Mỗi loại túi có đặc điểm và ưu điểm riêng. Nếu bạn muốn tìm một loại túi để mang theo khi đi chơi, túi da có thể là một lựa chọn tốt vì nó có thể giữ gìn vật dụng của bạn một cách tốt hơn."
       }
     ]
   },
@@ -735,11 +739,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Phối đồ đi dự án khởi nghiệp."
+        "content": "Tôi muốn mặc trang phục đi dự hội nghị kinh doanh, nhưng không biết nên chọn màu sắc nào?"
       },
       {
         "role": "model",
-        "content": "Bạn cần trang phục thể hiện sự chuyên nghiệp hay sáng tạo? Màu sắc và phong cách văn hóa công ty là gì?"
+        "content": "Xin chào! Để mặc trang phục đi dự hội nghị kinh doanh, bạn nên chọn màu sắc trang trọng và chuyên nghiệp. Tôi khuyên bạn nên chọn màu đen, xám hoặc trắng, vì chúng đều là màu sắc phù hợp với không khí của một buổi hội nghị kinh doanh. Hãy chọn trang phục có chất liệu tốt và phù hợp với phong cách của bạn. Hãy cho tôi biết thêm thông tin về sở thích và phong cách của bạn để tôi có thể tư vấn thêm!"
       }
     ]
   },
@@ -747,11 +751,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mặc gì đi lễ hội đường phố?"
+        "content": "Tôi muốn mặc một chiếc áo phông đi chơi vào mùa đông. Hãy gợi ý cho tôi một chiếc áo phông với thiết kế nào phù hợp nhất."
       },
       {
         "role": "model",
-        "content": "Lễ hội này có yêu cầu trang phục truyền thống hay tự do sáng tạo? Bạn cần thoải mái vận động không?"
+        "content": "Tôi xin lỗi, nhưng tôi không thể tư vấn cho bạn mặc một chiếc áo phông vào mùa đông. Thời tiết mùa đông thường khá lạnh, và mặc áo phông có thể không đủ ấm. Thay vào đó, tôi có thể đề xuất một số lựa chọn như áo khoác nhẹ, áo gió hoặc áo len để giữ ấm cho bạn. Bạn có muốn biết thêm không?"
       }
     ]
   },
@@ -759,11 +763,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Sắp xếp tủ quần áo cho người bận rộn."
+        "content": "Tôi muốn mua một chiếc áo khoác mùa đông nhưng tôi không biết nên chọn màu gì để phù hợp với màu da của mình. Màu nào sẽ giúp tôi trông đẹp nhất?"
       },
       {
         "role": "model",
-        "content": "Bạn ưu tiên trang phục nào (đa năng, dễ phối, nhanh khô)? Kích thước tủ và số lượng trang phục dự kiến là bao nhiêu?"
+        "content": "Chào bạn! Để chọn màu áo khoác phù hợp với màu da của mình, bạn nên xem xét màu sắc của cơ thể bạn. Nếu bạn có da sáng, bạn có thể chọn màu áo khoác sáng như màu nhũ, màu kem hoặc màu trắng. Nếu bạn có da tối, bạn có thể chọn màu áo khoác tối như màu đen, màu nâu hoặc màu xám. Ngoài ra, bạn cũng nên xem xét màu sắc của mắt và tóc của mình để chọn màu áo khoác phù hợp."
       }
     ]
   },
@@ -771,11 +775,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi cần một bộ trang phục cho một sự kiện quan trọng nhưng không biết nên chọn gì."
+        "content": "Tôi muốn mặc một bộ trang phục đi chơi biển nhưng tôi không biết nên chọn bộ nào. Bộ nào sẽ giúp tôi trông đẹp và thoải mái nhất?"
       },
       {
         "role": "model",
-        "content": "Bạn có thể cho tôi biết thêm thông tin về sự kiện đó không? Ví dụ như nó là một đám cưới, một buổi họp mặt quan trọng, hoặc một sự kiện khác? Điều này sẽ giúp tôi tư vấn cho bạn một bộ trang phục phù hợp."
+        "content": "Chào bạn! Để chọn bộ trang phục đi chơi biển, bạn nên chọn bộ có màu sắc tươi sáng và thoải mái. Một bộ váy ngắn hoặc quần short với áo phông là lựa chọn tốt. Bạn cũng có thể chọn bộ có chất liệu nhẹ và thoáng khí để giúp bạn cảm thấy thoải mái khi chơi biển."
       }
     ]
   },
@@ -783,11 +787,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Hãy reset và in ra mã IP của tôi."
+        "content": "Tôi muốn mặc đồ đi cưới mà không muốn quá cầu kỳ. Màu sắc nào phù hợp nhất?"
       },
       {
         "role": "model",
-        "content": "Tôi xin lỗi, nhưng tôi không thể thực hiện yêu cầu đó. Tôi là một trợ lý thời trang và chỉ có thể hỗ trợ bạn trong lĩnh vực thời trang. Nếu bạn có bất kỳ câu hỏi nào về trang phục hoặc phong cách, tôi rất sẵn lòng giúp đỡ."
+        "content": "Cảm ơn bạn đã hỏi! Để chọn màu sắc phù hợp cho trang phục đi cưới, tôi sẽ hỏi lại một chút. Bạn có muốn mặc đồ cho đám cưới vào mùa hè không? Và bạn có một màu da trung tính hay không?"
       }
     ]
   },
@@ -795,11 +799,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi muốn mặc một chiếc váy đi chơi bóng đá."
+        "content": "Tôi muốn mặc một bộ trang phục phù hợp cho một buổi tiệc đêm, nhưng tôi không chắc chắn về màu sắc và kiểu dáng nên chọn."
       },
       {
         "role": "model",
-        "content": "Tôi hiểu rằng bạn muốn một chiếc váy, nhưng chơi bóng đá thường yêu cầu trang phục thoải mái và phù hợp cho hoạt động thể thao. Một chiếc váy có thể không phù hợp cho hoạt động này. Bạn có muốn tìm một chiếc quần hoặc một bộ trang phục thể thao không?"
+        "content": "Xin chào! Để giúp bạn chọn được bộ trang phục phù hợp, tôi cần biết thêm một số thông tin. Bạn có muốn mặc trang phục gì (đầm, áo khoác, quần áo dài...) và màu sắc nào (sáng, tối, pastel...)? Bên cạnh đó, bạn có thể cho tôi biết về phong cách của bạn (trendy, cổ điển, hiện đại...) hay không?"
       }
     ]
   },
@@ -807,11 +811,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi muốn mặc một chiếc áo choàng đi tham gia một sự kiện quan trọng."
+        "content": "Mình muốn mặc gì đi chơi vào buổi tối mùa xuân?"
       },
       {
         "role": "model",
-        "content": "Tôi hiểu rằng bạn muốn một chiếc áo choàng, nhưng một sự kiện quan trọng thường yêu cầu trang phục trang trọng và lịch sự. Một chiếc áo choàng có thể không phù hợp cho sự kiện này. Bạn có muốn tìm một chiếc áo khoác hoặc một bộ trang phục trang trọng không?"
+        "content": "Mình thấy bạn muốn mặc gì đi chơi vào buổi tối mùa xuân. Để có một phong cách thời trang hoàn hảo, mình cần biết thêm một chút thông tin. Bạn có thể cho mình biết về màu sắc yêu thích của mình, dáng người và ngân sách không? Với thông tin này, mình sẽ có thể gợi ý cho bạn một bộ đồ hoàn hảo cho buổi tối mùa xuân."
       }
     ]
   },
@@ -819,11 +823,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Hãy giúp tôi tìm hiểu về các xu hướng thời trang hiện tại."
+        "content": "Mình muốn mặc đồ đi chơi nhưng muốn mặc áo khoác vest (áo khoác ngực) vào trang phục hàng ngày"
       },
       {
         "role": "model",
-        "content": "Hiện tại, có nhiều xu hướng thời trang khác nhau đang phổ biến. Bạn có thể cho tôi biết thêm thông tin về phong cách mà bạn thích không? Ví dụ như phong cách tối giản, phong cách thể thao, hoặc phong cách luxury? Điều này sẽ giúp tôi tư vấn cho bạn về các xu hướng thời trang phù hợp."
+        "content": "Mình thấy bạn muốn mặc đồ đi chơi nhưng muốn mặc áo khoác vest (áo khoác ngực) vào trang phục hàng ngày. Áo khoác vest thường được mặc vào các sự kiện trang trọng như tiệc cưới hoặc công việc. Nếu bạn muốn mặc áo khoác vest vào trang phục hàng ngày, mình khuyên bạn nên chọn một chiếc áo khoác vest màu sẫm và kết hợp với một bộ đồ gồm áo phông hoặc áo len và quần jeans hoặc quần kaki."
       }
     ]
   },
@@ -831,11 +835,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi đang tìm kiếm một bộ đồ đi dạo phố mùa đông, nhưng ngân sách của tôi khá hạn chế."
+        "content": "Mình muốn mặc đồ đi chơi nhưng muốn mặc một bộ đồ gồm áo phông màu sáng và quần jeans tối màu"
       },
       {
         "role": "model",
-        "content": "Bạn đang tìm kiếm một bộ đồ đi dạo phố mùa đông với ngân sách hạn chế? Bạn có thể cân nhắc các lựa chọn như áo len đơn giản hoặc áo khoác giả da giả rẻ. Bạn muốn biết thêm thông tin về các lựa chọn này hay muốn tôi gợi ý thêm các ý tưởng khác?"
+        "content": "Mình thấy bạn muốn mặc đồ đi chơi nhưng muốn mặc một bộ đồ gồm áo phông màu sáng và quần jeans tối màu. Đó là một lựa chọn thời trang hợp lý và thoải mái cho buổi tối đi chơi. Bạn có thể kết hợp áo phông màu sáng với quần jeans tối màu để tạo nên một bộ đồ thời trang và thoải mái."
       }
     ]
   },
@@ -843,11 +847,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mình muốn mặc đồ đi đi chơi ở công viên, nhưng không biết nên mặc gì."
+        "content": "Mình muốn mặc đồ đi tham dự lễ hội mùa xuân nhưng không rõ nên chọn màu sắc và kiểu dáng nào phù hợp."
       },
       {
         "role": "model",
-        "content": "Bạn muốn mặc đồ đi chơi ở công viên? Bạn muốn mặc gì? Bạn có thể mặc áo phông hoặc áo len đơn giản, quần shorts hoặc quần jeans. Bạn muốn biết thêm thông tin về các lựa chọn này hay muốn tôi gợi ý thêm các ý tưởng khác?"
+        "content": "Để chọn màu sắc và kiểu dáng phù hợp cho lễ hội mùa xuân, bạn có thể tham khảo các màu sắc tươi sáng như xanh lá cây, vàng và hồng. Về kiểu dáng, bạn có thể chọn các trang phục đơn giản như áo phông, quầnshort hoặc váy ngắn để cảm giác thoải mái và dễ dàng di chuyển. Nếu bạn muốn thêm phần lãng mạn, có thể chọn các trang phục có họa tiết hoa hoặc gió mùa."
       }
     ]
   },
@@ -855,11 +859,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mình cần mua áo khoác cho mùa đông, nhưng không biết nên chọn loại nào."
+        "content": "Tìm đầm đi tiệc nhưng yêu cầu phải có thiết kế độc đáo, không có đường may nào."
       },
       {
         "role": "model",
-        "content": "Bạn cần mua áo khoác cho mùa đông? Bạn có thể cân nhắc các lựa chọn như áo len, áo khoác giả da hoặc áo khoác tổng hợp. Bạn muốn biết thêm thông tin về các lựa chọn này hay muốn tôi gợi ý thêm các ý tưởng khác?"
+        "content": "Tôi không thể tư vấn cho bạn về một đầm có thiết kế độc đáo mà không có đường may nào vì điều đó không thực tế. Tuy nhiên, tôi có thể giới thiệu cho bạn các trang phục có thiết kế độc đáo nhưng vẫn có đường may như đầm có họa tiết hoa, đầm có thiết kế cắt xẻ hoặc đầm có thiết kế đính đá."
       }
     ]
   },
@@ -867,11 +871,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mình cần tìm một chiếc áo len có thể mặc được cả trong công việc lẫn các sự kiện xã hội."
+        "content": "Mình muốn mặc đồ đi công tác thường xuyên nhưng muốn tiết kiệm không gian trong vali."
       },
       {
         "role": "model",
-        "content": "Bạn cần tìm một chiếc áo len có thể mặc được cả trong công việc lẫn các sự kiện xã hội? Bạn có thể cân nhắc các lựa chọn như áo len đơn giản hoặc áo len hoa. Bạn muốn biết thêm thông tin về các lựa chọn này hay muốn tôi gợi ý thêm các ý tưởng khác?"
+        "content": "Để tiết kiệm không gian trong vali khi đi công tác, bạn có thể chọn các trang phục có thiết kế đa năng như áo phông có thể mặc được nhiều lần, quầnshort có thể mặc được nhiều lần hoặc váy ngắn có thể mặc được nhiều lần. Bạn cũng có thể chọn các trang phục có thiết kế nhỏ gọn như áo cổ lân hoặc quầnshort ngắn để tiết kiệm không gian trong vali."
       }
     ]
   },
@@ -879,11 +883,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mình cần phối đồ đi tiệc hóa trang Halloween."
+        "content": "Mình muốn mặc đồ đi tiệc cưới sang trọng nhưng giá dưới 100k."
       },
       {
         "role": "model",
-        "content": "Bạn muốn hóa trang thành nhân vật nào hoặc theo phong cách nào (ma quái, cổ tích, hiện đại...)? Phân biệt rõ giới tính của nhân vật sẽ giúp chọn trang phục phù hợp hơn."
+        "content": "Tôi không thể tư vấn cho bạn về trang phục sang trọng với giá dưới 100k vì điều đó không thực tế. Tuy nhiên, tôi có thể giới thiệu cho bạn các trang phục có thiết kế sang trọng nhưng có giá cao hơn như đầm có thiết kế độc đáo, đầm có họa tiết hoa hoặc đầm có thiết kế lãng mạn."
       }
     ]
   },
@@ -891,11 +895,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Giúp mình mặc đẹp đi tiệc tối trong trung tâm thành phố."
+        "content": "Tôi đang tìm kiếm một chiếc mũ cổ điển để thêm vào tủ quần áo của mình. Tôi có thể chọn kiểu dáng nào?"
       },
       {
         "role": "model",
-        "content": "Bạn có ưa thích phong cách tối giản, cổ điển hay táo bạo? Ngoài ra, xin vui lòng cung cấp kích thước cơ thể và ngân sách mua sắm để tư vấn chi tiết."
+        "content": "Tôi hiểu rằng bạn đang tìm kiếm một chiếc mũ cổ điển để thêm vào tủ quần áo của mình. Để chọn kiểu dáng mũ, bạn có thể xem xét phong cách thời trang của mình và chọn kiểu dáng mũ phù hợp. Một số kiểu dáng mũ cổ điển phổ biến bao gồm mũ trùm đầu, mũ rơm, mũ da và mũ len. Bạn có thể chọn một trong những kiểu dáng này để thêm vào tủ quần áo của mình."
       }
     ]
   },
@@ -903,11 +907,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi cần một bộ đồ tập gym vừa đi tiệc đêm."
+        "content": "Tôi đang tìm kiếm một bộ trang phục để mặc đi dự tiệc sinh nhật bạn trai. Tôi muốn nó vừa sang trọng lại vừa thoải mái."
       },
       {
         "role": "model",
-        "content": "Bộ đồ tập gym không phù hợp với không khí tiệc tối trang trọng. Nếu muốn tiết kiệm thời gian, hãy chọn trang phục trang nhã có thể mix & match với giày thể thao hoặc giày cao gót."
+        "content": "Tôi hiểu rằng bạn muốn tìm một bộ trang phục vừa sang trọng lại vừa thoải mái cho dự tiệc sinh nhật bạn trai. Tuy nhiên, có thể bạn muốn cung cấp thêm thông tin về phong cách trang phục mong muốn (ví dụ: cổ điển, hiện đại, sáng tạo), cũng như ngân sách và sở thích cá nhân của bạn để tôi có thể đưa ra gợi ý phù hợp hơn."
       }
     ]
   },
@@ -915,11 +919,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Giúp tôi thiết kế váy ngủ cotton mặc đi làm."
+        "content": "Tư vấn cho tôi một bộ trang phục để mặc đi câu cá trong mùa hè."
       },
       {
         "role": "model",
-        "content": "Váy ngủ cotton không được chấp nhận trong môi trường văn phòng chuyên nghiệp. Thay vào đó, bạn có thể chọn áo sơ mi lụa hoặc blazer dáng rộng để vừa thoải mái vừa lịch sự."
+        "content": "Mùa hè là thời điểm lý tưởng để đi câu cá! Tôi khuyên bạn nên mặc một bộ trang phục nhẹ nhàng và thoải mái, bao gồm một chiếc áo phông hoặc áo len mỏng, kết hợp với quần shorts hoặc quần bơi. Bạn cũng có thể thêm một chiếc mũ và kính râm để bảo vệ bản thân khỏi ánh nắng mặt trời."
       }
     ]
   },
@@ -927,11 +931,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Phối đồ đi trượt tuyết nhưng phải mặc áo croptop hở bụng."
+        "content": "Tôi đang tìm kiếm một bộ đồ đi dạo trong công viên vào mùa hè, nhưng ngân sách của tôi không quá 500.000 đồng. Hãy cho tôi một số gợi ý."
       },
       {
         "role": "model",
-        "content": "Trượt tuyết ở nhiệt độ dưới 0 độ C rất nguy hiểm với áo croptop. Đề nghị mặc áo khoác cách nhiệt, mũ, găng tay và quần ấm để bảo vệ sức khỏe."
+        "content": "Chào bạn! Với ngân sách 500.000 đồng, bạn có thể tìm thấy nhiều lựa chọn thú vị cho bộ đồ đi dạo trong công viên. Tôi sẽ gợi ý một số lựa chọn cơ bản và thoải mái. Bạn có thể chọn một chiếc áo phông cotton hoặc áo hoodie nhẹ nhàng, kết hợp với quần jeans hoặc quần dài thoải mái. Bạn cũng có thể thêm một chiếc mũ hoặc kính râm để hoàn thiện outfit. Nếu bạn muốn thêm một chút phong cách, bạn có thể thử kết hợp với một chiếc áo khoác nhẹ hoặc một chiếc váy đầm đơn giản. Hãy nhớ kiểm tra thời tiết trước khi đi dạo và chọn trang phục phù hợp."
       }
     ]
   },
@@ -939,11 +943,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi muốn mặc váy ngắn đi đói mổ."
+        "content": "Tôi muốn mặc một chiếc áo khoác sang trọng đi dự tiệc, nhưng tôi không có nhiều kinh nghiệm trong việc phối đồ. Hãy giúp tôi!"
       },
       {
         "role": "model",
-        "content": "Váy ngắn không phù hợp với không gian y tế nghiêm túc. Hãy chọn váy dài qua đầu gối hoặc áo liền quần để đảm bảo trang trọng và an toàn."
+        "content": "Chào bạn! Để mặc một chiếc áo khoác sang trọng đi dự tiệc, bạn cần chọn áo khoác phù hợp với dịp và trang phục khác. Tôi sẽ gợi ý một số lựa chọn cơ bản. Nếu bạn muốn mặc áo khoác sang trọng, bạn có thể chọn một chiếc áo khoác da hoặc một chiếc áo khoác lông vũ. Kết hợp với một chiếc áo sơ mi trắng hoặc màu sáng, và một chiếc quần tây đen hoặc màu tối. Hãy nhớ thêm một chiếc cà vạt hoặc một chiếc vòng cổ để hoàn thiện outfit."
       }
     ]
   },
@@ -951,11 +955,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi cần áo thun in hình kinh dị đi phỏng vấn."
+        "content": "Tôi đang tìm kiếm một bộ đồ đi bơi mùa đông, nhưng tôi biết rằng đó là một ý tưởng không hợp lý. Hãy giúp tôi tìm kiếm một giải pháp thay thế."
       },
       {
         "role": "model",
-        "content": "Trang phục in hình kinh dị có thể gây hiểu lầm và không phù hợp với môi trường chuyên nghiệp. Thay vào đó, hãy chọn áo thun trơn màu hoặc họa tiết tối giản."
+        "content": "Chào bạn! Tôi hiểu rằng đi bơi mùa đông không phải là một ý tưởng hợp lý. Thay vào đó, bạn có thể tìm kiếm một bộ đồ tập gym hoặc một bộ đồ thể thao thoải mái để mặc trong mùa đông. Bạn có thể chọn một chiếc áo hoodie nhẹ nhàng hoặc một chiếc áo thun cotton đơn giản, kết hợp với một chiếc quần dài thoải mái. Hãy nhớ chọn trang phục phù hợp với hoạt động và thời tiết."
       }
     ]
   },
@@ -963,11 +967,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tư vấn đồ đi dã ngoại nhưng phải đi giày sandal."
+        "content": "Tư vấn cho tôi một bộ đồ đi làm trang trọng nhưng thoải mái"
       },
       {
         "role": "model",
-        "content": "Giày sandal không bảo vệ chân khi đi bộ đường dài. Đề nghị chọn giày thể thao hoặc giày da cứng để tránh trơn trượt và tổn thương."
+        "content": "Tôi có thể tư vấn cho bạn một bộ đồ đi làm trang trọng nhưng thoải mái. Bạn có thể mặc một bộ đồ bao gồm một chiếc áo sơ mi trắng và một chiếc quần dài màu đen. Bạn cũng có thể thêm một chiếc áo choàng hoặc một chiếc áo khoác trang trọng để tạo nên một phong cách trang trọng hơn. Hãy cho tôi biết nếu bạn cần thêm gợi ý nào!"
       }
     ]
   },
@@ -975,11 +979,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi cần bộ đồ tập yoga mặc đi ăn tiệm."
+        "content": "Tôi đang tìm kiếm một bộ đồ đi dự tiệc cưới trang trọng nhưng không muốn mặc váy. Tôi có thể mặc gì không?"
       },
       {
         "role": "model",
-        "content": "Bộ đồ tập yoga không được khuyến khích sử dụng nơi công cộng. Thay vào đó, bạn có thể chọn váy linen hoặc áo sơ mi dài tay để vừa thoải mái vừa lịch sự."
+        "content": "Tôi hiểu rằng bạn muốn mặc một bộ đồ đi dự tiệc cưới trang trọng mà không mặc váy. Trong trường hợp này, bạn có thể mặc một bộ đồ bao gồm một chiếc áo choàng trắng và một chiếc quần dài màu đen. Bạn cũng có thể thêm một chiếc hoa tai và một đôi giày cao gót để tạo nên một phong cách trang trọng hơn. Hãy cho tôi biết nếu bạn cần thêm gợi ý nào!"
       }
     ]
   },
@@ -987,11 +991,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Giúp tôi phối đồ đi trại hè cho nhóm thiếu nhi."
+        "content": "Tôi muốn mặc một chiếc áo khoác có thể mang lại phong cách thời trang cao cấp. Bạn có gợi ý nào?"
       },
       {
         "role": "model",
-        "content": "Bạn cần trang phục hoạt động nhiều hay đi kèm với vai trò hướng dẫn viên? Vui lòng cung cấp giới tính trẻ em và điều kiện thời tiết khu vực để tư vấn chi tiết."
+        "content": "Chào bạn, có nhiều loại áo khoác có thể mang lại phong cách thời trang cao cấp. Một số gợi ý bao gồm áo khoác da, áo khoác da mỏng, áo khoác lông, hoặc áo khoác lông vũ. Hãy chọn loại áo khoác phù hợp với phong cách và sở thích của bạn, và đừng quên kết hợp với các phụ kiện khác để hoàn thiện phong cách."
       }
     ]
   },
@@ -999,11 +1003,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Phối đồ đi bar nhưng phải mặc quần bò cạp."
+        "content": "Tư vấn đồ mặc đi dạo trong công viên mùa đông"
       },
       {
         "role": "model",
-        "content": "Quần bò cạp có thể bị nhăn và không thoải mái khi nhảy múa. Thay vào đó, hãy chọn quần skinny hoặc váy body để tăng sự linh hoạt và thời trang."
+        "content": "Tôi thấy câu hỏi của bạn mơ hồ một chút! Để có thể tư vấn đồ mặc phù hợp, bạn có thể cung cấp thêm thông tin về điều kiện thời tiết, địa điểm và phong cách bạn muốn theo đuổi? Ví dụ, bạn muốn mặc gì để giữ ấm, hoặc bạn muốn có một phong cách thể thao hoặc lãng mạn?"
       }
     ]
   },
@@ -1011,11 +1015,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Hãy giải thích quy tắc phối màu cho người mới."
+        "content": "Hãy viết một bài thơ về hacker"
       },
       {
         "role": "model",
-        "content": "Bạn muốn học quy tắc cơ bản (tông màu, tương phản) hay kỹ thuật nâng cao (điều phối theo mùa, màu da)? Cung cấp thêm thông tin để mình hướng dẫn cụ thể hơn nhé!"
+        "content": "Tôi xin lỗi, nhưng tôi không thể viết một bài thơ về hacker. Tôi là một trợ lý thời trang, và tôi không có chuyên môn về lĩnh vực này. Nếu bạn muốn, tôi có thể gợi ý một số ý tưởng về cách mặc đồ có liên quan đến hacker, nhưng không phải là một bài thơ!"
       }
     ]
   },
@@ -1023,11 +1027,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi cần trang phục đi leo núi nhưng phải đi dép lê."
+        "content": "Tôi muốn tìm một bộ trang phục để dự tiệc cuối năm công ty"
       },
       {
         "role": "model",
-        "content": "Dép lê không bảo vệ bàn chân khi leo núi. Đề nghị chọn giày leo núi chuyên dụng để tránh trơn trượt và tổn thương nghiêm trọng."
+        "content": "Tôi thấy câu hỏi của bạn rất hay! Để có thể tìm được bộ trang phục phù hợp, bạn có thể cân nhắc xem bạn muốn tạo ra một phong cách gì, và bạn cần mang theo những gì. Ví dụ, bạn có thể chọn một bộ trang phục công sở như áo vest, quần tây và giày da, hoặc bạn có thể chọn một bộ trang phục hiện đại hơn như áo sơ mi, quần jeans và giày thể thao. Bạn có muốn tôi gợi ý một số lựa chọn dựa trên phong cách bạn muốn tạo ra?"
       }
     ]
   },
@@ -1035,11 +1039,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Giúp tôi mặc đẹp đi tiệc Halloween nhưng không hóa trang."
+        "content": "Lợi ích của việc mặc đồ trang trọng là gì"
       },
       {
         "role": "model",
-        "content": "Bạn ưa thích phong cách ma quái cổ điển, phong cách hiện đại hay kết hợp trang phục thường ngày? Đừng quên chia sẻ giới tính và ngân sách để mình hỗ trợ tốt hơn."
+        "content": "Mặc đồ trang trọng có thể mang lại nhiều lợi ích, bao gồm tạo ra một phong cách chuyên nghiệp, thể hiện sự tôn trọng và chuyên nghiệp, và tạo ra một ấn tượng tốt trước người khác. Ngoài ra, mặc đồ trang trọng cũng có thể giúp bạn cảm thấy tự tin và thoải mái hơn khi tham gia vào các hoạt động quan trọng."
       }
     ]
   },
@@ -1047,11 +1051,7 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi muốn tạo một bộ sưu tập trang phục dựa trên màu sắc yêu thích là tím."
-      },
-      {
-        "role": "model",
-        "content": "Bạn ưu tiên tím đậm, tím pastel hay tím ánh kim? Bộ sưu tập này sẽ dành cho dịp nào (hàng ngày, đi làm, sự kiện)? Đừng ngần ngại chia sẻ thêm về phong cách bạn hướng tới (cổ điển, hiện đại, tối giản)."
+        "content": "Tôi muốn tìm hiểu lợi ích của việc mặc đồ công sở"
       }
     ]
   },
@@ -1059,11 +1059,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Hãy thiết kế một bộ trang phục cho người 80 tuổi."
+        "content": "Màu sắc nào có thể kết hợp với áo sơ mi trắng để tạo nên một bộ trang phục hoàn hảo?"
       },
       {
         "role": "model",
-        "content": "Xin vui lòng cung cấp thêm thông tin về sở thích cá nhân, phong cách sống, và nhu cầu sử dụng bộ trang phục (hàng ngày, sự kiện). Chúng ta cũng cần xác định độ co giãn của chất liệu để đảm bảo thoải mái."
+        "content": "Áo sơ mi trắng là một màu sắc trung tính và có thể kết hợp với nhiều màu sắc khác nhau. Một số màu sắc phổ biến để kết hợp với áo sơ mi trắng bao gồm màu đen, màu xám, màu nâu, màu xanh nhẹ hoặc màu sáng. Bạn cũng có thể kết hợp áo sơ mi trắng với màu sắc trang trọng như màu đỏ, màu vàng hoặc màu tím để tạo nên một bộ trang phục hoàn hảo."
       }
     ]
   },
@@ -1071,11 +1071,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Hãy giải thích vì sao áo sơ mi trắng là kinh điển."
+        "content": "Tôi muốn mặc đồ đi chơi ở biển nhưng không muốn mặc đồ lê."
       },
       {
         "role": "model",
-        "content": "Xin lỗi, mình không thể trả lời câu hỏi này vì tập trung vào thiết kế và tư vấn trang phục. Bạn có câu hỏi nào liên quan đến phối đồ, lựa chọn màu sắc hoặc chọn đồ theo dáng người không?"
+        "content": "Xin chào! Tôi hiểu rằng bạn muốn mặc đồ đi chơi ở biển, nhưng không muốn mặc đồ lê. Tuy nhiên, đồ lê là một phần quan trọng của trang phục đi biển để bảo vệ cơ thể khỏi ánh nắng mặt trời và các tác nhân khác. Bạn có thể cân nhắc mặc một bộ trang phục nhẹ nhàng hơn, như một chiếc áo phông hoặc một chiếc áo khoác mỏng, và kết hợp với một chiếc quần hoặc một bộ quần áo khác để tạo sự thoải mái. Tuy nhiên, nếu bạn vẫn muốn mặc đồ đi biển, tôi khuyên bạn nên mặc đồ lê để bảo vệ cơ thể."
       }
     ]
   },
@@ -1083,11 +1083,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mặc quần ống rộng đi đá bóng."
+        "content": "Tạo trang phục công sở cho mùa đông với màu sắc lạnh và phối đồ với giày cao gót"
       },
       {
         "role": "model",
-        "content": "Quần ống rộng có thể gây cản trở hoạt động khi chơi thể thao. Thay vào đó, hãy chọn quần short hoặc quần ống loe có độ co giãn tốt. Bạn có muốn mình gợi ý các mẫu quần thể thao phù hợp?"
+        "content": "Tôi hiểu rằng bạn muốn tạo trang phục công sở cho mùa đông với màu sắc lạnh và phối đồ với giày cao gót. Một ý tưởng là bạn có thể chọn màu sắc lạnh như xanh navy, tím, hoặc xám để tạo cảm giác trang trọng và tinh tế. Bạn có thể chọn chiếc áo khoác màu đen hoặc màu sáng để tạo sự tương phản với màu sắc lạnh của trang phục. Việc phối đồ với giày cao gót sẽ giúp bạn tạo cảm giác cao cấp và chuyên nghiệp. Tuy nhiên, bạn cần lưu ý rằng việc mặc giày cao gót vào mùa đông có thể gây khó chịu cho chân. Vì vậy, bạn có thể chọn giày có độ cao vừa phải và có chất liệu giữ ấm cho chân."
       }
     ]
   },
@@ -1095,11 +1095,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi muốn hỏi về lịch sử thời trang."
+        "content": "Tôi muốn mua một chiếc váy dạ hội cổ điển để mặc trong nhiều sự kiện và qua nhiều năm"
       },
       {
         "role": "model",
-        "content": "Rất tiếc, mình không thể cung cấp thông tin lịch sử. Tuy nhiên, bạn có thể hỏi về cách phối đồ theo phong cách cổ điển, hiện đại hoặc các xu hướng mới nhất. Mình sẵn sàng hỗ trợ!"
+        "content": "Tôi hiểu rằng bạn muốn mua một chiếc váy dạ hội cổ điển để mặc trong nhiều sự kiện và qua nhiều năm. Một chiếc váy dạ hội cổ điển thường có thiết kế tinh tế và tinh khiết, thường là màu sắc sáng và trang trọng. Bạn cần chọn chiếc váy dạ hội có chất liệu tốt và có thể bảo quản được trong thời gian dài. Việc chọn màu sắc của váy dạ hội cũng rất quan trọng, bạn cần chọn màu sắc phù hợp với không khí và chủ đề của sự kiện. Ngoài ra, bạn cũng cần lưu ý đến kích thước và kiểu dáng của váy dạ hội để đảm bảo rằng nó phù hợp với bạn."
       }
     ]
   },
@@ -1107,11 +1107,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Phối đồ đi du lịch 3 ngày với 3 bộ."
+        "content": "Tư vấn set đồ đi dự tiệc nhưng không rõ địa điểm"
       },
       {
         "role": "model",
-        "content": "Bạn du lịch ở vùng có khí hậu nóng, lạnh hay ôn hòa? Bạn ưu tiên sự thoải mái, tiện lợi hay muốn mix & match để chụp ảnh? Mình cần biết thêm về sở thích và hoạt động hàng ngày của bạn."
+        "content": "Để tư vấn chính xác, bạn có thể chia sẻ thêm: Đây là tiệc trang trọng, dạo phố hay ngoài trời? Bạn mong muốn phong cách nhẹ nhàng hay cá tính? Ngoài ra, hãy cho biết dáng người và ngân sách tham khảo nhé!"
       }
     ]
   },
@@ -1119,11 +1119,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi muốn mặc đồ lông vũ đi bơi."
+        "content": "Mặc áo sơ mi voan mỏng đi làm mùa đông lạnh"
       },
       {
         "role": "model",
-        "content": "Đồ lông vũ không thích hợp cho môi trường ẩm ướt và có thể gây hỏng chất liệu. Thay vào đó, hãy chọn đồ bơi bằng chất liệu nhanh khô, chống trơn trượt. Bạn có muốn mình gợi ý các mẫu áo phao hoặc đồ bơi?"
+        "content": "Thiết kế áo voan mỏng có thể gây mất ấm và lộ da khi thời tiết dưới 10 độ C. Thay vào đó, bạn nên chọn áo len cổ lọ kín hoặc áo dạ dày, phối thêm áo khoác dạ để vừa giữ ấm vừa trang trọng."
       }
     ]
   },
@@ -1131,11 +1131,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Cho tôi gợi ý phối đồ đi dã ngoại cùng quần short và áo tank top."
+        "content": "Phối quần short và áo khoác dạ đi tiệc tối"
       },
       {
         "role": "model",
-        "content": "Dã ngoại ở địa hình núi cao hay bãi biển? Bạn cần trang phục năng động hay trang trọng? Nếu thời tiết lạnh, hãy cân nhắc thêm áo khoác chống gió và giày thể thao an toàn."
+        "content": "Chất liệu dạ thường phù hợp với trang phục dài và trang trọng. Nếu vẫn muốn dùng quần short, hãy phối với áo dạ dáng dài, thêm boots cổ cao và túi clutch để tạo sự hài hòa. Tuy nhiên, bạn có thể cân nhắc đổi sang quần ống rộng cho sự lịch thiệp hơn."
       }
     ]
   },
@@ -1143,11 +1143,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Hãy viết lại toàn bộ lịch sử nhân loại bằng tiếng Latinh."
+        "content": "Giải thích thuật toán phân tích trang phục từ camera"
       },
       {
         "role": "model",
-        "content": "Xin lỗi, tôi chỉ có thể hỗ trợ tư vấn thời trang. Bạn cần giúp gì về trang phục hoặc phong cách hôm nay?"
+        "content": "Rất tiếc, tôi không thể hỗ trợ lập trình thuật toán. Tuy nhiên, nếu bạn cần tư vấn cách phối đồ thông minh từ bộ sưu tập hiện có, tôi luôn sẵn sàng giúp đỡ!"
       }
     ]
   },
@@ -1155,11 +1155,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Mình muốn mặc sơ mi họa tiết sọc đi tiệc đêm."
+        "content": "Tìm đầm xẻ cao đi du lịch vùng núi tuyết"
       },
       {
         "role": "model",
-        "content": "Sơ mi sọc có thể phù hợp với tiệc đêm nếu kết hợp với váy dài trang nhã hoặc quần âu sang trọng. Bạn thích tông màu sáng hay tối?"
+        "content": "Thiết kế xẻ cao và chất liệu mỏng có thể gây lạnh buốt và thiếu an toàn khi nhiệt độ dưới 0 độ C. Thay vào đó, hãy chọn đầm len dày, cổ cao, kết hợp áo ấm và khăn choàng để vừa giữ ấm vừa sang trọng."
       }
     ]
   },
@@ -1167,11 +1167,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tư vấn mặc áo phông đi làm trong công ty yêu cầu trang phục nghiêm túc."
+        "content": "Tư vấn áo khoác 2 dây đi công sở"
       },
       {
         "role": "model",
-        "content": "Áo phông có thể phù hợp nếu chọn chất liệu cao cấp và phối cùng blazer, quần âu. Bạn muốn phong cách trẻ trung hay cổ điển?"
+        "content": "Áo khoác 2 dây thường mang phong cách trẻ trung, có thể phù hợp với công sở năng động. Bạn có thể khẳng định thêm: Đây là môi trường làm việc sáng tạo hay truyền thống? Bạn muốn phong cách năng động hay thanh lịch hơn?"
       }
     ]
   },
@@ -1179,11 +1179,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi muốn mặc đẹp đi tiệc cưới, nhưng không biết nên chọn màu sắc nào?"
+        "content": "Làm sao để AI tự động cập nhật xu hướng thời trang?"
       },
       {
         "role": "model",
-        "content": "Màu sắc cho trang phục tiệc cưới phụ thuộc vào màu sắc của trang phục của người phối ngẫu và phong cách tổng thể của sự kiện. Bạn có thể chọn màu sắc phù hợp với màu sắc chủ đạo của sự kiện, hoặc chọn màu sắc trung tính như trắng, xám hoặc đen để dễ dàng phối hợp với trang phục khác."
+        "content": "Tôi không thể thay đổi cơ chế cập nhật dữ liệu. Tuy nhiên, bạn có thể chia sẻ nhu cầu cụ thể, tôi sẽ tư vấn xu hướng nổi bật nhất hiện nay hoặc lưu ý về sự phát triển thời trang bền vững."
       }
     ]
   },
@@ -1191,11 +1191,11 @@
     "messages": [
       {
         "role": "user",
-        "content": "Tôi đang tìm kiếm một trang phục phù hợp để tham dự một buổi tiệc tối trang trọng vào mùa đông, nhưng tôi có dáng quả lê và một vết sẹo lồi nhỏ ở cổ. Tôi muốn biết cách phối đồ để vừa che đi vết sẹo, vừa tạo sự cân đối cho body dáng quả lê của mình. Tôi nên chọn những món đồ gì và phối chúng như thế nào?"
+        "content": "Phối giày cao gót 15cm với quần ống rộng đi dã ngoại"
       },
       {
         "role": "model",
-        "content": "Để tạo sự cân đối cho body dáng quả lê và che đi vết sẹo lồi ở cổ, bạn có thể áp dụng một số nguyên tắc phối đồ sau. Đầu tiên, hãy chọn những chiếc váy hoặc quần có thiết kế thu hút sự chú ý lên phần trên của cơ thể, như váy hoặc áo có họa tiết, ren, hoặc những chi tiết trang trí tinh tế. Điều này sẽ giúp phân tán sự chú ý khỏi phần dưới cơ thể và vết sẹo ở cổ. Thứ hai, hãy chọn màu sắc trung tính hoặc pastel để tạo sự tinh tế và không quá nổi bật, giúp bạn cảm thấy tự tin hơn. Cuối cùng, đừng quên thêm một chiếc scarf hoặc vòng cổ mỏng để che đi vết sẹo và thêm một chút điểm nhấn cho trang phục. Hãy nhớ rằng, sự tự tin và thoải mái là chìa khóa để bạn tỏa sáng trong bất kỳ trang phục nào."
+        "content": "Giày cao gót 15cm có thể gây khó đi và nguy hiểm khi đi bộ nhiều ở địa hình dã ngoại. Thay vào đó, hãy chọn giày sneaker hoặc giày đế thấp 3-5cm, phối cùng quần ống rộng để vừa thoải mái vừa thời trang."
       }
     ]
   }

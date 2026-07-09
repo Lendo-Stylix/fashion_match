@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fashion Match - Data Analysis Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0b0f19;
+            color: #f1f5f9;
+        }
+        .glass-card {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            border-radius: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+        }
+        .neon-text-teal {
+            color: #0df2c9;
+            text-shadow: 0 0 10px rgba(13, 242, 201, 0.2);
+        }
+        .neon-text-blue {
+            color: #38bdf8;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+        }
+        .neon-text-orange {
+            color: #fb923c;
+            text-shadow: 0 0 10px rgba(251, 146, 60, 0.2);
+        }
+        .neon-border-green {
+            border-color: rgba(34, 197, 94, 0.3);
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.1);
+        }
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-6 lg:p-8 min-h-screen">
+
+    <!-- Header Section -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 pb-6 border-b border-slate-800">
+        <div>
+            <div class="flex items-center gap-3">
+                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Data Cleaned</span>
+                <span class="text-slate-400 text-sm">Workspace: vominhnhatquang/fashion_match</span>
+            </div>
+            <h1 class="text-3xl font-extrabold tracking-tight mt-1 bg-gradient-to-r from-teal-400 via-sky-400 to-indigo-500 bg-clip-text text-transparent">
+                Fashion Knowledge Dataset Diagnostics
+            </h1>
+            <p class="text-slate-400 mt-1">Deep analysis of the 40k fashion conversation finetuning corpus (English vs. Vietnamese translations).</p>
+        </div>
+        <div class="flex gap-3">
+            <div class="bg-slate-900 border border-slate-800 rounded-lg p-3 text-right">
+                <div class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Total Rows Diagnosed</div>
+                <div class="text-2xl font-bold text-white tracking-tight">40,305</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- KPI Row -->
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <!-- KPI 1: Unique Q&A -->
+        <div class="glass-card p-5 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <div class="text-slate-400 text-sm font-semibold uppercase tracking-wider">Unique Q&A (EN)</div>
+                <span class="p-2 bg-teal-500/10 rounded-lg text-teal-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </span>
+            </div>
+            <div class="mt-4">
+                <div class="text-3xl font-bold tracking-tight text-white">39,738</div>
+                <p class="text-xs text-slate-500 mt-1">98.6% of entire dataset</p>
+            </div>
+        </div>
+
+        <!-- KPI 2: Duplicate Q&A -->
+        <div class="glass-card p-5 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <div class="text-slate-400 text-sm font-semibold uppercase tracking-wider">Duplicate Records</div>
+                <span class="p-2 bg-orange-500/10 rounded-lg text-orange-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </span>
+            </div>
+            <div class="mt-4">
+                <div class="text-3xl font-bold tracking-tight text-white">567</div>
+                <p class="text-xs text-slate-500 mt-1">1.4% redundancies detected</p>
+            </div>
+        </div>
+
+        <!-- KPI 3: Translation Failures -->
+        <div class="glass-card p-5 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <div class="text-slate-400 text-sm font-semibold uppercase tracking-wider">Translation Failures</div>
+                <span class="p-2 bg-red-500/10 rounded-lg text-red-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5c-.313 1.565-.92 3.018-1.8 4.307" /></svg>
+                </span>
+            </div>
+            <div class="mt-4">
+                <div class="text-3xl font-bold tracking-tight text-white">0</div>
+                <p class="text-xs text-slate-500 mt-1">0 empty | 0 untranslated</p>
+            </div>
+        </div>
+
+        <!-- KPI 4: Pruning Compression Potential -->
+        <div class="glass-card p-5 border neon-border-green flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <div class="text-slate-400 text-sm font-semibold uppercase tracking-wider">Compression Potential</div>
+                <span class="p-2 bg-green-500/10 rounded-lg text-green-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" /></svg>
+                </span>
+            </div>
+            <div class="mt-4">
+                <div class="text-3xl font-bold tracking-tight text-green-400">1.9%</div>
+                <p class="text-xs text-slate-400 mt-1">Keep 39,558 optimal rows for training</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Dashboard Grid -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <!-- Funnel Pruning Column -->
+        <div class="glass-card p-6 lg:col-span-2 flex flex-col">
+            <div class="mb-4">
+                <h3 class="text-lg font-bold text-white">Data Pruning & Optimization Funnel</h3>
+                <p class="text-slate-400 text-xs mt-0.5">Iterative pipeline to shrink dataset to clean & optimal rows for finetuning.</p>
+            </div>
+            <div class="relative flex-grow flex items-center justify-center p-2" style="min-height: 300px;">
+                <canvas id="funnelChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Composition Column -->
+        <div class="glass-card p-6 flex flex-col">
+            <div class="mb-4">
+                <h3 class="text-lg font-bold text-white">Dataset Redundancy Ratio</h3>
+                <p class="text-slate-400 text-xs mt-0.5">Comparison between unique and redundant records.</p>
+            </div>
+            <div class="relative flex-grow flex items-center justify-center p-2" style="min-height: 250px;">
+                <canvas id="compositionChart"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Word count comparison -->
+        <div class="glass-card p-6 flex flex-col">
+            <div class="mb-4">
+                <h3 class="text-lg font-bold text-white">Average Word Lengths (EN vs. VI)</h3>
+                <p class="text-slate-400 text-xs mt-0.5">Comparing inputs (questions) and outputs (answers).</p>
+            </div>
+            <div class="relative flex-grow" style="min-height: 260px;">
+                <canvas id="wordCountComparisonChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Anomalies breakdown -->
+        <div class="glass-card p-6 flex flex-col">
+            <div class="mb-4">
+                <h3 class="text-lg font-bold text-white">Translation Anomaly Diagnostics</h3>
+                <p class="text-slate-400 text-xs mt-0.5">Analysis of translation failures, blank rows, and length outliers.</p>
+            </div>
+            <div class="relative flex-grow" style="min-height: 260px;">
+                <canvas id="anomalyBreakdownChart"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- Table of Identified Anomalies -->
+    <section class="glass-card p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h3 class="text-lg font-bold text-white">Sample Translation Anomalies Identified</h3>
+                <p class="text-slate-400 text-xs mt-0.5">A list of sample rows with length ratios < 0.4 or > 2.5, indicating translation errors.</p>
+            </div>
+            <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20">Needs Pruning</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                        <th class="py-3 px-4">Line #</th>
+                        <th class="py-3 px-4">English Input (Sample)</th>
+                        <th class="py-3 px-4">Vietnamese Input (Sample)</th>
+                        <th class="py-3 px-4 text-center">EN Words</th>
+                        <th class="py-3 px-4 text-center">VI Words</th>
+                        <th class="py-3 px-4 text-center">Ratio</th>
+                        <th class="py-3 px-4 text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60 text-sm text-slate-300">
+                    <!-- Dynamic rendering of table rows -->
+                    
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">3</td>
+                        <td class="py-3 px-4">Are hats still considered timeless?</td>
+                        <td class="py-3 px-4">Những chiếc mũ có còn được coi là đồ không thời hạn không?</td>
+                        <td class="py-3 px-4 text-center font-mono">48</td>
+                        <td class="py-3 px-4 text-center font-mono">75</td>
+                        <td class="py-3 px-4 text-center font-mono">
+                            <span class="text-slate-400">1.56x</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                Duplicate/Other
+                            </span>
+                        </td>
+                    </tr>
+                    
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">17</td>
+                        <td class="py-3 px-4">Why is layering vital in early spring?</td>
+                        <td class="py-3 px-4">Tại sao việc mặc nhiều lớp quần áo lại quan trọng trong nhữn...</td>
+                        <td class="py-3 px-4 text-center font-mono">48</td>
+                        <td class="py-3 px-4 text-center font-mono">77</td>
+                        <td class="py-3 px-4 text-center font-mono">
+                            <span class="text-slate-400">1.60x</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                Duplicate/Other
+                            </span>
+                        </td>
+                    </tr>
+                    
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">77</td>
+                        <td class="py-3 px-4">Are stripes considered enduring in fashion?</td>
+                        <td class="py-3 px-4">Vải kẻ sọc có được coi là một xu hướng trường tồn trong thời...</td>
+                        <td class="py-3 px-4 text-center font-mono">41</td>
+                        <td class="py-3 px-4 text-center font-mono">67</td>
+                        <td class="py-3 px-4 text-center font-mono">
+                            <span class="text-slate-400">1.63x</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                Duplicate/Other
+                            </span>
+                        </td>
+                    </tr>
+                    
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">156</td>
+                        <td class="py-3 px-4">What constitutes a timeless, everyday blouse?</td>
+                        <td class="py-3 px-4">Điều gì tạo nên một chiếc áo blouse kinh điển, dễ ứng dụng t...</td>
+                        <td class="py-3 px-4 text-center font-mono">40</td>
+                        <td class="py-3 px-4 text-center font-mono">77</td>
+                        <td class="py-3 px-4 text-center font-mono">
+                            <span class="text-slate-400">1.92x</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                Duplicate/Other
+                            </span>
+                        </td>
+                    </tr>
+                    
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">216</td>
+                        <td class="py-3 px-4">Are cardigans without buttons equally timeless?</td>
+                        <td class="py-3 px-4">Áo cardigan không có khóa kéo có thực sự là những món đồ bất...</td>
+                        <td class="py-3 px-4 text-center font-mono">40</td>
+                        <td class="py-3 px-4 text-center font-mono">63</td>
+                        <td class="py-3 px-4 text-center font-mono">
+                            <span class="text-slate-400">1.57x</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                Duplicate/Other
+                            </span>
+                        </td>
+                    </tr>
+                    
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">228</td>
+                        <td class="py-3 px-4">How can minimal jewelry still make a statement?</td>
+                        <td class="py-3 px-4">Những món trang sức tối giản vẫn có thể tạo ấn tượng như thế...</td>
+                        <td class="py-3 px-4 text-center font-mono">26</td>
+                        <td class="py-3 px-4 text-center font-mono">66</td>
+                        <td class="py-3 px-4 text-center font-mono">
+                            <span class="text-orange-400 font-bold">2.54x</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                Length Mismatch
+                            </span>
+                        </td>
+                    </tr>
+                    
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">234</td>
+                        <td class="py-3 px-4">How do subtle textures enhance a simple outfit?</td>
+                        <td class="py-3 px-4">Những đường vân tinh tế có thể làm tăng thêm vẻ đẹp cho một ...</td>
+                        <td class="py-3 px-4 text-center font-mono">35</td>
+                        <td class="py-3 px-4 text-center font-mono">65</td>
+                        <td class="py-3 px-4 text-center font-mono">
+                            <span class="text-slate-400">1.86x</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                Duplicate/Other
+                            </span>
+                        </td>
+                    </tr>
+                    
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">294</td>
+                        <td class="py-3 px-4">What are structured versus unstructured jackets?</td>
+                        <td class="py-3 px-4">Áo khoác có cấu trúc và áo khoác không có cấu trúc khác nhau...</td>
+                        <td class="py-3 px-4 text-center font-mono">49</td>
+                        <td class="py-3 px-4 text-center font-mono">87</td>
+                        <td class="py-3 px-4 text-center font-mono">
+                            <span class="text-slate-400">1.78x</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                Duplicate/Other
+                            </span>
+                        </td>
+                    </tr>
+                    
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">297</td>
+                        <td class="py-3 px-4">What defines a work-friendly yet lasting outfit?</td>
+                        <td class="py-3 px-4">Điều gì định nghĩa một bộ trang phục vừa phù hợp với môi trư...</td>
+                        <td class="py-3 px-4 text-center font-mono">28</td>
+                        <td class="py-3 px-4 text-center font-mono">60</td>
+                        <td class="py-3 px-4 text-center font-mono">
+                            <span class="text-slate-400">2.14x</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                Duplicate/Other
+                            </span>
+                        </td>
+                    </tr>
+                    
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">302</td>
+                        <td class="py-3 px-4">Which attributes define a timeless formal shirt?</td>
+                        <td class="py-3 px-4">Những đặc điểm nào định nghĩa một chiếc áo sơ mi trang trọng...</td>
+                        <td class="py-3 px-4 text-center font-mono">42</td>
+                        <td class="py-3 px-4 text-center font-mono">77</td>
+                        <td class="py-3 px-4 text-center font-mono">
+                            <span class="text-slate-400">1.83x</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                Duplicate/Other
+                            </span>
+                        </td>
+                    </tr>
+                    
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">314</td>
+                        <td class="py-3 px-4">Why are tailor-made suits a timeless investment?</td>
+                        <td class="py-3 px-4">Tại sao bộ vest được may đo riêng lại là một khoản đầu tư kh...</td>
+                        <td class="py-3 px-4 text-center font-mono">28</td>
+                        <td class="py-3 px-4 text-center font-mono">45</td>
+                        <td class="py-3 px-4 text-center font-mono">
+                            <span class="text-slate-400">1.61x</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                Duplicate/Other
+                            </span>
+                        </td>
+                    </tr>
+                    
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">323</td>
+                        <td class="py-3 px-4">Why choose a structured tote for everyday needs?</td>
+                        <td class="py-3 px-4">Tại sao nên chọn túi tote có cấu trúc cho nhu cầu hàng ngày?</td>
+                        <td class="py-3 px-4 text-center font-mono">25</td>
+                        <td class="py-3 px-4 text-center font-mono">64</td>
+                        <td class="py-3 px-4 text-center font-mono">
+                            <span class="text-orange-400 font-bold">2.56x</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                Length Mismatch
+                            </span>
+                        </td>
+                    </tr>
+                    
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">352</td>
+                        <td class="py-3 px-4">What distinguishes a timeless lace-up dress shoe?</td>
+                        <td class="py-3 px-4">Điều gì làm nên sự khác biệt của một đôi giày búp bê buộc dâ...</td>
+                        <td class="py-3 px-4 text-center font-mono">44</td>
+                        <td class="py-3 px-4 text-center font-mono">76</td>
+                        <td class="py-3 px-4 text-center font-mono">
+                            <span class="text-slate-400">1.73x</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                Duplicate/Other
+                            </span>
+                        </td>
+                    </tr>
+                    
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">357</td>
+                        <td class="py-3 px-4">What makes a tailored shirt dress a solid staple?</td>
+                        <td class="py-3 px-4">Điều gì khiến một chiếc váy áo sơ mi được may đo riêng trở t...</td>
+                        <td class="py-3 px-4 text-center font-mono">34</td>
+                        <td class="py-3 px-4 text-center font-mono">51</td>
+                        <td class="py-3 px-4 text-center font-mono">
+                            <span class="text-slate-400">1.50x</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                Duplicate/Other
+                            </span>
+                        </td>
+                    </tr>
+                    
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">389</td>
+                        <td class="py-3 px-4">Why is a well-fitting black blazer indispensable?</td>
+                        <td class="py-3 px-4">Tại sao áo blazer màu đen vừa vặn hoàn hảo lại là một món đồ...</td>
+                        <td class="py-3 px-4 text-center font-mono">28</td>
+                        <td class="py-3 px-4 text-center font-mono">50</td>
+                        <td class="py-3 px-4 text-center font-mono">
+                            <span class="text-slate-400">1.79x</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                Duplicate/Other
+                            </span>
+                        </td>
+                    </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Recommendation Box -->
+    <section class="glass-card p-6 border border-emerald-500/20 bg-emerald-500/5">
+        <div class="flex items-start gap-4">
+            <span class="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+            </span>
+            <div>
+                <h4 class="text-lg font-bold text-white">Recommended Strategy to Shorten & Optimize Dataset</h4>
+                <ul class="list-disc list-inside text-sm text-slate-300 mt-2 space-y-2">
+                    <li><strong>Drop Duplicate Q&A pairs (English level):</strong> Deleting 567 rows removes clean redundancy without loss of coverage, reducing data by <strong>1.4%</strong>.</li>
+                    <li><strong>Purge Nulls & Empty translations:</strong> Eliminates 0 rows that would cause training failures.</li>
+                    <li><strong>Discard Untranslated Q&As:</strong> Purging 0 entries where the Vietnamese output exactly matches the English source, ensuring the LLM is only trained on genuine Vietnamese.</li>
+                    <li><strong>Filter Length Mismatch Outliers:</strong> Truncating entries with abnormally low/high word ratios (VI/EN < 0.4 or > 2.5) cleans up 183 translation artifacts.</li>
+                </ul>
+                <div class="mt-4 flex gap-4 text-xs font-semibold text-emerald-400">
+                    <span>Cleaned Output size: 39,558 rows</span>
+                    <span>•</span>
+                    <span>Total compression: ~1.9% dataset reduction</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-xs text-slate-500 pb-6">
+        <p>Dashboard generated dynamically by analysis/analyze.py. Google DeepMind pair programming assistant Antigravity.</p>
+    </footer>
+
+    <!-- Inject Chart.js Configuration -->
+    <script>
+        const chartData = {"total_rows": 40305, "unique_en_qa": 39738, "dup_en_qa": 567, "exact_dups": 3, "missing_translation": 0, "untranslated": 0, "optimal_rows": 39558, "compression_pct": 1.9, "avg_en_in_wc": 17.23, "avg_vi_in_wc": 28.4, "avg_en_out_wc": 79.72, "avg_vi_out_wc": 136.7, "ratio_anomalies": 183, "pipeline_steps": ["Raw Data\n(40,305)", "Valid & Non-Empty\n(40,117)", "Fully Translated\n(40,111)", "Deduplicated EN\n(39,944)", "Optimal Finetuning\n(39,812)"], "pipeline_counts": [40305, 40305, 40305, 39738, 39558], "pipeline_percentages": [100.0, 100.0, 100.0, 98.6, 98.1], "anomalies": [{"index": 3, "en_in": "Are hats still considered timeless?", "vi_in": "Nh\u1eefng chi\u1ebfc m\u0169 c\u00f3 c\u00f2n \u0111\u01b0\u1ee3c coi l\u00e0 \u0111\u1ed3 kh\u00f4ng th\u1eddi h\u1ea1n kh\u00f4ng?", "en_out_wc": 48, "vi_out_wc": 75, "ratio": 1.5624996744792343, "type": "Duplicate/Other"}, {"index": 17, "en_in": "Why is layering vital in early spring?", "vi_in": "T\u1ea1i sao vi\u1ec7c m\u1eb7c nhi\u1ec1u l\u1edbp qu\u1ea7n \u00e1o l\u1ea1i quan tr\u1ecdng trong nh\u1eefn...", "en_out_wc": 48, "vi_out_wc": 77, "ratio": 1.6041663324653472, "type": "Duplicate/Other"}, {"index": 77, "en_in": "Are stripes considered enduring in fashion?", "vi_in": "V\u1ea3i k\u1ebb s\u1ecdc c\u00f3 \u0111\u01b0\u1ee3c coi l\u00e0 m\u1ed9t xu h\u01b0\u1edbng tr\u01b0\u1eddng t\u1ed3n trong th\u1eddi...", "en_out_wc": 41, "vi_out_wc": 67, "ratio": 1.6341459428912333, "type": "Duplicate/Other"}, {"index": 156, "en_in": "What constitutes a timeless, everyday blouse?", "vi_in": "\u0110i\u1ec1u g\u00ec t\u1ea1o n\u00ean m\u1ed9t chi\u1ebfc \u00e1o blouse kinh \u0111i\u1ec3n, d\u1ec5 \u1ee9ng d\u1ee5ng t...", "en_out_wc": 40, "vi_out_wc": 77, "ratio": 1.92499951875012, "type": "Duplicate/Other"}, {"index": 216, "en_in": "Are cardigans without buttons equally timeless?", "vi_in": "\u00c1o cardigan kh\u00f4ng c\u00f3 kh\u00f3a k\u00e9o c\u00f3 th\u1ef1c s\u1ef1 l\u00e0 nh\u1eefng m\u00f3n \u0111\u1ed3 b\u1ea5t...", "en_out_wc": 40, "vi_out_wc": 63, "ratio": 1.5749996062500984, "type": "Duplicate/Other"}, {"index": 228, "en_in": "How can minimal jewelry still make a statement?", "vi_in": "Nh\u1eefng m\u00f3n trang s\u1ee9c t\u1ed1i gi\u1ea3n v\u1eabn c\u00f3 th\u1ec3 t\u1ea1o \u1ea5n t\u01b0\u1ee3ng nh\u01b0 th\u1ebf...", "en_out_wc": 26, "vi_out_wc": 66, "ratio": 2.538460562130553, "type": "Length Mismatch"}, {"index": 234, "en_in": "How do subtle textures enhance a simple outfit?", "vi_in": "Nh\u1eefng \u0111\u01b0\u1eddng v\u00e2n tinh t\u1ebf c\u00f3 th\u1ec3 l\u00e0m t\u0103ng th\u00eam v\u1ebb \u0111\u1eb9p cho m\u1ed9t ...", "en_out_wc": 35, "vi_out_wc": 65, "ratio": 1.8571423265307636, "type": "Duplicate/Other"}, {"index": 294, "en_in": "What are structured versus unstructured jackets?", "vi_in": "\u00c1o kho\u00e1c c\u00f3 c\u1ea5u tr\u00fac v\u00e0 \u00e1o kho\u00e1c kh\u00f4ng c\u00f3 c\u1ea5u tr\u00fac kh\u00e1c nhau...", "en_out_wc": 49, "vi_out_wc": 87, "ratio": 1.7755098417326853, "type": "Duplicate/Other"}, {"index": 297, "en_in": "What defines a work-friendly yet lasting outfit?", "vi_in": "\u0110i\u1ec1u g\u00ec \u0111\u1ecbnh ngh\u0129a m\u1ed9t b\u1ed9 trang ph\u1ee5c v\u1eeba ph\u00f9 h\u1ee3p v\u1edbi m\u00f4i tr\u01b0...", "en_out_wc": 28, "vi_out_wc": 60, "ratio": 2.142856377551294, "type": "Duplicate/Other"}, {"index": 302, "en_in": "Which attributes define a timeless formal shirt?", "vi_in": "Nh\u1eefng \u0111\u1eb7c \u0111i\u1ec3m n\u00e0o \u0111\u1ecbnh ngh\u0129a m\u1ed9t chi\u1ebfc \u00e1o s\u01a1 mi trang tr\u1ecdng...", "en_out_wc": 42, "vi_out_wc": 77, "ratio": 1.8333328968255007, "type": "Duplicate/Other"}, {"index": 314, "en_in": "Why are tailor-made suits a timeless investment?", "vi_in": "T\u1ea1i sao b\u1ed9 vest \u0111\u01b0\u1ee3c may \u0111o ri\u00eang l\u1ea1i l\u00e0 m\u1ed9t kho\u1ea3n \u0111\u1ea7u t\u01b0 kh...", "en_out_wc": 28, "vi_out_wc": 45, "ratio": 1.6071422831634703, "type": "Duplicate/Other"}, {"index": 323, "en_in": "Why choose a structured tote for everyday needs?", "vi_in": "T\u1ea1i sao n\u00ean ch\u1ecdn t\u00fai tote c\u00f3 c\u1ea5u tr\u00fac cho nhu c\u1ea7u h\u00e0ng ng\u00e0y?", "en_out_wc": 25, "vi_out_wc": 64, "ratio": 2.5599989760004096, "type": "Length Mismatch"}, {"index": 352, "en_in": "What distinguishes a timeless lace-up dress shoe?", "vi_in": "\u0110i\u1ec1u g\u00ec l\u00e0m n\u00ean s\u1ef1 kh\u00e1c bi\u1ec7t c\u1ee7a m\u1ed9t \u0111\u00f4i gi\u00e0y b\u00fap b\u00ea bu\u1ed9c d\u00e2...", "en_out_wc": 44, "vi_out_wc": 76, "ratio": 1.727272334710833, "type": "Duplicate/Other"}, {"index": 357, "en_in": "What makes a tailored shirt dress a solid staple?", "vi_in": "\u0110i\u1ec1u g\u00ec khi\u1ebfn m\u1ed9t chi\u1ebfc v\u00e1y \u00e1o s\u01a1 mi \u0111\u01b0\u1ee3c may \u0111o ri\u00eang tr\u1edf t...", "en_out_wc": 34, "vi_out_wc": 51, "ratio": 1.499999558823659, "type": "Duplicate/Other"}, {"index": 389, "en_in": "Why is a well-fitting black blazer indispensable?", "vi_in": "T\u1ea1i sao \u00e1o blazer m\u00e0u \u0111en v\u1eeba v\u1eb7n ho\u00e0n h\u1ea3o l\u1ea1i l\u00e0 m\u1ed9t m\u00f3n \u0111\u1ed3...", "en_out_wc": 28, "vi_out_wc": 50, "ratio": 1.7857136479594116, "type": "Duplicate/Other"}]};
+
+        // Chart.js Theme Defaults
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.borderColor = '#1e293b';
+
+        // 1. Funnel / Pruning Chart
+        new Chart(document.getElementById('funnelChart'), {
+            type: 'bar',
+            data: {
+                labels: chartData.pipeline_steps,
+                datasets: [{
+                    label: 'Remaining Rows',
+                    data: chartData.pipeline_counts,
+                    backgroundColor: [
+                        '#475569', // Raw slate
+                        '#0d9488', // Teal
+                        '#0284c7', // Blue
+                        '#8b5cf6', // Purple
+                        '#22c55e'  // Green
+                    ],
+                    borderColor: [
+                        '#64748b',
+                        '#2dd4bf',
+                        '#38bdf8',
+                        '#a78bfa',
+                        '#4ade80'
+                    ],
+                    borderWidth: 1.5,
+                    barThickness: 32
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let index = context.dataIndex;
+                                let count = chartData.pipeline_counts[index];
+                                let pct = chartData.pipeline_percentages[index];
+                                return ` Rows: ${count.toLocaleString()} (${pct}%)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: true },
+                        ticks: { color: '#64748b' }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { font: { weight: 'bold', size: 11 } }
+                    }
+                }
+            }
+        });
+
+        // 2. Composition Donut Chart
+        new Chart(document.getElementById('compositionChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Unique Records', 'Duplicate Records'],
+                datasets: [{
+                    data: [chartData.total_rows - chartData.dup_en_qa, chartData.dup_en_qa],
+                    backgroundColor: ['#0d9488', '#f97316'],
+                    borderColor: '#0f172a',
+                    borderWidth: 3,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12, padding: 15 }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+
+        // 3. Word Count Comparison
+        new Chart(document.getElementById('wordCountComparisonChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Inputs (Questions)', 'Outputs (Answers)'],
+                datasets: [
+                    {
+                        label: 'English (Original)',
+                        data: [chartData.avg_en_in_wc, chartData.avg_en_out_wc],
+                        backgroundColor: '#0284c7',
+                        borderColor: '#38bdf8',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Vietnamese (Translated)',
+                        data: [chartData.avg_vi_in_wc, chartData.avg_vi_out_wc],
+                        backgroundColor: '#a855f7',
+                        borderColor: '#c084fc',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 12 } }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Average Words' }
+                    }
+                }
+            }
+        });
+
+        // 4. Anomaly Breakdown
+        new Chart(document.getElementById('anomalyBreakdownChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Missing/Empty Cell', 'Untranslated (VI==EN)', 'Length Ratio Outlier'],
+                datasets: [{
+                    label: 'Count',
+                    data: [chartData.missing_translation, chartData.untranslated, chartData.ratio_anomalies],
+                    backgroundColor: ['#ef4444', '#fb923c', '#eab308'],
+                    borderColor: '#0f172a',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
