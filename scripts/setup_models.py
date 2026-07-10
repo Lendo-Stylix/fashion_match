@@ -21,6 +21,12 @@ BASE_DIR = Path("D:/Models")
 HF_HUB_CACHE = BASE_DIR / "hf_hub"
 ADAPTERS_DIR = BASE_DIR / "adapters"
 
+# Set HF cache env vars at IMPORT TIME so no download ever leaks to C:\~/.cache.
+# These must be set before any huggingface_hub / transformers import.
+os.environ.setdefault("HF_HUB_CACHE", str(HF_HUB_CACHE))
+os.environ.setdefault("HF_HOME", str(BASE_DIR / "hf_home"))
+os.environ.setdefault("HUGGINGFACE_HUB_CACHE", str(HF_HUB_CACHE))
+
 # 4 base models + 4 adapters verified 2026-07-10
 MODEL_REGISTRY = {
     "T1": {
