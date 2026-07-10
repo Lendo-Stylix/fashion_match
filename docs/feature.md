@@ -191,3 +191,18 @@ Sprint 3/3 — Graph-native grading + ablation harness. Commit: pending
 Current generated output: `data/custom/outfits/generated_outfits.parquet` with `1000` valid outfits (`700` FITB-beam / `300` random-scored), `1000` unique item combinations, score range `0.60–0.98`, zero invalid category-rule combinations, zero mixed-gender outfits, and zero formality-clash outfits. Price-tier balancing now targets affordable users by default (`budget=0.20`, `mid=0.50`, `premium=0.30`) and the latest build hit the target exactly (`max_price_tier_deviation=0.0000`).
 
 Sprint 1/3 — KB combination prototype. Commit: pending
+
+---
+
+## stylist-fashion-eval — Fashion-Knowledge & Fashion-Logic Benchmark (rule-based)
+
+`src/outfitmatch/stylist/fashion_eval.py` — a reproducible, LLM-judge-free benchmark for the stylist's *core* capability: **tri thức thời trang** (fashion knowledge) and **logic thời trang** (fashion reasoning). Every score is computed by parsing the model's free-text / tool-call output against rule-based ground truth derived from `vocab.py` — no LLM judge, fully deterministic.
+
+Two families, six item banks:
+
+* **Knowledge** — `OCCASION_FORMALITY_ITEMS` (occasion → appropriate formality via `formalities_for_occasion`), `BODY_SHAPE_ADVICE_ITEMS` (curated styling-do / styling-don't cues per body shape), `SEASON_ADVICE_ITEMS` (curated fabric/layering cues per season).
+* **Logic** — `COHERENCE_ITEMS` (judge outfit coherence by `FORMALITY_TOLERANCE`), `ASK_BACK_ITEMS` (abstain / ask-back when required `occasion` slot is missing instead of hallucinating a tool call), `TOOL_CALL_DERIVATION_ITEMS` (derive schema-valid `search_outfits` call from a complete profile; hallucinated enum zeroes the score).
+
+Scorers: `score_occasion_formality`, `score_body_shape_advice`, `score_season_advice`, `score_coherence_judgment` (+`detect_verdict`), `score_ask_back`, `score_tool_call_derivation`. `evaluate_fashion_dataset()` mirrors `stylist.benchmark.evaluate_dataset` (same `generate_fn` adapter contract) and aggregates per-task `mean_score` + overall.
+
+`tests/test_stylist_fashion_eval.py` — 34 tests, 98% coverage. Sprint 9 — stylist core-capability benchmark (branch `feat/benchmark`). Commit: pending

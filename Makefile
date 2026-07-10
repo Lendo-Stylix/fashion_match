@@ -1,4 +1,4 @@
-.PHONY: install test test-fast lint format demo qdrant-up qdrant-down clean
+.PHONY: install test test-fast lint format demo qdrant-up qdrant-down clean bench-fashion
 
 install:
 	uv sync --group dev
@@ -31,3 +31,6 @@ demo: qdrant-up
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -name "*.pyc" -delete 2>/dev/null || true
+# Reproducible fashion-knowledge/logic regression guard (no GPU).
+bench-fashion:
+	uv run python -m scripts.stylist.run_fashion_benchmark --mock

@@ -16,4 +16,10 @@ See Kien_truc_v3.1.md §4 for full specification.
 from outfitmatch.stylist.tools import SEARCH_OUTFITS_TOOL
 from outfitmatch.stylist.validation import extract_outfit_ids, validate_response
 
-__all__ = ["SEARCH_OUTFITS_TOOL", "extract_outfit_ids", "validate_response"]
+__all__ = [
+    "SEARCH_OUTFITS_TOOL",
+    "extract_outfit_ids",
+    "validate_response",
+    "evaluate_fashion_dataset",
+]
+from outfitmatch.stylist.fashion_eval import evaluate_fashion_dataset
