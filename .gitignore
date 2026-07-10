@@ -49,6 +49,7 @@ data/eval/
 # Env
 .env
 .env.*
+!.env.example
 
 # OS
 .DS_Store

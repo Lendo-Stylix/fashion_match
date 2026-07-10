@@ -1,4 +1,4 @@
-.PHONY: install test test-fast lint format demo qdrant-up qdrant-down clean bench-fashion
+.PHONY: install test test-fast lint format demo qdrant-up qdrant-down clean bench-fashion setup-models
 
 install:
 	uv sync --group dev
@@ -34,3 +34,6 @@ clean:
 # Reproducible fashion-knowledge/logic regression guard (no GPU).
 bench-fashion:
 	uv run python -m scripts.stylist.run_fashion_benchmark --mock
+# Pull 4 base models + 4 LoRA adapters to D:/Models (off C:)
+setup-models:
+	uv run python scripts/setup_models.py --base --adapters
