@@ -88,7 +88,11 @@ def build_json_report(data: dict[str, list[dict[str, str]]]) -> dict:
             metric = row.get("metric", "unknown")
             if ab not in by_ablation:
                 by_ablation[ab] = {}
-            by_ablation[ab][metric] = {"value": row["value"], "timestamp": row.get("timestamp", "")}
+            by_ablation[ab][metric] = {
+                "value": row["value"],
+                "timestamp": row.get("timestamp", ""),
+                "commit_sha": row.get("commit_sha", ""),
+            }
         report["experiments"][filename] = by_ablation
     return report
 

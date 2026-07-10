@@ -21,13 +21,13 @@ from scripts.metrics_summary import (
 def sample_csv(tmp_path: Path) -> Path:
     path = tmp_path / "eval_graph.csv"
     path.write_text(
-        "ablation,metric,value,timestamp\n"
-        "all-seeds,catalog_coverage,0.72,2026-07-10T10:00:00+00:00\n"
-        "all-seeds,n_assembled,142,2026-07-10T10:00:00+00:00\n"
-        "all-seeds,fitb_recall@5,0.95,2026-07-10T10:00:00+00:00\n"
-        "occasion=office,catalog_coverage,0.65,2026-07-10T10:00:00+00:00\n"
-        "occasion=office,fitb_recall@5,0.91,2026-07-10T10:00:00+00:00\n"
-        "beam=1,catalog_coverage,0.70,2026-07-10T10:00:00+00:00\n",
+        "ablation,metric,value,timestamp,commit_sha\n"
+        "all-seeds,catalog_coverage,0.72,2026-07-10T10:00:00+00:00,abc123\n"
+        "all-seeds,n_assembled,142,2026-07-10T10:00:00+00:00,abc123\n"
+        "all-seeds,fitb_recall@5,0.95,2026-07-10T10:00:00+00:00,abc123\n"
+        "occasion=office,catalog_coverage,0.65,2026-07-10T10:00:00+00:00,abc123\n"
+        "occasion=office,fitb_recall@5,0.91,2026-07-10T10:00:00+00:00,abc123\n"
+        "beam=1,catalog_coverage,0.70,2026-07-10T10:00:00+00:00,abc123\n",
         encoding="utf-8",
     )
     return path
@@ -36,12 +36,13 @@ def sample_csv(tmp_path: Path) -> Path:
 @pytest.fixture
 def csv_dir(tmp_path: Path) -> Path:
     (tmp_path / "eval_graph.csv").write_text(
-        "ablation,metric,value,timestamp\n"
-        "all-seeds,catalog_coverage,0.72,2026-07-10T10:00:00+00:00\n",
+        "ablation,metric,value,timestamp,commit_sha\n"
+        "all-seeds,catalog_coverage,0.72,2026-07-10T10:00:00+00:00,abc123\n",
         encoding="utf-8",
     )
     (tmp_path / "fashion_eval.csv").write_text(
-        "ablation,metric,value,timestamp\nask_back,accuracy,0.95,2026-07-10T11:00:00+00:00\n",
+        "ablation,metric,value,timestamp,commit_sha\n"
+        "ask_back,accuracy,0.95,2026-07-10T11:00:00+00:00,abc456\n",
         encoding="utf-8",
     )
     return tmp_path
@@ -64,6 +65,12 @@ def test_read_csv_metrics_preserves_timestamp(sample_csv: Path) -> None:
     rows = read_csv_metrics(sample_csv)
     ts = {r["timestamp"] for r in rows}
     assert "2026-07-10T10:00:00+00:00" in ts
+
+
+def test_read_csv_metrics_includes_commit_sha(sample_csv: Path) -> None:
+    rows = read_csv_metrics(sample_csv)
+    assert "commit_sha" in rows[0]
+    assert rows[0]["commit_sha"] == "abc123"
 
 
 # ---------------------------------------------------------------------------
@@ -141,6 +148,13 @@ def test_json_report_metric_value_is_string(sample_csv: Path) -> None:
     val = report["experiments"]["test.csv"]["all-seeds"]["catalog_coverage"]["value"]
     assert isinstance(val, str)
     assert val == "0.72"
+
+
+def test_json_report_includes_commit_sha(sample_csv: Path) -> None:
+    data = {"test.csv": read_csv_metrics(sample_csv)}
+    report = build_json_report(data)
+    sha = report["experiments"]["test.csv"]["all-seeds"]["catalog_coverage"]["commit_sha"]
+    assert sha == "abc123"
 
 
 # ---------------------------------------------------------------------------

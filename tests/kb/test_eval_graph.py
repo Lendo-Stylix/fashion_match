@@ -59,7 +59,7 @@ def test_csv_has_required_columns(tmp_path: Path) -> None:
     )
     with out_csv.open(encoding="utf-8") as fh:
         headers = next(csv.reader(fh))
-    REQUIRED = {"ablation", "metric", "value", "timestamp"}
+    REQUIRED = {"ablation", "metric", "value", "timestamp", "commit_sha"}
     assert REQUIRED.issubset(headers), f"Missing columns. Got {headers}"
 
 

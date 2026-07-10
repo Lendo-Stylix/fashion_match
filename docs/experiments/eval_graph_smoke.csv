@@ -1,0 +1,13 @@
+ablation,metric,value,timestamp,commit_sha
+all-seeds,catalog_coverage,0.017256,2026-07-10T10:52:54+00:00,532db50
+all-seeds,n_assembled,76,2026-07-10T10:52:54+00:00,532db50
+all-seeds,fitb_recall@5,1.0,2026-07-10T10:52:54+00:00,532db50
+all-seeds,coherence_violations,0,2026-07-10T10:52:54+00:00,532db50
+occasion=office,catalog_coverage,0.014487,2026-07-10T10:52:54+00:00,532db50
+occasion=office,n_assembled,88,2026-07-10T10:52:54+00:00,532db50
+occasion=office,fitb_recall@5,1.0,2026-07-10T10:52:54+00:00,532db50
+occasion=office,coherence_violations,0,2026-07-10T10:52:54+00:00,532db50
+beam=1,catalog_coverage,0.012995,2026-07-10T10:52:54+00:00,532db50
+beam=1,n_assembled,30,2026-07-10T10:52:54+00:00,532db50
+beam=1,fitb_recall@5,1.0,2026-07-10T10:52:54+00:00,532db50
+beam=1,coherence_violations,0,2026-07-10T10:52:54+00:00,532db50

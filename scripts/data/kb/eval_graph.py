@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("kb.eval_graph")
 
 # Columns written to the --output-csv CSV file.
-CSV_COLUMNS = ("ablation", "metric", "value", "timestamp")
+CSV_COLUMNS = ("ablation", "metric", "value", "timestamp", "commit_sha")
 
 
 def _git_commit_sha() -> str:
@@ -66,13 +66,33 @@ def _collect_metrics(
     outfits = assemble_outfits(graph, seed_ids, config=config)
     fitb = fitb_recall_at_k(graph, outfits, k=5)
     return [
-        {"ablation": ablation, "metric": "catalog_coverage", "value": str(report.catalog_coverage)},
-        {"ablation": ablation, "metric": "n_assembled", "value": str(report.n_assembled)},
-        {"ablation": ablation, "metric": "fitb_recall@5", "value": str(fitb)},
+        {
+            "ablation": ablation,
+            "metric": "catalog_coverage",
+            "value": str(report.catalog_coverage),
+            "timestamp": timestamp,
+            "commit_sha": commit_sha,
+        },
+        {
+            "ablation": ablation,
+            "metric": "n_assembled",
+            "value": str(report.n_assembled),
+            "timestamp": timestamp,
+            "commit_sha": commit_sha,
+        },
+        {
+            "ablation": ablation,
+            "metric": "fitb_recall@5",
+            "value": str(fitb),
+            "timestamp": timestamp,
+            "commit_sha": commit_sha,
+        },
         {
             "ablation": ablation,
             "metric": "coherence_violations",
             "value": str(report.coherence_violations),
+            "timestamp": timestamp,
+            "commit_sha": commit_sha,
         },
     ]
 
