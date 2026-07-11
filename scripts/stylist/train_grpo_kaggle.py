@@ -149,12 +149,6 @@ def main() -> None:
     if not torch.cuda.is_available():  # pragma: no cover
         raise SystemExit("No CUDA GPU. Use --dry-run on CPU, or run on Kaggle/Colab.")
 
-    quantization_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_compute_dtype=torch.float16,
-        bnb_4bit_use_double_quant=True,
-        bnb_4bit_quant_type="nf4",
-    )
     peft_config = LoraConfig(
         r=args.lora_r,
         lora_alpha=args.lora_r,
@@ -179,8 +173,6 @@ def main() -> None:
         max_completion_length=args.max_completion_length,
         beta=args.beta,
         optim="paged_adamw_8bit",
-        scale_rewards="batch",
-        loss_type="dr_grpo",
         fp16=True,
         bf16=False,
         gradient_checkpointing=True,
@@ -188,15 +180,51 @@ def main() -> None:
         save_steps=100,
         seed=args.seed,
         report_to="none",
+        use_vllm=False,  # never use vllm on Windows; rely on HF generate()
     )
 
+    # Load base model with proven bnb 4-bit single-GPU config (memory mrga01ofns8)
+    # AutoModelForImageTextToText handles Qwen3-VL; falls back to CausalLM for text-only.
+    from transformers import AutoConfig as _AutoConfig
+
+    try:
+        from transformers import AutoModelForImageTextToText as _AutoModel
+
+        _is_vl = True
+    except ImportError:
+        from transformers import AutoModelForCausalLM as _AutoModel
+
+        _is_vl = False
+    _cfg = _AutoConfig.from_pretrained(args.model)
+    _is_vl = _is_vl or "VL" in type(_cfg).__name__ or "vl" in args.model.lower()
+    if not _is_vl:
+        from transformers import AutoModelForCausalLM as _AutoModel
+    bnb_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_use_double_quant=True,
+        bnb_4bit_quant_type="nf4",
+    )
+    model = _AutoModel.from_pretrained(
+        args.model,
+        quantization_config=bnb_config,
+        device_map={"": 0},  # skip infer_auto_device_map (avoids CPU-dispatch ValueError)
+        torch_dtype=torch.float16,
+        low_cpu_mem_usage=True,
+    )
+    model.config.use_cache = False
+    logger.info("Loaded base model: %s (%s, VL=%s)", args.model, type(model).__name__, _is_vl)
+
+    # GRPOTrainer.__init__ sets model.warnings_issued[...] on the wrapped
+    # PeftModel; for VL models that don't have it, set the dict manually so
+    # the attribute access succeeds after get_peft_model wrapping.
+    if not hasattr(model, "warnings_issued"):
+        model.warnings_issued = {}
     trainer = GRPOTrainer(
-        model=args.model,
+        model=model,
         reward_funcs=list(FASHION_REWARD_FUNCS),
-        reward_weights=[1.0] * len(FASHION_REWARD_FUNCS),
         args=training_args,
         train_dataset=dataset,
-        quantization_config=quantization_config,
         peft_config=peft_config,
     )
     logger.info(

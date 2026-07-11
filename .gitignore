@@ -66,3 +66,7 @@ task_plan.md
 findings.md
 progress.md
 .claude/
+
+# RL/training artifacts
+outputs/
+_grpo_smoke.log

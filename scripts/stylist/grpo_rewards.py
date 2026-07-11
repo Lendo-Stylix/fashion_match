@@ -76,7 +76,9 @@ def _extract_score(detail):
 
 def _make_task_reward(item_type, scorer):
     def reward_fn(completions, **kwargs):
-        items = kwargs.get("items") or ([kwargs["item"]] if "item" in kwargs else [])
+        items = kwargs.get("items") or kwargs.get("item", [])
+        if not isinstance(items, list):
+            items = [items]
         if not isinstance(items, list):
             items = [items]
         rewards = []
