@@ -393,3 +393,82 @@ def test_evaluate_fashion_dataset_includes_new_types() -> None:
     assert "season_advice" in rep["per_task"]
     assert rep["per_task"]["body_shape_advice"]["mean_score"] == 0.0
     assert rep["overall"]["count"] == 2
+
+
+# ---------------------------------------------------------------------------
+# Regression tests — FORMALITY alias normalisation
+# ---------------------------------------------------------------------------
+def test_occasion_formality_smart_casual_space_variant() -> None:
+    """Moi hinh viet smart casual (space) -> alias credit smart_casual band."""
+    appropriate = formalities_for_occasion("interview")
+    item = {"occasion": "interview", "appropriate_formalities": appropriate}
+    gen = "Phong van nen mac smart casual."
+    res = score_occasion_formality(gen, item)
+    assert res["f1"] > 0.0
+
+
+def test_occasion_formality_business_casual_not_credit_casual() -> None:
+    """business casual khong duoc credit nhu casual (precision bug fix)."""
+    appropriate = formalities_for_occasion("wedding")
+    item = {"occasion": "wedding", "appropriate_formalities": appropriate}
+    gen = "Dam cuoi nen mac business casual hoac semi-formal."
+    res = score_occasion_formality(gen, item)
+    assert "casual" not in res.get("wrong_formalities", [])
+    assert res["recall"] > 0.0
+    assert "smart_casual" in res["wrong_formalities"]
+
+
+def test_occasion_formality_semi_formal_underscore() -> None:
+    """semi_formal underscore variant -> formal canonical."""
+    appropriate = formalities_for_occasion("wedding")
+    item = {"occasion": "wedding", "appropriate_formalities": appropriate}
+    gen = "Dam cuoi nen mac semi_formal."
+    res = score_occasion_formality(gen, item)
+    assert res["f1"] == pytest.approx(1.0, rel=1e-3)
+
+
+def test_extract_enum_values_with_aliases_param() -> None:
+    """extract_enum_values accepts aliases and normalises text before matching."""
+    text = "smart casual hoac business casual"
+    found = extract_enum_values(
+        text,
+        FORMALITY,
+        FORMALITY_LABELS_VI,
+        aliases=[
+            ("business casual", "smart_casual"),
+            ("smart casual", "smart_casual"),
+        ],
+    )
+    assert found == {"smart_casual"}
+
+
+def test_body_shape_advice_chu_a_variant() -> None:
+    """va y chu A phai credit positive keyword chan va a cua pear."""
+    item = {
+        "body_shape": "pear",
+        "positive_keywords": ("nhấn eo", "chân váy a", "a-line", "high waist", "áo phồng tay"),
+        "negative_keywords": ("quần bó sát hông",),
+    }
+    gen = "Nên nhấn eo và mặc váy chữ A."
+    res = score_body_shape_advice(gen, item)
+    assert "chân váy a" in res["positives_mentioned"]
+    assert res["score"] > 0.0
+
+
+def test_season_advice_chong_nuoc_alias() -> None:
+    """chong nuoc -> vai chong nuoc positive for rainy."""
+    item = {
+        "season": "rainy",
+        "positive_keywords": (
+            "áo mưa",
+            "chống trượt",
+            "nhiều lớp nhẹ",
+            "giày bọc",
+            "vải chống nước",
+        ),
+        "negative_keywords": ("suede", "da thật", "giày vải", "mỏng dễ thấm"),
+    }
+    gen = "Nên mặc áo có vải chống nước."
+    res = score_season_advice(gen, item)
+    assert "vải chống nước" in res["positives_mentioned"]
+    assert res["correct"] is True

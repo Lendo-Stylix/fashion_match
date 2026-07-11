@@ -85,6 +85,7 @@ def extract_enum_values(
     text: str,
     values: Sequence[str],
     labels_vi: dict[str, str],
+    aliases: Sequence[tuple[str, str]] | None = None,
 ) -> set[str]:
     """Return canonical enum values mentioned in *text*.
 
@@ -96,16 +97,60 @@ def extract_enum_values(
     This dual matching lets the scorer credit a model that answers in either
     language while always normalising to the canonical internal value.
     """
-    text_lower = text.lower()
+    # Multi-word English variants (smart casual / business casual / semi-formal
+    # / black tie / sportswear ...) are first collapsed to canonical snake_case
+    # via *aliases*, applied longest-first so phrases like "semi-black-tie" are
+    # not eaten by "black tie". This kills two failure modes the bare regex
+    # produced on real model answers: (a) the smart_casual band went un-credited
+    # when the model wrote "smart casual" (space vs "_"), and (b) the bare
+    # \bcasual\b regex false-credited the casual band inside "business casual",
+    # which then counted as a *wrong* formality since casual is rarely in the
+    # appropriate set. Pre-normalising makes the score reflect what the model
+    # actually knows.
+    normalised = text.lower()
+    if aliases:
+        for phrase, canonical in sorted(aliases, key=lambda kv: -len(kv[0])):
+            if phrase.lower() != canonical.lower():
+                normalised = normalised.replace(phrase.lower(), canonical.lower())
     found: set[str] = set()
     for value in values:
-        if re.search(r"\b" + re.escape(value) + r"\b", text, re.IGNORECASE):
+        if re.search(r"\b" + re.escape(value) + r"\b", normalised, re.IGNORECASE):
             found.add(value)
             continue
         label = labels_vi.get(value, "")
-        if label and label.lower() in text_lower:
+        if label and label.lower() in normalised:
             found.add(value)
     return found
+
+
+# Multi-word English styling synonyms -> canonical FORMALITY snake_case.
+# Used by score_occasion_formality to normalise free-text answers before the
+# word-boundary regex. Applies longest-first so phrases like "semi-black-tie"
+# aren't eaten by "black tie". The mapping is deterministic & grounded in
+# vocab.py FORMALITY (no LLM, no fuzzy matching).
+_FORMALITY_VARIANT_ALIASES: tuple[tuple[str, str], ...] = (
+    # smart_casual band — business casual ≈ smart casual in VN styling talk
+    ("business casual", "smart_casual"),
+    ("business-casual", "smart_casual"),
+    ("smart casual", "smart_casual"),
+    ("smart-casual", "smart_casual"),
+    # formal band — semi-formal / black tie / veston (VN French loan word for suit)
+    ("semi-formal", "formal"),
+    ("semi formal", "formal"),
+    ("semi_formal", "formal"),
+    ("semiformal", "formal"),
+    ("semi-black-tie", "formal"),
+    ("semi black tie", "formal"),
+    ("black-tie", "formal"),
+    ("black tie", "formal"),
+    ("veston", "formal"),
+    # athletic band — sportswear / activewear
+    ("sportswear", "athletic"),
+    ("sport wear", "athletic"),
+    ("sport-wear", "athletic"),
+    ("active wear", "athletic"),
+    ("activewear", "athletic"),
+)
 
 
 # ---------------------------------------------------------------------------
@@ -119,7 +164,9 @@ def score_occasion_formality(generated: str, item: dict[str, Any]) -> dict[str, 
     an appropriate one lowers recall.
     """
     appropriate: set[str] = set(item["appropriate_formalities"])
-    mentioned = extract_enum_values(generated, FORMALITY, FORMALITY_LABELS_VI)
+    mentioned = extract_enum_values(
+        generated, FORMALITY, FORMALITY_LABELS_VI, aliases=_FORMALITY_VARIANT_ALIASES
+    )
     correct = mentioned & appropriate
     wrong = mentioned - appropriate
 
@@ -136,6 +183,50 @@ def score_occasion_formality(generated: str, item: dict[str, Any]) -> dict[str, 
     }
 
 
+# Variant spellings of the curated positive/negative cues. Applied longest-first
+# before the substring check so e.g. "chữ A" credits the "chân váy a" positive
+# and "v neck" credits "v cổ". Grounded in the Vietnamese lexical variants that
+# real stylist models tend to emit. Normaliser is case-insensitive (lowercases
+# text first), so alias entries must also be lowercased. No LLM, deterministic.
+_ADVICE_VARIANT_ALIASES: tuple[tuple[str, str], ...] = (
+    # body-shape positive variants
+    ("chữ a", "chân váy a"),
+    ("v-neck", "v cổ"),
+    ("v neck", "v cổ"),
+    ("vneck", "v cổ"),
+    ("kẻ sọc đứng", "kẻ sọc dọc"),
+    ("high-waist", "high waist"),
+    ("highwaist", "high waist"),
+    # body-shape negative variants
+    ("quần bó", "quần bó sát hông"),
+    ("bó sát hông", "quần bó sát hông"),
+    ("vai phồng to", "vai phồng"),
+    ("shoulder pads", "shoulder pad"),
+    ("croptop", "crop top"),
+    ("crop top", "crop top"),
+    # season positive variants
+    ("chống nước", "vải chống nước"),
+    ("giày boot", "giày bọc"),
+    ("giày bốt", "giày bọc"),
+    ("layering nhẹ", "layer nhẹ"),
+    ("lớp nhẹ", "layer nhẹ"),
+    # season negative variants
+    ("áo phông", "áo phông mỏng"),
+    ("cotton mỏng", "cotton mỏng"),
+)
+
+
+def _normalise_advice_text(text: str) -> str:
+    """Collapse common spelling variants to canonical cue form. Longest-first,
+    case-insensitive. Keeps the variant normaliser separate from the FORMALITY
+    alias path so the two scorers do not bleed into each other. No LLM.
+    """
+    lower = text.lower()
+    for phrase, canonical in sorted(_ADVICE_VARIANT_ALIASES, key=lambda kv: -len(kv[0])):
+        lower = lower.replace(phrase, canonical)
+    return lower
+
+
 def _score_advice_bank(
     generated: str,
     positive_keywords: Sequence[str],
@@ -143,13 +234,15 @@ def _score_advice_bank(
 ) -> dict[str, Any]:
     """Shared scorer for curated fashion-advice item banks.
 
-    A model is rewarded for mentioning canonical positive advice cues (recall)
-    and penalised for stating clearly-wrong advice (each negative mention halves
+    Rewarded for mentioning canonical positive advice cues (recall) and
+    penalised for stating clearly-wrong advice (each negative mention halves
     the score, floored at 0). ``correct`` requires at least one positive and no
-    negative — i.e. the model gave the right kind of advice without a wrong one.
+    negative. Text is first run through _normalise_advice_text so semi-canonical
+    spellings (chữ A vs chân váy a, v neck vs v cổ) count as the same cue.
     """
-    positives = _count_keywords(generated, positive_keywords)
-    negatives = _count_keywords(generated, negative_keywords)
+    normalised = _normalise_advice_text(generated)
+    positives = _count_keywords(normalised, positive_keywords)
+    negatives = _count_keywords(normalised, negative_keywords)
     recall = len(positives) / max(len(positive_keywords), 1)
     score = max(0.0, recall - 0.5 * len(negatives))
     return {

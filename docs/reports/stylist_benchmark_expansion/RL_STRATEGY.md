@@ -1,10 +1,51 @@
 # Chiến lược RL cho Stylist — refresh thực tế từ GPU benchmark
 
-**Ngày:** 2026-07-11 (revision 2 sau khi chạy REAL GPU benchmark)
+**Ngày:** 2026-07-11 (revision 3 — sau scorer-fix + alias normalisation)
 **Tác giả:** benchmark-expansion track
 **Model mục tiêu:** **T3 — Qwen3-VL-8B Thinking + LoRA** (ứng viên production)
 **Verdict:** **GRPO + QLoRA với reward = 6 deterministic scorers đã có trong `fashion_eval.py`** (verifiable-reward RL, không cần reward model).
 **Local GPU (mới):** RTX 5060 Laptop 8GB, CUDA 13.3, torch 2.12.0+cu130 — đủ chạy 8B QLoRA cho 3 model T1/T2/T3 (chưa đủ cho T4 12B).
+
+---
+
+## ⚡ REV 3 UPDATE (post-scorer-fix — 2026-07-11)
+
+Sau khi fix bug scoring trong `score_occasion_formality` (alias normalisation cho
+"smart casual", "business casual", "semi-formal", "semi_formal" → canonical
+`vocab.py` enum), baseline tăng mạnh:
+
+| Model | mean (rev 2, broken) | **mean (rev 3, fixed)** | Δ |
+|---|---:|---:|---:|
+| T1 (VL Instruct)  | 0.2596 | **0.4620** | +0.2024 |
+| T2 (9B text-only) | 0.3552 | **0.5433** | +0.1881 |
+| T3 (VL Thinking)  | 0.2793 | **0.5242** | +0.2449 |
+
+`occasion_formality` tăng từ 0.00 → **0.74 (T3)**, **0.61 (T1)**, **0.59 (T2)**.
+
+**Tác động lên chiến lược RL:**
+
+1. **T2 đã đạt target mean ≥ 0.55** (0.5433, chỉ thiếu 0.01) — T2 làm **upper-bound baseline** để T3 phải vượt qua.
+2. **T3 (0.5242) chỉ cần +0.03 để bắt T2** — khả thi chỉ bằng RL + body_shape hint.
+3. **P0 giờ là `body_shape_advice`** (T3=0.04, T1=0.00) — scorer đã fix nhưng model
+   vẫn cho answer quá generic. Đây là **model behavior, không phải scorer bug** —
+   reward signal từ R1 (body_shape) sẽ dạy model dùng canonical keywords.
+4. **`occasion_formality` xuống P1** — đã khá tốt (0.74); chỉ cần RL giữ không bị
+   regression.
+
+Bảng rev 3 đầy đủ (source: `gpu_T{1,2,3}_rescored.json`):
+
+| Task | T1 | T2 | **T3** | Priority |
+|---|---:|---:|---:|---|
+| `occasion_formality`     | 0.6074 | 0.5852 | **0.7397** | 🟡 P1 — giữ + crawl 0.65+ |
+| `body_shape_advice`      | 0.0000 | 0.0500 | **0.0400** | 🔴 P0 — quá generic |
+| `season_advice`          | 0.2583 | 0.3333 | **0.3833** | 🟡 P1 — tốt nhất nhưng còn thấp |
+| `coherence`              | 0.5000 | 1.0000 | 0.5000 | 🟡 P2 — T3 học từ T2 pattern |
+| `ask_back`               | 0.6667 | 0.6667 | 0.6667 | 🟢 P3 — anti-regression |
+| `tool_call_derivation`   | 0.8121 | 0.7879 | 0.7626 | 🟢 P3 — anti-regression |
+| **Overall mean**         | **0.4620** | **0.5433** | **0.5242** | — |
+
+**Phần còn lại của doc (rev 2) được giữ nguyên làm lịch sử** — mọi tham chiếu tới
+`occasion_formality = 0` trong rev 2 mô tả bug, đã được giải thích + fix ở rev 3.
 
 ---
 
