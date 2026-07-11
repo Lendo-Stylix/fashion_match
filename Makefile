@@ -1,4 +1,4 @@
-.PHONY: install test test-fast lint format demo qdrant-up qdrant-down clean bench-fashion setup-models
+.PHONY: install test test-fast lint format demo qdrant-up qdrant-down clean bench-fashion setup-models bench-rl bench-graph
 
 install:
 	uv sync --group dev
@@ -37,3 +37,9 @@ bench-fashion:
 # Pull 4 base models + 4 LoRA adapters to D:/Models (off C:)
 setup-models:
 	uv run python scripts/setup_models.py --base --adapters
+
+bench-graph:
+	uv run python -m scripts.data.kb.eval_graph --seeds 50 --output-csv docs/experiments/eval_graph_benchmark_run.csv
+
+bench-rl:
+	uv run python -m scripts.stylist.train_grpo_kaggle --dry-run --canonical
