@@ -119,7 +119,7 @@ def _load_model(model_path: str, adapter_path: str | None):
     if adapter_path is not None:
         from peft import PeftModel
 
-        model = PeftModel.from_pretrained(model, adapter_path)
+        model = PeftModel.from_pretrained(model, adapter_path)  # type: ignore[assignment]
     model.eval()
 
     # Report VRAM
