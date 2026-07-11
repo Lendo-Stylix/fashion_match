@@ -1,196 +1,225 @@
-# Chiến lược RL cho Stylist — Verifiable-Reward GRPO trên T3 Qwen3-VL-8B Thinking
+# Chiến lược RL cho Stylist — refresh thực tế từ GPU benchmark
 
-**Ngày:** 2026-07-11
+**Ngày:** 2026-07-11 (revision 2 sau khi chạy REAL GPU benchmark)
 **Tác giả:** benchmark-expansion track
 **Model mục tiêu:** **T3 — Qwen3-VL-8B Thinking + LoRA** (ứng viên production)
-**Verdict:** **GRPO + QLoRA với reward = 6 deterministic scorers đã có trong `fashion_eval.py`** (verifiable-reward RL, không cần reward model / không cần human pairwise preferences).
+**Verdict:** **GRPO + QLoRA với reward = 6 deterministic scorers đã có trong `fashion_eval.py`** (verifiable-reward RL, không cần reward model).
+**Local GPU (mới):** RTX 5060 Laptop 8GB, CUDA 13.3, torch 2.12.0+cu130 — đủ chạy 8B QLoRA cho 3 model T1/T2/T3 (chưa đủ cho T4 12B).
 
 ---
 
-## 1. Vì sao chọn T3 làm model RL
+## 0. Recap bản gốc (mock-only) → revision này (real GPU)
 
-Từ `docs/reports/stylist_final_qlora_benchmark/DETAILED_REPORT.md` §6 (kết quả SFT QLoRA):
+Bản gốc (rev 1) dựa vào MOCK benchmark (`mock_run.json`, mean 0.107, luôn hỏi lại → collapse). **Rev 2 này cần此地 cần được nâng cấp vì đã chạy được benchmark thật trên GPU 8GB.** Ba sửa đổi thực tế quan trọng:
 
-| Model | Tool F1 | Text sim | Format | Error | Eval loss |
-|---|---:|---:|---:|---:|---:|
-| **T3 Qwen3-VL-8B Thinking** | **0.8980** | **0.5519** | **1.0000** | 0 | **0.5943** |
-| T2 Qwen3.5-9B BNB4 | 0.8776 | 0.4877 | 1.0000 | 0 | — |
-| T1 Qwen3-VL-8B Instruct | 0.8571 | 0.5437 | 1.0000 | 0 | — |
-| T4 Gemma 4 12B IT | 0.6531 | 0.5354 | 0.9714 | 0 | — |
-
-T3 thắng trên 3/4 metric chính, có eval loss thấp nhất, tool validity = 1.0. T3 là multimodal (Qwen3-VL) → RL trên T3 cải thiện trực tiếp đường production (có thể nhận ảnh người dùng). T2 (text-only) là fallback nhanh nhưng không có vision → không tận dụng được tính năng cốt lõi của stylist.
-
-**Gap cần RL đóng:** mock benchmark (`mock_run.json`, §9 DETAILED_REPORT) cho thấy với câu hỏi **knowledge/logic** (không phải tool-call), T3 hiện trả lời an toàn ("Bạn muốn mặc cho dịp nào ạ?") cho **tất cả 25 mục knowledge/coherence/season/body-shape** → mean 0.107. Đây là **hành vi SFT collapse** (mô hình quá thiên về ask-back an toàn). RL có thể trực tiếp tối ưu 6 hành vi này mà không cần nhãn người dùng.
+1. **Baseline đổi**: từ mock mean 0.107 → REAL T3 mean **0.2793**, T1 0.2596, T2 0.3552. Mô hình không hoàn toàn "collapsed": chúng TRẢ LỜI thực sự, chỉ là trả lời sai kiến thức/cú pháp.
+2. **Top priority thay đổi**: mock cho thấy ask-back collapse là ưu tiên 1; REAL data cho thấy **occasion_formality = 0 trên cả 3 model** mới là ưu tiên 1 (mô hình viết "smart casual", "business casual", "semi-formal" thay vì enum `vocab.py`: `formal`/`smart_casual`/`casual`/`athletic`).
+3. **Local GPU mở ra khả năng** chạy RL nhỏ (<=500 step) ngay trên máy dev, không cần chờ Kaggle.
 
 ---
 
-## 2. So sánh thuật toán — chọn GRPO verifiable-reward
+## 1. Vì sao chọn T3 làm model RL (xét lại với REAL data)
 
-| Thuật toán | Dữ liệu cần | Reward model? | Ref model? | Critic? | GPU (8B) | Fit tool-call + 8B LoRA |
-|---|---|---|---|---|---|---|
-| **PPO (RLHF cổ điển)** | prompt + RM | **có** | có | **có** | ~4 model tải RAM — **rất nặng** | ❌ quá nặng cho Kaggle T4 |
-| **DPO** | **pairs** (yw, yl) | không | có | không | 2 model | ⚠️ cần sinh pairs; offline dễ overfit |
-| **IPO** | pairs | không | có | không | 2 model | ⚠️ như DPO, chống overfit |
-| **KTO** | **unpaired** (desirable/undesirable) | không | có | không | 2 model | ✅ nếu chỉ có nhãn binary |
-| **SimPO** | pairs | không | **không** | không | 1 model | ✅ nhẹ nhất, nhưng cần pairs |
-| **GRPO (verifiable reward)** | **prompt only** | **không (rule-based!)** | có (KL, optional β=0) | **không** | 1–2 model | ✅ **tối ưu** cho verifiable |
+### 1a. REAL GPU benchmark (28 items × 6 scorers, torch 2.12+cu130, RTX 5060 Laptop 8GB)
 
-### Tại sao GRPO thắng cho OutfitMatch
+Bảng đầy đủ (source: `docs/reports/stylist_benchmark_expansion/gpu_T{1,2,3}.json`):
 
-1. **Verifiable reward có sẵn.** `fashion_eval.py` đã triển khai 6 scorer deterministic dựa trên `vocab.py` (occasion→formality F1, body-shape/season keyword recall, coherence verdict, ask-back gate, tool-call F1 × enum-valid). Đây chính là *verifiable reward* theo nghĩa DeepSeek-R1 — không cần reward model, không cần pairwise preferences, không cần RLAIF. Mỗi prompt có ground-truth objectivity.
-2. **Không cần Critic.** GRPO bỏ critic (theo DeepSeekMath / DeepSeek-R1), dùng group baseline (mean/std của G completion). Tiết kiệm ~1 model trong RAM → chạy được 8B QLoRA trên T4/Kaggle (~9.2 GB VRAM, theo notebook chính thức `grpo_trl_lora_qlora.ipynb` của HF).
-3. **On-policy.** GRPO sinh completion tại mỗi step → mô hình học đúng phân phối của chính nó, tránh distribution mismatch của DPO offline (vấn đề chính khi SFT đã collapse sang ask-back an toàn).
-4. **Tính toán được trên phần cứng của ta.** Kaggle P100 16GB / T4×2 15GB mỗi GPU là đủ cho GRPO+QLoRA 8B.
+| Task | T1 (VL Instruct) | T2 (9B text) | **T3 (VL Thinking)** | Tập RL focus |
+|---|---:|---:|---:|---|
+| `occasion_formality` | **0.0000** | **0.0000** | **0.0000** | 🔴 P0 — sai vocabulary toàn bộ |
+| `body_shape_advice` | 0.0000 | 0.0500 | 0.0000 | 🔴 P0 — answers quá generic |
+| `season_advice` | 0.2083 | 0.3333 | **0.3833** | 🟡 P1 — T3 tốt nhất nhưng còn thấp |
+| `coherence` | 0.5000 | **1.0000** | 0.5000 | 🟡 P2 — T2 đã perfect; T3 học từ đó |
+| `ask_back` | 0.6667 | 0.6667 | 0.6667 | 🟢 P3 — chỉ 1 prompt fail, ít cần RL |
+| `tool_call_derivation` | **0.8121** | 0.7879 | 0.7626 | 🟢 P3 — đã cao, anti-regression |
+| **Overall mean** | **0.2596** | **0.3552** | **0.2793** | — |
+| eval latency (28 items) | 407s | 712s | 509s | — |
 
-### Backup: KTO (nếu GRPO quá nặng hoặc không ổn định)
-Nếu GRPO chạy không ổn định trên Kaggle, **KTO** là fallback vì chỉ cần nhãn unpaired (mỗi sample chỉ cần `desirable`/`undesirable` từ 6 scorer) và TRL có `KTOTrainer` hỗ trợ QLoRA.
+### 1b. Tại sao vẫn giữ T3 làm mục tiêu chính (mặc dù T2 mean cao hơn)
 
----
+- **T3 là multimodal (Qwen3-VL)** — stylist nhận ảnh user là **feature cốt lõi** v3.1; T2 text-only không có vision tower → bó tay khi user up ảnh.
+- T3 có **tool_call_derivation cao** (SFT Tool F1 0.898, eval loss 0.5943 — thấp nhất 4 model theo `DETAILED_REPORT.md` §6).
+- T3 thắng trên `season_advice` (0.3833 > 0.3333 > 0.2083) — kiến thức mùa đã tốt, chỉ cần kéo \`occasion\` + \`bodyshape\` lên.
+- T2 thắng nhờ `coherence` perfect — nhưng T3 có thể học pattern này qua RL (reward R4) mà không cần đổi model.
 
-## 3. Reward design — 6 verifiable reward functions
+**Trade-off cần theo dõi:** Nếu sau RL T3 vẫn tụt dưới T2 ≥ 0.10 mean → cân nhắc ship T2 (text-only) cho feature không cần ảnh, T3 cho tính năng ảnh. Đánh giá lại sau RL.
 
-Reward functions được implement trong `scripts/stylist/grpo_rewards.py`, mỗi function có chữ ký:
-```python
-def reward_fn(completions: list[list[dict[str,str]]], **kwargs) -> list[float]
-```
-(theo chuẩn `trl.GRPOTrainer`). Mỗi completion group được chấm bởi **pool item của task đó** (đưa prompt vào `reward_funcs` + dataset `prompt` chứa trường `item_type` để router chọn scorer).
+### 1c. Phân tích failure mode chính (REAL data)
 
-| # | Reward | Nguời chấm | Thang | Mục tiêu tối ưu |
-|---|---|---|---|---|
-| R1 | `occasion_formality_reward` | `score_occasion_formality` | F1 ∈ [0,1] | Nêu đúng formality band cho occasion |
-| R2 | `body_shape_advice_reward` | `score_body_shape_advice` | recall−½·neg ∈ [0,1] | Tư vấn body-shape đúng, né sai |
-| R3 | `season_advice_reward` | `score_season_advice` | recall−½·neg ∈ [0,1] | Tư vấn vải/mùa đúng |
-| R4 | `coherence_reward` | `score_coherence_judgment` | binary {0,1} | Phán đoán outfit coherent/incoherent |
-| R5 | `ask_back_reward` | `score_ask_back` | binary {0,1} | Hỏi lại khi thiếu occasion, KHÔNG hallucinate |
-| R6 | `tool_call_reward` | `score_tool_call_derivation` | F1×enum_valid ∈ [0,1] | search_outfits call đúng schema + enum |
+Đọc 9 samples `occasion_formality` của T3 (`gpu_T3.json`):
 
-**Reward tổng:** Mỗi prompt chỉ kích hoạt 1 reward (theo `item_type`) — tránh reward conflict. Có thể thêm **format bonus** (+0.1 nếu output có `<tool_call>` đúng khi task yêu cầu) và **length penalty** (−0.05 nếu completion > 256 token, để tránh gibberish dài).
+- Prompt: "Cho dịp đi làm (`office`), mức độ trang trọng nào phù hợp?"
+- T3 output: "Mức độ trang trọng phù hợp cho môi trường văn phòng là **smart casual hoặc business casual**..."
+- Scorer: tìm enum trong `{athletic, casual, smart_casual, formal}`. "business casual", "semi-formal", "semi-black-tie", "smart-casual" (hyphen, không đúng `smart_casual`) → scorer **không match**.
 
-### Anti-reward-hacking
-- `score_ask_back` **trừ điểm** nếu hallucinate occasion (R5 đã tích hợp).
-- `score_tool_call_derivation` **zero** nếu enum invalid (R6 đã tích hợp).
-- Drift KL (`β>0`) giữ mô hình gần SFT ref → chống reward hack (xem HF blog "guide-to-llm-post-training-algorithms" §KL pitfalls: K1-in-reward > K3-in-loss > K3-in-reward).
+**3 failure concretely thấy:**
+1. **Vocabulary mismatch**: mô hình dùng "business casual", "semi-formal", "semi-black-tie", "smart-casual" (hyphen) — NONE thuộc `FORMALITY` enum (`vocab.py`: `athletic`, `casual`, `smart_casual`, `formal`).
+2. **Hyphen normalization**: "smart-casual" ≠ "smart_casual" → scorer skip token.
+3. **Background default**: mô hình sợ sai nên liệt kê range ("smart casual hoặc business casual", "smart casual hoặc casual") — giải thích đúng nhưng enum mismatch.
+
+Body_shape_advice:
+- T3 output cho "dáng quả lê": "Hãy chọn những trang phục có dáng ôm nhẹ nhàng, ví dụ như váy chữ A hoặc quần ống rộng, để tôn lên đường cong tự nhiên. Tránh mặc những trang phục quá bó sát hoặc quá rộng..."
+- `positives_mentioned` lookup: [nhấn eo, chân váy a, a-line, high waist, áo phồng tay] — "chữ A" gần "chân váy a" nhưng scorer dùng exact substring → \`[]\`. Nói chung **Answer quá generic, không dùng Q&A pattern đã chuẩn hoá**.
+
+→ RL reward phải **khuyến khích cụ thể positive keywords** (xem R2 retryetal below).
 
 ---
 
-## 4. Data — Prompt pool từ fashion_eval (zero new annotation)
+## 2. So sánh thuật toán — GRPO vẫn chọn tối ưu
 
-GRPO chỉ cần **prompts** (không cần completions). `fashion_eval.py` đã có 28 prompts trên 6 task types (9 occasion×formality + 5 body-shape + 4 season + 4 coherence + 3 ask-back + 3 tool-call). Để RL hiệu quả, **mở rộng prompt pool lên ~500–1000**:
+(Bảng không đổi — xem reasoning bản gốc rev 1.) GRPO + verifiable reward vẫn thắng:
+- reward deterministic từ `fashion_eval.py` → không cần RM.
+- on-policy → khắc phục distribution mismatch của DPO offline (vấn đề khi SFT đã thiên).
+- 1 quantized model + KL seulement → vừa T4 Kaggle 16GB vừa RTX 5060 8GB local.
 
-1. **Cartesian expansion occasion×style×body×season** → ~9×8×5×4 = 1440 mix profile, mỗi profile 1 prompt kiểu "Tôi dáng pear, phong cách korean, mùa hè, đi làm — gợi ý formality và 2 outfit?". Ground-truth formality từ `formalities_for_occasion`, body/season cue từ curated banks.
-2. **Adversarial ask-back:** 50 prompt thiếu occasion cố ý (đã có pattern 3, cần 50 biến thể).
-3. **Tool-call profile:** 50 profile đầy đủ slot → reference tool-call auto-sinh từ schema.
+**Tinh chỉnh v2 (mới):**
+- KTO vẫn là fallback nếu GRPO không ổn định.
+- **Đặc biệt v2:** vì local GPU 8GB có thể chạy GRPO QLoRA 7-8B ở `max_completion_length=256` (VRAM peak ~7.5GB trong benchmark), **ta nên chạy dry-run + 10-50 step GRPO local** trước khi Kaggle để bắt bugs sớm.
 
-Tất cả ground-truth **tính từ `vocab.py`** → reproducible 100%, không annotation người dùng. Module `_build_*_items()` trong `fashion_eval.py` đã có pattern này — chỉ cần mở rộng bank.
-
----
-
-## 5. Training recipe — Kaggle
-
-**Script:** `scripts/stylist/train_grpo_kaggle.py` (push qua Kaggle kernel, mô hình về D:/Models + HF Hub).
-
-```python
-# Cốt lõi (xem file đầy đủ)
-from trl import GRPOConfig, GRPOTrainer
-from scripts.stylist.grpo_rewards import FASHION_REWARD_FUNCS, select_reward
-
-trainer = GRPOTrainer(
-    model="unsloth/Qwen3-VL-8B-Thinking-bnb-4bit",   # T3 base (đã có ở D:/Models/hf_hub)
-    reward_funcs=FASHION_REWARD_FUNCS,                # 6 verifiable scorers
-    args=GRPOConfig(
-        per_device_train_batch_size=8,
-        num_generations=8,            # G — group size cho advantage baseline
-        max_completion_length=256,
-        learning_rate=1e-5,           # thấp hơn SFT (1e-4) vì RL nhạy
-        max_steps=500,                # ~3-5h trên T4; mở rộng nếu ổn định
-        beta=0.04,                    # drift KL, chống reward hack
-        optim="paged_adamw_8bit",
-        scale_rewards="batch",        # HF 2508.08221: ổn định hơn group-std
-        loss_type="dr_grpo",          # bỏ length bias (2503.20783)
-        bf16=False, fp16=True,        # T4 không có bf16
-        gradient_checkpointing=True,
-    ),
-    train_dataset=fashion_prompt_pool,   # 500-1000 prompts (item_type để router)
-    peft_config=LoraConfig(r=32, alpha=32, target_modules=[...]),
-    # quantization_config=BitsAndBytesConfig(load_in_4bit=True, nf4, double_quant)
-)
-trainer.train()
-```
-
-### Hyperparameter justification
-| Param | Giá trị | Lý do / nguồn |
-|---|---|---|
-| `num_generations` G | 8 | Group baseline cần ≥4; T4 RAM giới hạn. HF notebook dùng 8. |
-| `learning_rate` | 1e-5 | RL nhạy hơn SFT 10×; DeepSeek-R1 dùng 1e-6 cho 671B, scale lên cho 8B. |
-| `beta` (KL) | 0.04 | DeepSeekMath default; nếu hack tăng lên 0.1. |
-| `max_completion_length` | 256 | Stylist trả lời ngắn; tiết kiệm gen time. |
-| `loss_type` | `dr_grpo` | Bỏ length bias — 2503.20783 chứng minh GRPO gốc thiên answer dài. |
-| `scale_rewards` | `batch` | HF 2508.08221: group-std gây difficulty bias. |
-| LoRA r | 32 | Match SFT adapter sẵn có (cùng rank để có thể merge/inject). |
-
-### Compute budget
-- **Kaggle T4 (15GB) ≈ 13h cho 500 steps** (HF notebook benchmark). T4×2 = ~7h.
-- **Kaggle P100 (16GB)** tương đương T4.
-- **GPU PC local**: KHÔNG có (CUDA=False, CPU-only). Bắt buộc Kaggle/Colab.
-- vLLM **TẮT** với QLoRA (HF warning: weight sync精度 issue) — dùng transformers generate.
+### Compute budget (rev 2 — local + Kaggle)
+| Hardware | Mode | ETA | VRAM peak | Output |
+|---|---|---|---:|---|
+| **Local RTX 5060 (8GB)** | 10-50 GRPO steps, 28-item pool | ~30-90 min | ~7.5GB | sanity + first signal |
+| **Local RTX 5060** | 200-500 GRPO steps, 397-item pool | 4-12h | ~7.5GB | usable adapter (overnight) |
+| Kaggle T4×1 (15GB) | 500 steps, ~500-prompt pool | ~13h | ~9.2GB | production-ready |
+| Kaggle T4×2 (15GB/GPU) | 500 steps | ~7h | same | production-ready |
+- vLLM **TẮT** với QLoRA (HF warning) — dùng transformers generate.
 
 ---
 
-## 6. Đánh giá — đo trước/sau RL
+## 3. Reward design — 6 verifiable reward functions + revision priorities
 
-Chạy `scripts/stylist/run_fashion_benchmark.py --model <t3-rl-adapter>` và so với `mock_run.json` (baseline SFT). **Mục tiêu:**
+6 reward functions giữ nguyên (`scripts/stylist/grpo_rewards.py` đã có). **rev 2 cập nhật weights theo REAL failure pattern:**
 
-| Metric | Baseline (mock) | Target sau RL |
-|---|---:|---:|
-| `occasion_formality` mean | 0.0 | ≥ 0.70 |
-| `body_shape_advice` mean | 0.0 | ≥ 0.50 |
-| `season_advice` mean | 0.0 | ≥ 0.50 |
-| `coherence` mean | 0.0 | ≥ 0.75 |
-| `ask_back` mean | 1.0 | ≥ 0.95 (không regress!) |
-| `tool_call_derivation` mean | 0.0 | ≥ 0.70 |
-| **Overall mean** | **0.107** | **≥ 0.65** |
+| # | Reward | T1 | T2 | T3 | RL Priority | Revision |
+|---|---|---:|---:|---:|---|---|
+| R1 | `occasion_formality_reward` | 0.0 | 0.0 | 0.0 | 🔴 P0 top | **Thêm substring normalization** ("smart casual" ↔ "smart_casual"; khác hyphen/spacing thường match — xem §3a) |
+| R2 | `body_shape_advice_reward` | 0.0 | 0.05 | 0.0 | 🔴 P0 | **Tăng positive recall weight** (hiện chỉ penalty negative nhẹ) — \`answer nếu mention ≥2 positive keywords\` |
+| R3 | `season_advice_reward` | 0.21 | 0.33 | 0.38 | 🟡 P1 | như bản gốc |
+| R4 | `coherence_reward` | 0.5 | 1.0 | 0.5 | 🟡 P2 | thêm **binary key** ("phù hợp"/"không phù hợp") để scorer catch verdict |
+| R5 | `ask_back_reward` | 0.67 | 0.67 | 0.67 | 🟢 P3 | giữ |
+| R6 | `tool_call_derivation_reward` | 0.81 | 0.79 | 0.76 | 🟢 P3 | giữ — mục tiêu anti-regression |
 
-**Regression guard:** chạy lại `benchmark_stylist.py` (tool F1/text sim) để đảm bảo Tool F1 không tụt dưới 0.85 (RL có thể trade-off tool-call vs free-text → phải đo cả hai).
+### 3a. Vocabulary normalization gap (mới, quan trọng)
+
+Scorer hiện match by **exact string** ("smart_casual" phải y hệt). Mô hình output dùng **"smart casual" (space)** hoặc **"smart-casual" (hyphen)** — **match false**. 2 cách sửa:
+
+- **Fix ăn ngay (scorer)**: thêm variant map trong `fashion_eval.py` `score_occasion_formality`:
+  `variants = {"smart_casual": ["smart_casual","smart casual","smart-casual"], ...}`. Match bất kỳ biến thể.
+- **Fix triệt để (RL)**: reward R1 incent mô hình **xuất đúng canonical enum disguise** `smart_casual` (snake_case). Cách incentiv: bonus +0.2 nếu output có ít nhất 1 canonical `FORMALITY` token bất kỳ.
+
+**Quyết định:** làm cả 2. Sửa scorer (trở nên có realistic partial-credit) **+** vẫn incent canonical trong reward. Lý do:blr dữ liệu training có mục tiêu hướng tới canonical, nhưng scorer robust giúp không penalty quá nặng lần đầu RL.
+
+### 3b. Vocabulary dạy mô hình — change trong prompt chỉ đạo
+
+Prompt mẫu của reward có thể inject "Trả lời dùng snake_case cho style/formality (`smart_casual`, `formal`, ...)" → giảm mismatch. RL sẽ học pattern này khi thấy reward tăng.
 
 ---
 
-## 7. Rủi ro & mitigation
+## 4. Data — Prompt pool (giữ + mở rộng poco)
+
+Giữ `build_fashion_prompt_pool()` (397 items từ Cartesian expansion trong `scripts/stylist/grpo_rewards.py`). **Mới v2**:
+- Thêm 50 ân nhiên occasion-prompt biến thể "...`athletic`" hoặc "...`formal`" đơn class (chỉ 1 đúng) → ép mô hình chọn chính xác, không range.
+- Body-shape > tạo 30 prompt chỉ hỏi 1 body-shape cụ thể + yêu cầu mention ít nhất 2 positive keywords → thúc R2.
+
+Tất cả ground-truth tính từ `vocab.py` (reproducible 100%).
+
+---
+
+## 5. Training recipe — updated cho local + Kaggle
+
+Kaggle giữ như bản gốc. **Local (mới):**
+
+\`\`\`bash
+# Local RTX 5060 (8GB, torch 2.12+cu130) — không dùng uv run (re-sync CPU wheel!)
+# 1. Đảm bảo torch CUDA active (verify torch.cuda.is_available()=True)
+# 2. Chạy 50 step GRPO để bắt bug:
+$env:PYTHONPATH="src;."
+.venv/Scripts/python.exe scripts/stylist/train_grpo_kaggle.py \    --model unsloth/Qwen3-VL-8B-Thinking-bnb-4bit \    --adapter D:/Models/adapters/Nhat-Quang--outfitmatch-stylist-final-qwen3vl8b-thinking-lora \    --max-steps 50 --batch-size 1 --num-generations 4 \    --output-dir D:/Models/grpo_t3_local
+\`\`\`
+
+**Lưu ý Windows (mới)**: tránh "device_map='auto'" với bnb 4-bit + accelerate → tránh `ValueError: Some modules dispatched on the CPU` (đã xử lý trong `scripts/stylist/run_gpu_benchmark.py` dùng `device_map={"":0}`). Áp dụng cùng pattern cho train script.
+
+### Hyperparameters unchanged (β=0.04, lr=1e-5, G=8, dr_grpo loss, paged_adamw_8bit)
+(Local GPU 8GB → giảm G xuống 4 nếu OOM.)
+
+---
+
+## 6. Đánh giá — REAL baseline (rev 2)
+
+Chạy `scripts/stylist/run_gpu_benchmark.py --model-id T3 --adapter post-RL` so với `gpu_T3.json` (REAL baseline). **Targets (rev 2 — realistic hơn):**
+
+| Metric | REAL baseline T3 | Target sau RL | Quan trọng? |
+|---|---:|---:|---|
+| `occasion_formality` | **0.0000** | ≥ 0.65 | 🔴 P0 — nguyên failure #1 |
+| `body_shape_advice` | **0.0000** | ≥ 0.45 | 🔴 P0 |
+| `season_advice` | 0.3833 | ≥ 0.60 | 🟡 P1 |
+| `coherence` | 0.5000 | ≥ 0.85 | 🟡 P2 — T2 đã 1.0; khả thi |
+| `ask_back` | 0.6667 | ≥ 0.95 (anti-regress) | 🟢 P3 |
+| `tool_call_derivation` | 0.7626 | ≥ 0.75 (anti-regress) | 🟢 P3 |
+| **Overall mean** | **0.2793** | **≥ 0.55** | — |
+
+**Mục tiêu overall REAL** (≥0.55) thấp hơn target rev 1 (≥0.65) — vì baseline thật đã 0.28, không phải 0.107 (mock); khoảng +0.27 gain là significant nhưng khả thi.
+
+**Regression guard**: sau RL chạy lại `benchmark_stylist.py` (tool F1/text sim từ SFT eval) → Tool F1 không được tụt dưới 0.85 của T3 SFT.
+
+---
+
+## 7. Rủi ro & mitigation (rev 2)
 
 | Rủi ro | Mitigation |
 |---|---|
 | GRPO Collapse (reward hack) | `β=0.04` KL drift; monitor `frac_reward_zero_std` ≥ 0.3 → giảm LR. |
-| Multimodal instability | Train **text-only path trước** (T2 Qwen3.5-9B) 200 steps proof-of-concept, rồi transfer recipe sang T3 VLM. |
+| **Vocabulary mismatch không fix được qua RL** (3a) | Fix scorer song song (partial credit cho variant) — giảm gradient noise cho mô hình. |
+| **Local 8GB OOM (peak 7.5GB)** | G=4 thay 8; `max_completion_length=192`; bật gradient_checkpointing. |
+| Multimodal instability | Train text-only path first (T2) 100 step proof, rồi transfer recipe sang T3. |
 | Length explosion | `loss_type=dr_grpo` + length penalty −0.05. |
-| Catastrophic forget tiếng Việt | Drift KL giữ gần SFT ref; eval `ask_back` (tiếng Việt) mỗi 50 step. |
-| Kaggle 9h limit | `max_steps=500` ≤ 9h; nếu chưa converge, resume từ checkpoint (save_steps=100). |
+| Catastrophic forget tiếng Việt | Drift KL; eval ask_back mỗi 50 step. |
+| Kaggle 9h limit | `max_steps=500` ≤ 9h; resume từ checkpoint khi cần (save_steps=100). |
 | Tool-call schema break | R6 zero khi enum invalid → mô hình tự học schema. |
+| **uv run re-sync torch CPU** (Windows) | **KHÔNG dùng `uv run` cho GPU work** — sua  \`.venv/Scripts/python.exe\` trực tiếp + pip install --index-url cu130. Lập kỳ/v script intuitoal passing windows command. |
+| `device_map="auto"` ValueError bnb 4-bit | Dùng `device_map={"":0}` (xem `run_gpu_benchmark.py`). |
 
 ---
 
-## 8. Roadmap thực thi
+## 8. Roadmap thực thi (rev 2 — với local GPU enabled)
 
-| Phase | Việc | Status | GPU? |
+| Phase | Việc | Status | Hardware |
 |---|---|---|---|
-| **P0** | Mở rộng prompt pool → 500-1000 (Cartesian vocab) | `grpo_rewards.py` + pool builder | CPU |
-| **P0** | Unit test 6 reward functions (deterministic) | `tests/test_grpo_rewards.py` | CPU |
-| **P0** | Viết `train_grpo_kaggle.py` kernel | done | — |
-| **P1** | Dry-run GRPO 10 steps CPU (sanity check reward shaping) | todo | CPU (slow) |
-| **P1** | Push kernel Kaggle T4, 500 steps | todo | T4 |
-| **P2** | Eval RL adapter vs SFT baseline trên 6 task + tool F1 | todo | T4 |
-| **P2** | Nếu Tool F1 regress → multi-reward rebalance hoặc KTO fallback | todo | T4 |
+| **P0** | Mở rộng prompt pool → 500-1000 (Cartesian + adversarial) | có `build_fashion_prompt_pool` (397); thiếu adversarial | CPU |
+| **P0** | Unit tests 6 reward functions | ✅ 30 tests pass (`test_grpo_rewards.py`) | CPU |
+| **P0** | `scripts/stylist/train_grpo_kaggle.py` kernel | ✅ done, --dry-run verified | CPU |
+| **P0 NEW** | **GPU benchmark REAL trên 3 model** | ✅ done — `gpu_T{1,2,3}.json` | Local RTX 5060 ✅ |
+| **P0 NEW** | Fix `score_occasion_formality` vocabulary variants | todo (P0) | CPU |
+| **P1 NEW** | **Local GRPO 50 step T3 dry-proof** | todo (sau khi fix scorer) | Local RTX 5060 |
+| **P2** | Push kernel Kaggle T4 ×2, 500 steps | todo | T4 Kaggle |
+| **P2** | Eval post-RL T3 vs `gpu_T3.json` baseline | todo | Local RTX 5060 or T4 |
+| **P2** | Nếu Tool F1 regress → multi-reward rebalance / KTO fallback | todo | T4 |
 | **P3** | A/B SFT-vs-RL trên fashion-agent-benchmark (200 tasks × 5 evaluators) | todo | T4 |
+| **P3 NEW** | T4 Gemma 4 12B GPU benchmark (cần 16GB+ — Kaggle A100/T4×2) | todo | Kaggle |
 
 ---
 
-## 9. Trích dẫn
+## 9. Trích dẫn (giữ)
 
-- **GRPO / DeepSeekMath** — Shao et al., 2024, arXiv:2402.03300, "Pushing the Limits of Mathematical Reasoning in Open Language Models".
-- **DeepSeek-R1** — DeepSeek-AI, 2025, arXiv:2501.12948, "Incentivizing Reasoning Capability in LLMs via RL" (R1-Zero pure RL with verifiable rewards).
-- **TRL GRPOTrainer + QLoRA** — HuggingFace TRL docs (https://huggingface.co/docs/trl/en/grpo_trainer) + official notebook `examples/notebooks/grpo_trl_lora_qlora.ipynb` (7B QLoRA trên T4 free, 9.2GB VRAM).
+- **GRPO / DeepSeekMath** — Shao et al., 2024, arXiv:2402.03300.
+- **DeepSeek-R1** — DeepSeek-AI, 2025, arXiv:2501.12948.
+- **TRL GRPOTrainer + QLoRA** — HuggingFace TRL (https://huggingface.co/docs/trl/en/grpo_trainer) + notebook `grpo_trl_lora_qlora.ipynb`.
+- **Dr. GRPO** — Liu et al., 2025, arXiv:2503.20783 (remove length bias).
+- **Reward scaling** — HF, 2025, arXiv:2508.08221 (batch-std > group-std).
 - **DPO** — Rafailov et al., 2023, arXiv:2305.18290.
 - **KTO** — Ethayarajh et al., 2024, arXiv:2402.01306 (unpaired preference).
 - **SimPO** — Meng et al., 2024, arXiv:2405.14734 (reference-free).
-- **Dr. GRPO** — Liu et al., 2025, arXiv:2503.20783 (remove length bias).
-- **Lite PPO / reward scaling** — HF, 2025, arXiv:2508.08221 (batch-std > group-std).
-- **KL estimator pitfalls** — Shah et al., 2026, arXiv:2512.21852 ("A Comedy of Estimators").
-- **Post-training algorithm guide** — Zadorozhny, HF Blog, 2025 (https://huggingface.co/blog/karina-zadorozhny/guide-to-llm-post-training-algorithms).
+
+---
+
+## Appendix A: REAL benchmark artifact paths
+
+- `docs/reports/stylist_benchmark_expansion/gpu_T1.json` — T1 (Qwen3-VL-8B Instruct + LoRA), mean 0.2596, eval_s 406.7
+- `docs/reports/stylist_benchmark_expansion/gpu_T2.json` — T2 (Qwen3.5-9B text-only + LoRA), mean 0.3552, eval_s 712.0
+- `docs/reports/stylist_benchmark_expansion/gpu_T3.json` — T3 (Qwen3-VL-8B Thinking + LoRA), mean 0.2793, eval_s 509.4
+- `scripts/stylist/run_gpu_benchmark.py` — thành runner (Qwen3-VL aware, device_map={"{":0} }): đã hóaARDS CPU-leak vs bnb 4-bit.
+- `scripts/stylist/grpo_rewards.py` — 6 reward functions + 397-prompt pool.
+- `scripts/stylist/train_grpo_kaggle.py` — GRPO+QLoRA training script.
+
+T4 Gemma 4 12B chưa benchmark GPU vì cần >8GB VRAM (4-bit ~7GB weights + KV cache ~2GB > 8GB budget của RTX 5060) — defer Kaggle.

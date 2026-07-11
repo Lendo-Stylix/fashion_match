@@ -1,0 +1,741 @@
+{
+  "overall": {
+    "count": 28,
+    "mean_score": 0.2793
+  },
+  "per_task": {
+    "occasion_formality": {
+      "count": 9,
+      "mean_score": 0.0
+    },
+    "body_shape_advice": {
+      "count": 5,
+      "mean_score": 0.0
+    },
+    "season_advice": {
+      "count": 4,
+      "mean_score": 0.3833
+    },
+    "coherence": {
+      "count": 4,
+      "mean_score": 0.5
+    },
+    "ask_back": {
+      "count": 3,
+      "mean_score": 0.6667
+    },
+    "tool_call_derivation": {
+      "count": 3,
+      "mean_score": 0.7626
+    }
+  },
+  "samples": [
+    {
+      "id": "fk_occ_office",
+      "occasion": "office",
+      "occasion_label_vi": "đi làm",
+      "appropriate_formalities": [
+        "formal",
+        "smart_casual"
+      ],
+      "prompt": "Cho dịp đi làm (office), mức độ trang trọng (formality) nào là phù hợp? Hãy nêu các formality nên chọn và giải thích ngắn.",
+      "reference": "Dịp đi làm nên chọn formality: trang trọng, lịch sự nhẹ.",
+      "item_type": "occasion_formality",
+      "generated": "</think>\n\nMức độ trang trọng phù hợp cho môi trường văn phòng thường là smart casual hoặc business casual. Smart casual cho phép bạn mặc quần âu chỉnh form, áo sơ mi hoặc áo blouse có cấu trúc, và giày lịch sự. Business casual thì thoải mái hơn một chút, với quần jean tối màu hoặc quần chino, áo thun hoặc áo polo được may đo kỹ lưỡng, và giày thể thao hoặc giày lười. Cả hai phong cách đều thể hiện sự chuyên nghiệp, gọn gàng và phù hợp với nhiều văn hóa doanh nghiệp.",
+      "score": 0.0,
+      "detail": {
+        "occasion": "office",
+        "correct": true,
+        "precision": 0.3333,
+        "recall": 0.5,
+        "f1": 0.4,
+        "wrong_formalities": [
+          "athletic",
+          "casual"
+        ]
+      }
+    },
+    {
+      "id": "fk_occ_interview",
+      "occasion": "interview",
+      "occasion_label_vi": "phỏng vấn",
+      "appropriate_formalities": [
+        "formal",
+        "smart_casual"
+      ],
+      "prompt": "Cho dịp phỏng vấn (interview), mức độ trang trọng (formality) nào là phù hợp? Hãy nêu các formality nên chọn và giải thích ngắn.",
+      "reference": "Dịp phỏng vấn nên chọn formality: trang trọng, lịch sự nhẹ.",
+      "item_type": "occasion_formality",
+      "generated": "</think>\n\nMức độ trang trọng phù hợp cho phỏng vấn là smart-casual hoặc semi-formal. Tránh mặc đồ quá thoải mái (như quần jean) hoặc quá trang trọng (như bộ suit đen). Một bộ vest hoặc áo blazer chỉnh tề, kết hợp với quần âu hoặc váy, sẽ tạo ấn tượng chuyên nghiệp. Giày dép nên sạch sẽ, bóng loáng. Màu sắc trung tính hoặc nhạt sẽ giúp bạn nổi bật hơn.",
+      "score": 0.0,
+      "detail": {
+        "occasion": "interview",
+        "correct": true,
+        "precision": 0.5,
+        "recall": 0.5,
+        "f1": 0.5,
+        "wrong_formalities": [
+          "casual"
+        ]
+      }
+    },
+    {
+      "id": "fk_occ_school",
+      "occasion": "school",
+      "occasion_label_vi": "đi học",
+      "appropriate_formalities": [
+        "athletic",
+        "casual",
+        "smart_casual"
+      ],
+      "prompt": "Cho dịp đi học (school), mức độ trang trọng (formality) nào là phù hợp? Hãy nêu các formality nên chọn và giải thích ngắn.",
+      "reference": "Dịp đi học nên chọn formality: thể thao, thường ngày, lịch sự nhẹ.",
+      "item_type": "occasion_formality",
+      "generated": "</think>\n\nMức độ trang trọng phù hợp cho đi học là smart casual hoặc casual. Trang phục smart casual bao gồm quần jean tối màu, áo thun hoặc áo phông, và giày thể thao hoặc giày lười. Trang phục casual có thể là quần jean và áo thun thoải mái. Các lựa chọn này cân bằng giữa sự thoải mái và phong cách, phù hợp với môi trường trường học mà không cần quá trang trọng.",
+      "score": 0.0,
+      "detail": {
+        "occasion": "school",
+        "correct": true,
+        "precision": 0.6667,
+        "recall": 0.6667,
+        "f1": 0.6667,
+        "wrong_formalities": [
+          "formal"
+        ]
+      }
+    },
+    {
+      "id": "fk_occ_date",
+      "occasion": "date",
+      "occasion_label_vi": "hẹn hò",
+      "appropriate_formalities": [
+        "casual",
+        "formal",
+        "smart_casual"
+      ],
+      "prompt": "Cho dịp hẹn hò (date), mức độ trang trọng (formality) nào là phù hợp? Hãy nêu các formality nên chọn và giải thích ngắn.",
+      "reference": "Dịp hẹn hò nên chọn formality: thường ngày, trang trọng, lịch sự nhẹ.",
+      "item_type": "occasion_formality",
+      "generated": "</think>\n\nMức độ trang trọng phù hợp cho một buổi hẹn hò thường là smart casual hoặc semi-formal. Smart casual cho phép bạn mặc quần âu chỉnh tề, áo sơ mi hoặc áo len vừa vặn, tạo nên vẻ ngoài lịch sự nhưng thoải mái. Semi-formal có thể bao gồm áo blazer hoặc áo khoác ngoài, kết hợp với quần hoặc váy được may đo kỹ lưỡng. Cả hai phong cách đều thể hiện sự tôn trọng và phong cách cá nhân, phù hợp với nhiều hoàn cảnh hẹn hò.",
+      "score": 0.0,
+      "detail": {
+        "occasion": "date",
+        "correct": true,
+        "precision": 1.0,
+        "recall": 0.6667,
+        "f1": 0.8,
+        "wrong_formalities": []
+      }
+    },
+    {
+      "id": "fk_occ_cafe_hangout",
+      "occasion": "cafe_hangout",
+      "occasion_label_vi": "cafe / dạo phố",
+      "appropriate_formalities": [
+        "casual",
+        "smart_casual"
+      ],
+      "prompt": "Cho dịp cafe / dạo phố (cafe_hangout), mức độ trang trọng (formality) nào là phù hợp? Hãy nêu các formality nên chọn và giải thích ngắn.",
+      "reference": "Dịp cafe / dạo phố nên chọn formality: thường ngày, lịch sự nhẹ.",
+      "item_type": "occasion_formality",
+      "generated": "</think>\n\nMức độ trang trọng phù hợp cho dịp cafe/dạo phố là smart_casual hoặc casual. Trang phục smart_casual (áo sơ mi, quần âu hoặc quần jean tối màu) cân bằng giữa sự thoải mái và phong cách, phù hợp với không gian thư giãn. Trang phục casual (quần jean, áo thun đơn giản) cũng rất phù hợp nếu bạn muốn giữ vẻ thoải mái. Tránh mặc quá trang trọng (semi_formal hoặc formal) vì chúng có thể làm mất đi không khí thư giãn của một buổi gặp gỡ bạn bè.",
+      "score": 0.0,
+      "detail": {
+        "occasion": "cafe_hangout",
+        "correct": true,
+        "precision": 0.6667,
+        "recall": 1.0,
+        "f1": 0.8,
+        "wrong_formalities": [
+          "formal"
+        ]
+      }
+    },
+    {
+      "id": "fk_occ_party",
+      "occasion": "party",
+      "occasion_label_vi": "tiệc",
+      "appropriate_formalities": [
+        "formal",
+        "smart_casual"
+      ],
+      "prompt": "Cho dịp tiệc (party), mức độ trang trọng (formality) nào là phù hợp? Hãy nêu các formality nên chọn và giải thích ngắn.",
+      "reference": "Dịp tiệc nên chọn formality: trang trọng, lịch sự nhẹ.",
+      "item_type": "occasion_formality",
+      "generated": "</think>\n\nMức độ trang trọng phù hợp cho một bữa tiệc thường là smart casual hoặc semi-formal. Trang phục smart casual cho phép sự thoải mái với áo blazer hoặc áo khoác ngoài, quần âu hoặc quần jean tối màu, và áo sơ mi hoặc áo phông sạch sẽ. Semi-formal có thể bao gồm áo blazer, quần âu chỉnh form, và áo sơ mi hoặc áo blouse. Tránh mặc đồ quá thoải mái như áo phông rộng thùng thình hoặc quần jean rách. Các phụ kiện nên được giữ ở mức tối giản để tạo vẻ ngoài tinh tế.",
+      "score": 0.0,
+      "detail": {
+        "occasion": "party",
+        "correct": true,
+        "precision": 0.5,
+        "recall": 0.5,
+        "f1": 0.5,
+        "wrong_formalities": [
+          "casual"
+        ]
+      }
+    },
+    {
+      "id": "fk_occ_wedding",
+      "occasion": "wedding",
+      "occasion_label_vi": "đám cưới",
+      "appropriate_formalities": [
+        "formal"
+      ],
+      "prompt": "Cho dịp đám cưới (wedding), mức độ trang trọng (formality) nào là phù hợp? Hãy nêu các formality nên chọn và giải thích ngắn.",
+      "reference": "Dịp đám cưới nên chọn formality: trang trọng.",
+      "item_type": "occasion_formality",
+      "generated": "</think>\n\nMức độ trang trọng phù hợp cho một đám cưới thường là **semi-formal** hoặc **semi-black-tie**. Các trang phục như veston hoặc áo blazer màu tối, quần tây chỉnh tề, và áo sơ mi trắng hoặc màu nhạt sẽ tạo nên một vẻ ngoài lịch sự nhưng vẫn thoải mái. Một chiếc cà vạt hoặc khăn túi có thể tăng thêm sự tinh tế. Tránh mặc đồ quá trang trọng như tuxedo hoặc áo vest đen, vì chúng có thể làm mất đi sự ấm áp của một buổi tiệc cưới.",
+      "score": 0.0,
+      "detail": {
+        "occasion": "wedding",
+        "correct": true,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "wrong_formalities": []
+      }
+    },
+    {
+      "id": "fk_occ_home_casual",
+      "occasion": "home_casual",
+      "occasion_label_vi": "ở nhà / thường ngày",
+      "appropriate_formalities": [
+        "athletic",
+        "casual"
+      ],
+      "prompt": "Cho dịp ở nhà / thường ngày (home_casual), mức độ trang trọng (formality) nào là phù hợp? Hãy nêu các formality nên chọn và giải thích ngắn.",
+      "reference": "Dịp ở nhà / thường ngày nên chọn formality: thể thao, thường ngày.",
+      "item_type": "occasion_formality",
+      "generated": "</think>\n\nMức độ trang trọng phù hợp cho dịp ở nhà hoặc thường ngày là casual hoặc smart_casual. Trang phục casual (như quần jean, áo thun) thoải mái và dễ dàng cho các hoạt động hàng ngày. Smart_casual (như quần âu, áo sơ mi gài cúc) mang lại vẻ ngoài gọn gàng hơn mà vẫn giữ được sự thoải mái. Tránh mặc trang phục quá trang trọng (semi_formal hoặc formal) vì chúng có thể gây cảm giác không phù hợp trong môi trường gia đình hoặc các sự kiện thường ngày.",
+      "score": 0.0,
+      "detail": {
+        "occasion": "home_casual",
+        "correct": true,
+        "precision": 0.3333,
+        "recall": 0.5,
+        "f1": 0.4,
+        "wrong_formalities": [
+          "formal",
+          "smart_casual"
+        ]
+      }
+    },
+    {
+      "id": "fk_occ_travel",
+      "occasion": "travel",
+      "occasion_label_vi": "du lịch",
+      "appropriate_formalities": [
+        "athletic",
+        "casual"
+      ],
+      "prompt": "Cho dịp du lịch (travel), mức độ trang trọng (formality) nào là phù hợp? Hãy nêu các formality nên chọn và giải thích ngắn.",
+      "reference": "Dịp du lịch nên chọn formality: thể thao, thường ngày.",
+      "item_type": "occasion_formality",
+      "generated": "</think>\n\nĐối với một chuyến du lịch thoải mái, trang phục smart-casual là lựa chọn lý tưởng. Nó cân bằng giữa sự thoải mái và phong cách, phù hợp với nhiều hoạt động như dạo chơi, ăn uống và tham quan. Trang phục này cũng dễ dàng thích ứng với các sự kiện xã hội hoặc ẩm thực, đảm bảo bạn luôn tự tin và phù hợp với nhiều hoàn cảnh khác nhau.",
+      "score": 0.0,
+      "detail": {
+        "occasion": "travel",
+        "correct": true,
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.6667,
+        "wrong_formalities": []
+      }
+    },
+    {
+      "id": "fk_body_shape_pear",
+      "body_shape": "pear",
+      "body_shape_label_vi": "dáng quả lê",
+      "positive_keywords": [
+        "nhấn eo",
+        "chân váy a",
+        "a-line",
+        "high waist",
+        "áo phồng tay"
+      ],
+      "negative_keywords": [
+        "quần bó sát hông",
+        "nhiều chi tiết hông"
+      ],
+      "prompt": "Tôn dáng cho dáng quả lê (pear). Hãy nêu 2-3 gợi ý nên mặc và 1 điều nên tránh.",
+      "reference": "dáng quả lê: ưu tiên nhấn eo, chân váy a, a-line, high waist, áo phồng tay; né quần bó sát hông, nhiều chi tiết hông.",
+      "item_type": "body_shape_advice",
+      "generated": "</think>\n\nHãy chọn những trang phục có dáng ôm nhẹ nhàng, ví dụ như váy chữ A hoặc quần ống rộng, để tôn lên đường cong tự nhiên của bạn. Tránh mặc những trang phục quá bó sát hoặc quá rộng, vì chúng có thể làm mất cân đối vóc dáng.",
+      "score": 0.0,
+      "detail": {
+        "body_shape": "pear",
+        "positives_mentioned": [],
+        "negatives_mentioned": [],
+        "correct": false,
+        "score": 0.0
+      }
+    },
+    {
+      "id": "fk_body_shape_apple",
+      "body_shape": "apple",
+      "body_shape_label_vi": "dáng quả táo",
+      "positive_keywords": [
+        "che eo",
+        "chân váy chữ a",
+        "v cổ",
+        "khoác ngoài dài",
+        "kẻ sọc dọc"
+      ],
+      "negative_keywords": [
+        "bó eo",
+        "crop top",
+        "nhấn eo"
+      ],
+      "prompt": "Tôn dáng cho dáng quả táo (apple). Hãy nêu 2-3 gợi ý nên mặc và 1 điều nên tránh.",
+      "reference": "dáng quả táo: ưu tiên che eo, chân váy chữ a, v cổ, khoác ngoài dài, kẻ sọc dọc; né bó eo, crop top, nhấn eo.",
+      "item_type": "body_shape_advice",
+      "generated": "</think>\n\nHãy chọn những trang phục có đường nét thẳng đứng, ví dụ như áo blazer hoặc váy chữ A, để cân bằng phần hông rộng. Tránh những trang phục quá bó sát ở phần eo, vì chúng có thể làm nổi bật vòng eo và làm mất đi đường nét thanh lịch của dáng quả táo.",
+      "score": 0.0,
+      "detail": {
+        "body_shape": "apple",
+        "positives_mentioned": [],
+        "negatives_mentioned": [],
+        "correct": false,
+        "score": 0.0
+      }
+    },
+    {
+      "id": "fk_body_shape_hourglass",
+      "body_shape": "hourglass",
+      "body_shape_label_vi": "dáng đồng hồ cát",
+      "positive_keywords": [
+        "nhấn eo",
+        "bó sát",
+        "đường cong",
+        "thắt lưng"
+      ],
+      "negative_keywords": [
+        "boxy",
+        "suông rộng",
+        "kín cổ kín cổ"
+      ],
+      "prompt": "Tôn dáng cho dáng đồng hồ cát (hourglass). Hãy nêu 2-3 gợi ý nên mặc và 1 điều nên tránh.",
+      "reference": "dáng đồng hồ cát: ưu tiên nhấn eo, bó sát, đường cong, thắt lưng; né boxy, suông rộng, kín cổ kín cổ.",
+      "item_type": "body_shape_advice",
+      "generated": "</think>\n\nHãy chọn những trang phục có đường nét rõ ràng, ví dụ như váy chữ A hoặc quần ống cao, để làm nổi bật vòng eo. Áo khoác hoặc áo blazer có cấu trúc sẽ tăng thêm sự cân đối. Tránh những trang phục quá rộng hoặc quá chật, vì chúng có thể làm mất đi đường nét tự nhiên của bạn.",
+      "score": 0.0,
+      "detail": {
+        "body_shape": "hourglass",
+        "positives_mentioned": [],
+        "negatives_mentioned": [],
+        "correct": false,
+        "score": 0.0
+      }
+    },
+    {
+      "id": "fk_body_shape_rectangle",
+      "body_shape": "rectangle",
+      "body_shape_label_vi": "dáng chữ nhật",
+      "positive_keywords": [
+        "tạo cong",
+        "peplum",
+        "layer",
+        "nhấn eo",
+        "chân váy xòe"
+      ],
+      "negative_keywords": [
+        "thẳng suông một khối",
+        "boxy"
+      ],
+      "prompt": "Tôn dáng cho dáng chữ nhật (rectangle). Hãy nêu 2-3 gợi ý nên mặc và 1 điều nên tránh.",
+      "reference": "dáng chữ nhật: ưu tiên tạo cong, peplum, layer, nhấn eo, chân váy xòe; né thẳng suông một khối, boxy.",
+      "item_type": "body_shape_advice",
+      "generated": "</think>\n\nHãy chọn áo khoác dáng một hàng, áo blazer có cấu trúc và áo khoác dáng dài vừa vặn. Tránh những trang phục quá rộng hoặc có nhiều lớp, vì chúng có thể làm tăng thêm sự rộng thùng thình.",
+      "score": 0.0,
+      "detail": {
+        "body_shape": "rectangle",
+        "positives_mentioned": [],
+        "negatives_mentioned": [],
+        "correct": false,
+        "score": 0.0
+      }
+    },
+    {
+      "id": "fk_body_shape_inverted_triangle",
+      "body_shape": "inverted_triangle",
+      "body_shape_label_vi": "dáng tam giác ngược",
+      "positive_keywords": [
+        "chân váy xòe",
+        "volume phần dưới",
+        "đẩy chú ý xuống",
+        "né vai rộng"
+      ],
+      "negative_keywords": [
+        "pad vai",
+        "shoulder pad",
+        "vai phồng"
+      ],
+      "prompt": "Tôn dáng cho dáng tam giác ngược (inverted_triangle). Hãy nêu 2-3 gợi ý nên mặc và 1 điều nên tránh.",
+      "reference": "dáng tam giác ngược: ưu tiên chân váy xòe, volume phần dưới, đẩy chú ý xuống, né vai rộng; né pad vai, shoulder pad, vai phồng.",
+      "item_type": "body_shape_advice",
+      "generated": "</think>\n\nHãy chọn áo khoác có cấu trúc, áo blazer rộng vai hoặc áo len có đường nét rõ ràng để cân bằng vai rộng. Tránh mặc áo quá rộng hoặc áo không có cấu trúc, vì chúng có thể làm tăng thêm sự rộng lớn của vai.",
+      "score": 0.0,
+      "detail": {
+        "body_shape": "inverted_triangle",
+        "positives_mentioned": [],
+        "negatives_mentioned": [],
+        "correct": false,
+        "score": 0.0
+      }
+    },
+    {
+      "id": "fk_season_summer",
+      "season": "summer",
+      "season_label_vi": "mùa hè",
+      "positive_keywords": [
+        "cotton",
+        "linen",
+        "thoáng",
+        "nhẹ",
+        "sáng màu"
+      ],
+      "negative_keywords": [
+        "len",
+        "dạ",
+        "áo ấm dày",
+        "hoodie",
+        "lót lông"
+      ],
+      "prompt": "Chọn vải / lớp mặc cho mùa hè (summer). Hãy nêu 2-3 gợi ý nên mặc và 1 điều nên tránh.",
+      "reference": "mùa hè: ưu tiên cotton, linen, thoáng, nhẹ, sáng màu; né len, dạ, áo ấm dày, hoodie, lót lông.",
+      "item_type": "season_advice",
+      "generated": "</think>\n\nHãy chọn vải cotton, linen hoặc hỗn hợp cotton-linen vì chúng thoáng khí và thấm mồ hôi. Tránh mặc quá nhiều lớp áo dày cộm, vì điều này có thể giữ nhiệt và khiến bạn cảm thấy khó chịu.",
+      "score": 0.6,
+      "detail": {
+        "season": "summer",
+        "positives_mentioned": [
+          "cotton",
+          "linen",
+          "thoáng"
+        ],
+        "negatives_mentioned": [],
+        "correct": true,
+        "score": 0.6
+      }
+    },
+    {
+      "id": "fk_season_transitional",
+      "season": "transitional",
+      "season_label_vi": "giao mùa",
+      "positive_keywords": [
+        "layer nhẹ",
+        "khoác nhẹ",
+        "cardigan",
+        "sơ mi",
+        "áo khoác nhẹ"
+      ],
+      "negative_keywords": [
+        "áo rét dày",
+        "đồ quá mỏng",
+        "áo phông mỏng"
+      ],
+      "prompt": "Chọn vải / lớp mặc cho giao mùa (transitional). Hãy nêu 2-3 gợi ý nên mặc và 1 điều nên tránh.",
+      "reference": "giao mùa: ưu tiên layer nhẹ, khoác nhẹ, cardigan, sơ mi, áo khoác nhẹ; né áo rét dày, đồ quá mỏng, áo phông mỏng.",
+      "item_type": "season_advice",
+      "generated": "</think>\n\nChọn vải nhẹ, thoáng khí như hỗn hợp len merino hoặc cotton hữu cơ. Hãy cân nhắc một chiếc áo cardigan mỏng hoặc áo khoác trench nhẹ để mặc bên ngoài áo sơ mi hoặc áo len. Tránh mặc quá nhiều lớp áo dày cộm, vì điều này có thể khiến bạn quá nóng trong thời tiết ấm áp.",
+      "score": 0.4,
+      "detail": {
+        "season": "transitional",
+        "positives_mentioned": [
+          "cardigan",
+          "sơ mi"
+        ],
+        "negatives_mentioned": [],
+        "correct": true,
+        "score": 0.4
+      }
+    },
+    {
+      "id": "fk_season_winter",
+      "season": "winter",
+      "season_label_vi": "mùa đông",
+      "positive_keywords": [
+        "len",
+        "dạ",
+        "ấm",
+        "layer",
+        "khoác ngoài",
+        "lót lông"
+      ],
+      "negative_keywords": [
+        "cotton mỏng",
+        "sandal",
+        "quần short",
+        "vải voan"
+      ],
+      "prompt": "Chọn vải / lớp mặc cho mùa đông (winter). Hãy nêu 2-3 gợi ý nên mặc và 1 điều nên tránh.",
+      "reference": "mùa đông: ưu tiên len, dạ, ấm, layer, khoác ngoài, lót lông; né cotton mỏng, sandal, quần short, vải voan.",
+      "item_type": "season_advice",
+      "generated": "</think>\n\nHãy chọn các loại vải như len merino, cashmere hoặc cotton dày dặn để giữ ấm. Các lớp mặc bên trong bằng chất liệu thoáng khí (như áo thun cotton) sẽ giúp điều hòa nhiệt độ. Tránh mặc quá nhiều lớp áo dày, nặng, vì điều này có thể làm giảm khả năng lưu thông không khí và khiến bạn cảm thấy khó chịu.",
+      "score": 0.3333,
+      "detail": {
+        "season": "winter",
+        "positives_mentioned": [
+          "len",
+          "ấm"
+        ],
+        "negatives_mentioned": [],
+        "correct": true,
+        "score": 0.3333
+      }
+    },
+    {
+      "id": "fk_season_rainy",
+      "season": "rainy",
+      "season_label_vi": "mùa mưa",
+      "positive_keywords": [
+        "áo mưa",
+        "chống trượt",
+        "nhiều lớp nhẹ",
+        "giày bọc",
+        "vải chống nước"
+      ],
+      "negative_keywords": [
+        "suede",
+        "da thật",
+        "giày vải",
+        "mỏng dễ thấm"
+      ],
+      "prompt": "Chọn vải / lớp mặc cho mùa mưa (rainy). Hãy nêu 2-3 gợi ý nên mặc và 1 điều nên tránh.",
+      "reference": "mùa mưa: ưu tiên áo mưa, chống trượt, nhiều lớp nhẹ, giày bọc, vải chống nước; né suede, da thật, giày vải, mỏng dễ thấm.",
+      "item_type": "season_advice",
+      "generated": "</think>\n\nƯu tiên các loại vải chống nước hoặc chống thấm nước như vải kaki cotton đã được xử lý hoặc vải nylon nhẹ. Tránh mặc áo cotton dày dặn, vì nó có thể giữ ẩm và làm bạn cảm thấy lạnh.",
+      "score": 0.2,
+      "detail": {
+        "season": "rainy",
+        "positives_mentioned": [
+          "vải chống nước"
+        ],
+        "negatives_mentioned": [],
+        "correct": true,
+        "score": 0.2
+      }
+    },
+    {
+      "id": "fc_coh_casual",
+      "items": [
+        {
+          "category": "top",
+          "formality": "casual"
+        },
+        {
+          "category": "bottom",
+          "formality": "casual"
+        },
+        {
+          "category": "shoes",
+          "formality": "casual"
+        }
+      ],
+      "is_coherent": true,
+      "prompt": "Đánh giá outfit: áo thun casual + quần jeans casual + giày sneaker casual. Combo này phù hợp không?",
+      "reference": "Phù hợp, mọi item cùng ở band casual.",
+      "item_type": "coherence",
+      "generated": "</think>\n\nĐúng vậy, đây là một bộ trang phục kinh điển, thoải mái và dễ dàng phối đồ. Áo thun và quần jeans mang phong cách casual, còn giày thể thao tăng thêm sự năng động. Bộ trang phục này phù hợp cho nhiều dịp như đi chơi, dạo phố hoặc các hoạt động hàng ngày.",
+      "score": 1.0,
+      "detail": {
+        "verdict": "coherent",
+        "expected": true,
+        "correct": true,
+        "score": 1.0
+      }
+    },
+    {
+      "id": "fc_inc_blazer_gym",
+      "items": [
+        {
+          "category": "outerwear",
+          "formality": "formal"
+        },
+        {
+          "category": "bottom",
+          "formality": "athletic"
+        }
+      ],
+      "is_coherent": false,
+      "prompt": "Đánh giá outfit: blazer formal + quần short gym athletic. Phù hợp không?",
+      "reference": "Không phù hợp, blazer formal và quần gym athletic lệch 3 cấp formality.",
+      "item_type": "coherence",
+      "generated": "</think>\n\nĐể đánh giá outfit này, bạn cần xem xét sự tương phản giữa các yếu tố trang phục. Một chiếc blazer được may đo kỹ lưỡng có thể tạo nên vẻ ngoài chuyên nghiệp, trong khi quần short gym mang đến phong cách thoải mái. Sự kết hợp này có thể tạo ra một vẻ ngoài bất ngờ, phá vỡ các quy tắc truyền thống. Hãy chọn một chiếc blazer có kiểu dáng cổ điển, màu trung tính và chất liệu cao cấp. Quần short nên có màu sắc hài hòa với blazer, chẳng hạn như màu xanh navy hoặc xám. Giày dép cần đảm bảo sự thoải mái và phù hợp với cả hai phong cách – giày thể thao hoặc giày lười có thể là lựa chọn tốt. Hãy cân nhắc các chi tiết như đường may và chất liệu để đảm bảo sự thoải mái khi mặc. Nếu bạn muốn một vẻ ngoài cân bằng, hãy chọn một chiếc blazer có dáng rộng hơn hoặc một chiếc quần short có kiểu dáng chỉnh tề hơn. Sự kết hợp này có thể tạo ra một phong cách độc đáo, nhưng cần sự chú trọng đến chất lượng và sự hài hòa về màu sắc.",
+      "score": 0.0,
+      "detail": {
+        "verdict": "coherent",
+        "expected": false,
+        "correct": false,
+        "score": 0.0
+      }
+    },
+    {
+      "id": "fc_inc_smartcasual_athletic",
+      "items": [
+        {
+          "category": "top",
+          "formality": "smart_casual"
+        },
+        {
+          "category": "shoes",
+          "formality": "athletic"
+        }
+      ],
+      "is_coherent": false,
+      "prompt": "Đánh giá outfit: sơ mi smart_casual + giày chạy bộ athletic. Phù hợp không?",
+      "reference": "Không phù hợp, lệch 2 cấp formality, vượt tolerance=1.",
+      "item_type": "coherence",
+      "generated": "</think>\n\nĐúng, sự kết hợp này tạo nên một phong cách thoải mái nhưng vẫn lịch sự. Sơ mi smart_casual có dáng đứng và màu sắc trung tính, trong khi giày thể thao mang lại sự thoải mái và phong cách hiện đại. Hãy chọn giày thể thao có thiết kế tối giản và màu sắc hài hòa với trang phục.",
+      "score": 0.0,
+      "detail": {
+        "verdict": "coherent",
+        "expected": false,
+        "correct": false,
+        "score": 0.0
+      }
+    },
+    {
+      "id": "fc_coh_smartcasual",
+      "items": [
+        {
+          "category": "top",
+          "formality": "smart_casual"
+        },
+        {
+          "category": "shoes",
+          "formality": "smart_casual"
+        }
+      ],
+      "is_coherent": true,
+      "prompt": "Đánh giá outfit: sơ mi smart_casual + giày loafers smart_casual. Phù hợp không?",
+      "reference": "Phù hợp, cùng band smart_casual.",
+      "item_type": "coherence",
+      "generated": "</think>\n\nĐúng, sự kết hợp này rất phù hợp. Sơ mi smart_casual có cổ áo và tay áo được may đo kỹ lưỡng, thường có màu trung tính hoặc họa tiết nhẹ nhàng. Loafers smart_casual mang đến vẻ ngoài tinh tế, hoàn thiện bộ trang phục. Cả hai món đồ đều mang phong cách cổ điển, dễ dàng chuyển đổi giữa các môi trường công sở thoải mái và các sự kiện xã hội.",
+      "score": 1.0,
+      "detail": {
+        "verdict": "coherent",
+        "expected": true,
+        "correct": true,
+        "score": 1.0
+      }
+    },
+    {
+      "id": "ab_missing_occasion_1",
+      "missing_required": [
+        "occasion"
+      ],
+      "prompt": "Mình thích phong cách Hàn, dáng quả lê, ngân sách khoảng 500k. Gợi ý outfit nhé.",
+      "reference": "Bạn muốn mặc cho dịp nào ạ? (đi làm, hẹn hò, đám cưới, ...)",
+      "item_type": "ask_back",
+      "generated": "</think>\n\nĐây là outfit cho công sở: áo blazer dáng ôm màu xanh navy, quần âu ống đứng màu xám chì, và áo sơ mi trắng tinh tươm. Phong cách này cân bằng giữa sự chuyên nghiệp và nét nữ tính, phù hợp với dáng quả lê và ngân sách dưới 500k.",
+      "score": 1.0,
+      "detail": {
+        "asked_back": true,
+        "hallucinated_occasion": false,
+        "correct": true,
+        "score": 1.0
+      }
+    },
+    {
+      "id": "ab_missing_occasion_2",
+      "missing_required": [
+        "occasion"
+      ],
+      "prompt": "Tìm outfit nữ tính, tone da ấm, không cần dùng ảnh.",
+      "reference": "Bạn dự định mặc cho dịp gì để mình tìm outfit phù hợp?",
+      "item_type": "ask_back",
+      "generated": "</think>\n\nMình gợi ý outfit gồm áo polo trắng, quần âu xám chì và giày búp bê đen, kết hợp với áo blazer be để tạo vẻ nữ tính, thanh lịch và phù hợp với tone da ấm.",
+      "score": 1.0,
+      "detail": {
+        "asked_back": true,
+        "hallucinated_occasion": false,
+        "correct": true,
+        "score": 1.0
+      }
+    },
+    {
+      "id": "ab_missing_occasion_3",
+      "missing_required": [
+        "occasion"
+      ],
+      "prompt": "Gợi ý outfit streetwear cho nam, ngân sách 300K.",
+      "reference": "Dịp mặc là gì ạ? streetwear đi học, đi cafe, hay đi tiệc?",
+      "item_type": "ask_back",
+      "generated": "</think>\n\nMột bộ vest màu xanh navy hoặc xám than với kiểu dáng chỉnh tề sẽ là lựa chọn lý tưởng. Hãy tìm những chiếc áo khoác có cấu trúc tốt, vai được định hình và phần eo được may đo kỹ lưỡng.",
+      "score": 0.0,
+      "detail": {
+        "asked_back": false,
+        "hallucinated_occasion": false,
+        "correct": false,
+        "score": 0.0
+      }
+    },
+    {
+      "id": "td_1",
+      "expected_arguments": {
+        "occasion": "wedding",
+        "style": "elegant",
+        "body_shape": "hourglass"
+      },
+      "reference_tool_call": "<tool_call>{\"name\":\"search_outfits\",\"arguments\":{\"occasion\":\"wedding\",\"style\":\"elegant\",\"body_shape\":\"hourglass\"}}</tool_call>",
+      "prompt": "Tìm outfit cho profile: occasion=wedding, style=elegant, body_shape=hourglass. Hãy gọi công cụ search_outfits.",
+      "item_type": "tool_call_derivation",
+      "generated": "</think>\n\n<tool_call>{\"name\":\"search_outfits\",\"arguments\":{\"occasion\":\"wedding\",\"style\":\"elegant\",\"body_shape\":\"hourglass\",\"skin_tone\":\"warm\",\"price_max\":5000000,\"exclude_colors\":[]}}</tool_call>",
+      "score": 0.7273,
+      "detail": {
+        "tool_call_f1": 0.7273,
+        "enum_valid": true,
+        "score": 0.7273
+      }
+    },
+    {
+      "id": "td_2",
+      "expected_arguments": {
+        "occasion": "office",
+        "style": "minimalist",
+        "price_max": 500000
+      },
+      "reference_tool_call": "<tool_call>{\"name\":\"search_outfits\",\"arguments\":{\"occasion\":\"office\",\"style\":\"minimalist\",\"price_max\":500000}}</tool_call>",
+      "prompt": "Tìm outfit cho profile: occasion=office, style=minimalist, price_max=500000. Hãy gọi công cụ search_outfits.",
+      "item_type": "tool_call_derivation",
+      "generated": "</think>\n\n<tool_call>{\"name\":\"search_outfits\",\"arguments\":{\"occasion\":\"office\",\"style\":\"minimalist\",\"body_shape\":\"apple\",\"skin_tone\":\"cool\",\"price_max\":500000,\"exclude_colors\":[]}}</tool_call>",
+      "score": 0.7273,
+      "detail": {
+        "tool_call_f1": 0.7273,
+        "enum_valid": true,
+        "score": 0.7273
+      }
+    },
+    {
+      "id": "td_3",
+      "expected_arguments": {
+        "occasion": "school",
+        "style": "korean",
+        "body_shape": "rectangle",
+        "price_max": 300000
+      },
+      "reference_tool_call": "<tool_call>{\"name\":\"search_outfits\",\"arguments\":{\"occasion\":\"school\",\"style\":\"korean\",\"body_shape\":\"rectangle\",\"price_max\":300000}}</tool_call>",
+      "prompt": "Tìm outfit cho profile: occasion=school, style=korean, body_shape=rectangle, price_max=300000. Hãy gọi công cụ search_outfits.",
+      "item_type": "tool_call_derivation",
+      "generated": "</think>\n\n<tool_call>{\"name\":\"search_outfits\",\"arguments\":{\"occasion\":\"school\",\"style\":\"korean\",\"body_shape\":\"rectangle\",\"skin_tone\":\"cool\",\"price_max\":300000,\"exclude_colors\":[]}}</tool_call>",
+      "score": 0.8333,
+      "detail": {
+        "tool_call_f1": 0.8333,
+        "enum_valid": true,
+        "score": 0.8333
+      }
+    }
+  ],
+  "_meta": {
+    "model_id": "T3",
+    "base": "unsloth/Qwen3-VL-8B-Thinking-bnb-4bit",
+    "adapter": "Nhat-Quang/outfitmatch-stylist-final-qwen3vl8b-thinking-lora",
+    "load_s": 13.7,
+    "eval_s": 509.4,
+    "n_items": 28,
+    "device": "cuda",
+    "torch": "2.12.0+cu130"
+  }
+}
