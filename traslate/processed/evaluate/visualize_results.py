@@ -31,12 +31,27 @@ for model_name, file_path in eval_files.items():
         data = json.load(f)
         
     for item in data:
-        if 'judge_score' in item:
-            records.append({
+        if 'evaluation' in item:
+            eval_data = item['evaluation']
+            criteria_cols = ['knowledge_retrieval', 'citation_accuracy', 'fashion_knowledge_qa', 'faithfulness', 'hallucination']
+            score = sum(eval_data.get(k, 0.0) for k in criteria_cols) / len(criteria_cols)
+            row = {
+                "Model": model_name,
+                "Prompt": item.get('question') or item.get('prompt', ''),
+                "Score": score
+            }
+            for k in criteria_cols:
+                row[k] = eval_data.get(k, 0.0)
+            records.append(row)
+        elif 'judge_score' in item:
+            row = {
                 "Model": model_name,
                 "Prompt": item.get('prompt', ''),
-                "Score": item['judge_score']
-            })
+                "Score": item['judge_score'] / 5.0
+            }
+            for k in ['knowledge_retrieval', 'citation_accuracy', 'fashion_knowledge_qa', 'faithfulness', 'hallucination']:
+                row[k] = item.get(k, item['judge_score']) / 5.0
+            records.append(row)
 
 df = pd.DataFrame(records)
 
@@ -75,10 +90,10 @@ for i, p in enumerate(ax.patches):
         fontweight='bold'
     )
 
-plt.title("So Sánh Điểm Số Đánh Giá Trung Bình Của Các Mô Hình (Thang 1-5)", fontsize=14, fontweight='bold', pad=15)
+plt.title("So Sánh Điểm Số Đánh Giá Trung Bình Của Các Mô Hình (Thang 0-1)", fontsize=14, fontweight='bold', pad=15)
 plt.xlabel("Điểm đánh giá trung bình", fontsize=12)
 plt.ylabel("Mô hình", fontsize=12)
-plt.xlim(0, 5.5)
+plt.xlim(0, 1.15)
 plt.tight_layout()
 
 output_avg = os.path.join(BASE_DIR, "benchmark_average_scores.png")
@@ -119,10 +134,10 @@ for p in ax2.patches:
             fontsize=9
         )
 
-plt.title("Phần Trăm Phân Phối Điểm Số (1 đến 5) Của Từng Mô Hình", fontsize=14, fontweight='bold', pad=15)
+plt.title("Phần Trăm Phân Phối Điểm Số (Thang 0-1) Của Từng Mô Hình", fontsize=14, fontweight='bold', pad=15)
 plt.xlabel("Điểm số (Judge Score)", fontsize=12)
 plt.ylabel("Tỷ lệ (%)", fontsize=12)
-plt.ylim(0, 100)
+plt.ylim(0, 105)
 plt.legend(title="Mô hình", bbox_to_anchor=(1.05, 1), loc='upper left')
 plt.tight_layout()
 
@@ -150,7 +165,7 @@ sns.violinplot(
 axes[0].set_title("Biểu đồ Violin Phân Phối Điểm Số", fontsize=12, fontweight='bold')
 axes[0].set_xlabel("Mô hình")
 axes[0].set_ylabel("Điểm số")
-axes[0].set_ylim(0.5, 5.5)
+axes[0].set_ylim(-0.05, 1.05)
 axes[0].tick_params(axis='x', rotation=15)
 
 # Box Plot
@@ -166,7 +181,7 @@ sns.boxplot(
 axes[1].set_title("Biểu đồ Box Plot So Sánh Độ Dao Động", fontsize=12, fontweight='bold')
 axes[1].set_xlabel("Mô hình")
 axes[1].set_ylabel("Điểm số")
-axes[1].set_ylim(0.5, 5.5)
+axes[1].set_ylim(-0.05, 1.05)
 axes[1].tick_params(axis='x', rotation=15)
 
 plt.suptitle("Phân Tích Chi Tiết Biểu Đồ Hộp & Biểu Đồ Violin", fontsize=15, fontweight='bold', y=0.98)
@@ -176,5 +191,69 @@ output_combined = os.path.join(BASE_DIR, "benchmark_box_violin_plots.png")
 plt.savefig(output_combined, dpi=300)
 plt.close()
 print(f"Đã lưu biểu đồ phân bố chi tiết tại: {output_combined}")
+
+# ----------------------------------------------------
+# BIỂU ĐỒ 4: SO SÁNH CHI TIẾT THEO 5 TIÊU CHÍ (Criteria Comparison Grouped Bar Chart)
+# ----------------------------------------------------
+criteria_cols = ['knowledge_retrieval', 'citation_accuracy', 'fashion_knowledge_qa', 'faithfulness', 'hallucination']
+has_criteria = all(col in df.columns for col in criteria_cols)
+
+if has_criteria:
+    # Melt dataframe về dạng long format
+    melted_df = df.melt(
+        id_vars=["Model"],
+        value_vars=criteria_cols,
+        var_name="Criterion",
+        value_name="CriteriaScore"
+    )
+    # Ánh xạ tên tiếng Việt/Anh đẹp mắt
+    criteria_names_map = {
+        'knowledge_retrieval': 'Knowledge Retrieval',
+        'citation_accuracy': 'Citation Accuracy',
+        'fashion_knowledge_qa': 'Fashion QA',
+        'faithfulness': 'Faithfulness',
+        'hallucination': 'Hallucination'
+    }
+    melted_df["Criterion"] = melted_df["Criterion"].map(criteria_names_map)
+    
+    # Tính điểm trung bình của mỗi model cho từng tiêu chí
+    criterion_means = melted_df.groupby(["Model", "Criterion"])["CriteriaScore"].mean().reset_index()
+    
+    plt.figure(figsize=(14, 7))
+    ax3 = sns.barplot(
+        x="Criterion",
+        y="CriteriaScore",
+        hue="Model",
+        data=criterion_means,
+        palette="Set2"
+    )
+    
+    # Thêm giá trị số trên đầu mỗi cột
+    for p in ax3.patches:
+        height = p.get_height()
+        if height > 0:
+            ax3.text(
+                p.get_x() + p.get_width() / 2.,
+                height + 0.05,
+                f'{height:.2f}',
+                ha="center",
+                va="bottom",
+                fontsize=9,
+                fontweight='bold'
+            )
+            
+    plt.title("So Sánh Các Mô Hình Qua 5 Tiêu Chí Đánh Giá Chi Tiết", fontsize=14, fontweight='bold', pad=15)
+    plt.xlabel("Tiêu chí đánh giá", fontsize=12)
+    plt.ylabel("Điểm trung bình (Thang 0-1)", fontsize=12)
+    plt.ylim(0, 1.1)
+    plt.legend(title="Mô hình", bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()
+    
+    output_detail = os.path.join(BASE_DIR, "benchmark_criteria_comparison.png")
+    plt.savefig(output_detail, dpi=300)
+    plt.close()
+    print(f"Đã lưu biểu đồ so sánh chi tiết các tiêu chí tại: {output_detail}")
+else:
+    print("ℹ️ Bỏ qua biểu đồ so sánh tiêu chí vì các file đánh giá chưa chứa điểm tiêu chí chi tiết.")
 
 print("✨ Hoàn tất tạo tất cả biểu đồ trực quan hóa!")

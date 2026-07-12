@@ -58,7 +58,7 @@ class RotatingGroqClient:
         self.keys = keys
         self.current_idx = 0
         
-    def create_chat_completion(self, model, messages, temperature=0.0, max_tokens=300):
+    def create_chat_completion(self, model, messages, temperature=0.0, max_tokens=1024):
         if not self.keys:
             raise ValueError("Không tìm thấy GROQ_API_KEY trong file .env hoặc danh sách dự phòng")
             
@@ -233,35 +233,80 @@ class RotatingGeminiClient:
 
 gemini_client = RotatingGeminiClient(gemini_keys)
 
+def extract_json(text):
+    """Trích xuất và parse JSON từ văn bản phản hồi của LLM."""
+    if not text:
+        return None
+    # Loại bỏ think tag nếu có (đặc biệt đối với các model suy nghĩ của Qwen/DeepSeek)
+    if "<think>" in text:
+        if "</think>" in text:
+            text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+        else:
+            text = re.sub(r'<think>.*', '', text, flags=re.DOTALL)
+            
+    # Tìm khối JSON trong văn bản
+    match = re.search(r'\{.*\}', text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group())
+        except Exception:
+            pass
+            
+    # Thử làm sạch trực tiếp đầu ra
+    cleaned = text.strip()
+    if cleaned.startswith("```json"):
+        cleaned = cleaned[7:]
+    elif cleaned.startswith("```"):
+        cleaned = cleaned[3:]
+    if cleaned.endswith("```"):
+        cleaned = cleaned[:-3]
+        
+    try:
+        return json.loads(cleaned.strip())
+    except Exception as e:
+        print(f"Không thể parse JSON từ text. Lỗi: {e}")
+        return None
+
 def llm_as_a_judge(prompt, generated_text, reference_text):
     """
-    Dùng Gemini-2.5-flash làm giám khảo để so sánh câu trả lời của AI 
-    với câu trả lời chuẩn (Ground Truth).
+    Dùng LLM làm giám khảo đánh giá câu trả lời trên 5 tiêu chí thời trang cốt lõi.
+    Trả về dictionary chứa điểm 5 tiêu chí và phần lập luận giải thích.
     """
     if MOCK_MODE:
-        # Chế độ mô phỏng điểm số (từ 3 đến 5) dựa trên hash nội dung để kiểm tra giao diện
         import random
         random.seed(abs(hash(prompt)))
-        return random.randint(3, 5), "Đây là kết quả đánh giá mô phỏng ở chế độ MOCK_MODE."
+        return {
+            'knowledge_retrieval': random.randint(3, 5),
+            'citation_accuracy': random.randint(3, 5),
+            'fashion_knowledge_qa': random.randint(3, 5),
+            'faithfulness': random.randint(3, 5),
+            'hallucination': random.randint(3, 5),
+            'reasoning': "Đây là kết quả đánh giá mô phỏng ở chế độ MOCK_MODE."
+        }
 
     judge_prompt = f"""
-    Bạn là một Giám khảo thời trang khách quan. Hãy chấm điểm câu trả lời của AI từ 1 đến 5 và giải thích lý do ngắn gọn bằng tiếng Việt.
-    Hãy trả về kết quả theo định dạng chính xác như sau (thay thế phần nằm trong ngoặc vuông bằng kết quả của bạn):
-    DIEM: [Một con số nguyên duy nhất từ 1 đến 5]
-    LY_DO: [Giải thích ngắn gọn lý do chấm điểm bằng tiếng Việt, khoảng 1-2 câu]
+    Bạn là một Giám khảo thời trang khách quan. Hãy chấm điểm câu trả lời của AI dựa trên Câu trả lời MẪU (Chuẩn) và Yêu cầu của khách hàng.
+    Hãy chấm điểm từ 1 đến 5 (số nguyên) cho 5 tiêu chí sau:
+    1. knowledge_retrieval (Truy xuất Tri thức): Khả năng áp dụng quy tắc phối đồ/thông tin sản phẩm hữu ích từ tài liệu.
+    2. citation_accuracy (Độ chính xác trích dẫn): Trích dẫn đúng, đủ URL nguồn tương ứng với danh mục câu hỏi (không bịa link, link rác).
+    3. fashion_knowledge_qa (Hỏi đáp Kiến thức Thời trang): Tư vấn thời trang chuẩn xác, logic chuyên nghiệp, không khuyên phản thẩm mỹ.
+    4. faithfulness (Tính trung thực với ngữ cảnh): Tất cả thông tin tư vấn đều có căn cứ từ ngữ cảnh cung cấp, không suy diễn quá đà.
+    5. hallucination (Chống ảo giác): Không bịa đặt sản phẩm, giá tiền, hoặc link không tồn tại.
 
-    Yêu cầu của khách hàng: {prompt}
-    
-    Câu trả lời MẪU (Chuẩn): {reference_text}
-    
-    Câu trả lời CỦA AI CẦN CHẤM: {generated_text}
-    
-    Tiêu chí chấm (1-5):
-    5 điểm: Hoàn hảo, bám sát các ý chính của câu trả lời mẫu, văn phong lịch sự, tư vấn chính xác. Chấp nhận và khuyến khích câu trả lời chi tiết, mở rộng hơn câu mẫu nếu đúng kiến thức thời trang.
-    4 điểm: Trả lời đúng trọng tâm nhưng văn phong chưa được tinh tế hoặc thiếu một chút sự sâu sắc.
-    3 điểm: Trả lời được nhưng thiếu ý quan trọng hoặc có một số sai sót nhỏ so với mẫu.
-    2 điểm: Trả lời sai kiến thức thời trang cơ bản hoặc bị ảo giác (hallucination) một phần.
-    1 điểm: Hoàn toàn lạc đề, sinh ra text rác, bịa đặt, hoặc từ chối trả lời sai cách.
+    Hãy trả về một JSON object duy nhất có cấu trúc chính xác như dưới đây. Không kèm bất kỳ lời dẫn hay văn bản thừa nào ngoài JSON.
+    {{
+      "knowledge_retrieval": [số nguyên từ 1 đến 5],
+      "citation_accuracy": [số nguyên từ 1 đến 5],
+      "fashion_knowledge_qa": [số nguyên từ 1 đến 5],
+      "faithfulness": [số nguyên từ 1 đến 5],
+      "hallucination": [số nguyên từ 1 đến 5],
+      "reasoning": "[Giải thích ngắn gọn lý do chấm điểm bằng tiếng Việt, khoảng 2-3 câu]"
+    }}
+
+    Dữ liệu đánh giá:
+    - Yêu cầu của khách hàng: {prompt}
+    - Câu trả lời MẪU (Chuẩn): {reference_text}
+    - Câu trả lời CỦA AI CẦN CHẤM: {generated_text}
     """
     
     # Thiết lập cấu hình bộ lọc an toàn tối thiểu (BLOCK_NONE) để tránh lỗi kiểm duyệt với các từ nhạy cảm trong ngành thời trang
@@ -291,7 +336,7 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
                 contents=judge_prompt,
                 config=types.GenerateContentConfig(
                     temperature=0.0,
-                    max_output_tokens=300,
+                    max_output_tokens=500,
                     safety_settings=safety_settings
                 )
             )
@@ -299,9 +344,9 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
         elif JUDGE_PROVIDER == "anthropic":
             message = anthropic_client.messages.create(
                 model=JUDGE_MODEL,
-                max_tokens=300,
+                max_tokens=500,
                 temperature=0.0,
-                system="Bạn là một Giám khảo thời trang khách quan, hãy chấm điểm và giải thích ngắn gọn.",
+                system="Bạn là một Giám khảo thời trang khách quan, hãy trả về kết quả dưới dạng JSON theo đúng cấu trúc yêu cầu.",
                 messages=[{"role": "user", "content": judge_prompt}]
             )
             response_text = message.content[0].text
@@ -310,7 +355,7 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
                 model=JUDGE_MODEL,
                 messages=[{"role": "user", "content": judge_prompt}],
                 temperature=0.0,
-                max_tokens=300
+                max_tokens=500
             )
             response_text = response.choices[0].message.content
         elif JUDGE_PROVIDER == "groq":
@@ -324,56 +369,93 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
         else:
             raise ValueError(f"Không nhận diện được JUDGE_PROVIDER: {JUDGE_PROVIDER}")
             
-        # Trích xuất số điểm từ câu trả lời của Judge
         if response_text is None:
-            print("Cảnh báo: Câu trả lời bị chặn bởi bộ lọc an toàn (Safety Filter) hoặc không có nội dung.")
-            return 1, "Bị chặn bởi bộ lọc an toàn."
+            print("Cảnh báo: Câu trả lời bị chặn bởi bộ lọc an toàn hoặc không có nội dung.")
+            return None
             
-        # Loại bỏ tag <think>...</think> nếu có (đặc biệt đối với các model suy nghĩ của Qwen/DeepSeek)
-        clean_text = response_text
-        if "<think>" in clean_text:
-            if "</think>" in clean_text:
-                clean_text = re.sub(r'<think>.*?</think>', '', clean_text, flags=re.DOTALL)
+        parsed_result = extract_json(response_text)
+        if not parsed_result:
+            # Fallback nếu không parse được JSON
+            print(f"Cảnh báo: Không thể phân tích cú pháp JSON của Judge. Phản hồi thô: {response_text}")
+            return None
+            
+        # Đảm bảo các trường điểm số hợp lệ
+        for k in ['knowledge_retrieval', 'citation_accuracy', 'fashion_knowledge_qa', 'faithfulness', 'hallucination']:
+            if k not in parsed_result:
+                parsed_result[k] = 3 # Trị số mặc định trung bình
             else:
-                clean_text = re.sub(r'<think>.*', '', clean_text, flags=re.DOTALL)
+                try:
+                    parsed_result[k] = max(1, min(5, int(parsed_result[k])))
+                except ValueError:
+                    parsed_result[k] = 3
+                    
+        if 'reasoning' not in parsed_result:
+            parsed_result['reasoning'] = "Không có lý do chi tiết."
             
-        score_match = re.search(r'DIEM:\s*(\d+)', clean_text, re.IGNORECASE)
-        reason_match = re.search(r'LY_DO:\s*(.*)', clean_text, re.DOTALL | re.IGNORECASE)
-        
-        if not score_match:
-            # Fallback nếu không đúng format
-            num_match = re.search(r'\d+', clean_text)
-            score = int(num_match.group()) if num_match else 1
-            reason = clean_text.strip()
-        else:
-            score = int(score_match.group(1))
-            reason = reason_match.group(1).strip() if reason_match else ""
-            
-        # Đảm bảo điểm nằm trong khoảng 1-5
-        return max(1, min(5, score)), reason
+        return parsed_result
     except Exception as e:
         print(f"❌ Lỗi gọi API ({JUDGE_PROVIDER}): {e}")
-        return None, None # Trả về None để báo hiệu lỗi API hệ thống (hết token, lỗi key, mất mạng)
+        return None
 
 def evaluate_model_file(filepath, limit=None):
-    """Chạy đánh giá cho 1 file kết quả, hỗ trợ resume từ checkpoint."""
+    """Chạy đánh giá cho 1 file kết quả, hỗ trợ resume và tự động chuẩn hóa sang định dạng mới."""
     # Xác định đường dẫn file checkpoint
     eval_filepath = filepath.replace(".json", "_eval.json")
+    if "tested" in eval_filepath:
+        eval_filepath = eval_filepath.replace("tested", "evaluated")
     
     # Đọc dữ liệu từ checkpoint cũ nếu có, nếu không thì đọc file gốc
     data = []
     if os.path.exists(eval_filepath):
         try:
             with open(eval_filepath, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+                loaded_data = json.load(f)
             print(f"Phát hiện checkpoint cũ tại: {eval_filepath}")
+            
+            # Chuẩn hóa dữ liệu cũ sang cấu trúc mới
+            data = []
+            for i, row in enumerate(loaded_data):
+                if "question" in row:
+                    data.append(row)
+                else:
+                    item = {
+                        "id": row.get("id") or f"Q-{i+1:03d}",
+                        "question": row.get("prompt") or "",
+                        "ground_truth": row.get("reference_text") or "",
+                        "contexts": row.get("contexts") or [],
+                        "metadata": row.get("metadata") or {"category": row.get("category", "unknown")},
+                        "retrieved_contexts": row.get("retrieved_contexts") or [],
+                        "answer": row.get("generated_text") or ""
+                    }
+                    # Nếu đã có đánh giá
+                    if "judge_score" in row or "knowledge_retrieval" in row:
+                        item["evaluation"] = {
+                            "knowledge_retrieval": round(row.get("knowledge_retrieval", row.get("judge_score", 3.0)) / 5.0, 2),
+                            "citation_accuracy": round(row.get("citation_accuracy", row.get("judge_score", 3.0)) / 5.0, 2),
+                            "fashion_knowledge_qa": round(row.get("fashion_knowledge_qa", row.get("judge_score", 3.0)) / 5.0, 2),
+                            "faithfulness": round(row.get("faithfulness", row.get("judge_score", 3.0)) / 5.0, 2),
+                            "hallucination": round(row.get("hallucination", row.get("judge_score", 3.0)) / 5.0, 2),
+                            "reasoning": row.get("judge_reasoning", row.get("reasoning", ""))
+                        }
+                    data.append(item)
         except Exception as e:
             print(f"Lỗi đọc file checkpoint {eval_filepath}: {e}. Đang tải lại file gốc...")
             
     if not data:
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+                raw_data = json.load(f)
+            data = []
+            for i, row in enumerate(raw_data):
+                data.append({
+                    "id": f"Q-{i+1:03d}",
+                    "question": row.get("prompt") or row.get("question") or "",
+                    "ground_truth": row.get("reference_text") or row.get("ground_truth") or "",
+                    "contexts": row.get("contexts") or [],
+                    "metadata": row.get("metadata") or {"category": row.get("category", "unknown")},
+                    "retrieved_contexts": row.get("retrieved_contexts") or [],
+                    "answer": row.get("generated_text") or row.get("answer") or ""
+                })
         except FileNotFoundError:
             print(f"⚠️ Bỏ qua: Không tìm thấy file {filepath}")
             return None
@@ -385,46 +467,60 @@ def evaluate_model_file(filepath, limit=None):
     if total_samples == 0:
         return None
 
-    total_judge_score = 0
     completed_samples = 0
-    
-    # Đếm số lượng mẫu đã được chấm điểm trước đó
     for row in data:
-        if 'judge_score' in row:
-            total_judge_score += row['judge_score']
+        has_eval = 'evaluation' in row and all(k in row['evaluation'] for k in ['knowledge_retrieval', 'citation_accuracy', 'fashion_knowledge_qa', 'faithfulness', 'hallucination'])
+        if has_eval:
             completed_samples += 1
             
     if completed_samples > 0:
         print(f"  -> Tiếp tục chạy: Đã chấm {completed_samples}/{total_samples} mẫu trước đó.")
 
     for i, row in enumerate(data):
-        # Đảm bảo có trường id trong mỗi hàng
-        if 'id' not in row:
-            row['id'] = i
-            
-        # Bỏ qua nếu đã được chấm điểm
-        if 'judge_score' in row:
+        # Bỏ qua nếu đã được chấm điểm đủ các tiêu chí mới
+        has_eval = 'evaluation' in row and all(k in row['evaluation'] for k in ['knowledge_retrieval', 'citation_accuracy', 'fashion_knowledge_qa', 'faithfulness', 'hallucination'])
+        if has_eval:
             continue
             
-        prompt = row.get('prompt', '')
-        gen_text = row.get('generated_text', '')
-        ref_text = row.get('reference_text', '') 
+        prompt = row.get('question', '')
+        gen_text = row.get('answer', '')
+        ref_text = row.get('ground_truth', '') 
         
         # Thêm khoảng nghỉ để tránh Spam API quá nhanh gây Rate Limit (bỏ qua nếu chạy Mock)
         if not MOCK_MODE:
             time.sleep(SLEEP_DELAY)
         
-        judge_score, judge_reason = llm_as_a_judge(prompt, gen_text, ref_text)
-        if judge_score is None:
-            print(f"\n❌ Quá trình đánh giá bị dừng ở mẫu thứ {completed_samples + 1} do lỗi API hệ thống (hết token, lỗi key hoặc mất mạng).")
-            print("Tiến trình đã được lưu an toàn đến mẫu trước đó. Điểm của mẫu lỗi hiện tại CHƯA bị lưu đè.")
-            print("👉 Vui lòng kiểm tra lại API Key hoặc hạn mức, sau đó chạy lại lệnh để tiếp tục từ mẫu này.")
-            import sys
-            sys.exit(1)
+        # Thử gọi API tối đa 3 lần nếu bị lỗi kết nối hoặc parse JSON
+        judge_res = None
+        for attempt in range(3):
+            judge_res = llm_as_a_judge(prompt, gen_text, ref_text)
+            if judge_res is not None:
+                break
+            print(f"  [RETRY] Lỗi nhận diện câu trả lời ở mẫu thứ {completed_samples + 1}. Đang thử lại lần {attempt + 1}/3...")
+            time.sleep(2.0)
             
-        row['judge_score'] = judge_score
-        row['judge_reasoning'] = judge_reason
-        total_judge_score += judge_score
+        if judge_res is None:
+            print(f"  ⚠️ Cảnh báo: Không thể nhận kết quả từ Judge cho mẫu thứ {completed_samples + 1} sau 3 lần thử.")
+            print("  -> Tự động gán điểm mặc định (3/5) để tiếp tục tiến trình.")
+            judge_res = {
+                'knowledge_retrieval': 3,
+                'citation_accuracy': 3,
+                'fashion_knowledge_qa': 3,
+                'faithfulness': 3,
+                'hallucination': 3,
+                'reasoning': "Lỗi gọi API hoặc parse JSON từ Judge sau 3 lần thử."
+            }
+            
+        # Lưu các điểm số riêng lẻ và chuẩn hóa về thang 0.0 - 1.0
+        row['evaluation'] = {
+            'knowledge_retrieval': round(judge_res['knowledge_retrieval'] / 5.0, 2),
+            'citation_accuracy': round(judge_res['citation_accuracy'] / 5.0, 2),
+            'fashion_knowledge_qa': round(judge_res['fashion_knowledge_qa'] / 5.0, 2),
+            'faithfulness': round(judge_res['faithfulness'] / 5.0, 2),
+            'hallucination': round(judge_res['hallucination'] / 5.0, 2),
+            'reasoning': judge_res['reasoning']
+        }
+        
         completed_samples += 1
         
         # Lưu checkpoint ngay sau mỗi lần chấm điểm để đề phòng mất mạng/sập nguồn
@@ -438,9 +534,26 @@ def evaluate_model_file(filepath, limit=None):
         if completed_samples % 10 == 0 or completed_samples == total_samples:
             print(f"  Đã chấm {completed_samples}/{total_samples} mẫu...")
             
+    # Tính điểm trung bình của từng tiêu chí để in báo cáo so sánh chi tiết
+    num_samples = len(data)
+    if num_samples == 0:
+        return None
+        
+    k_ret = sum(row['evaluation']['knowledge_retrieval'] for row in data if 'evaluation' in row) / num_samples
+    c_acc = sum(row['evaluation']['citation_accuracy'] for row in data if 'evaluation' in row) / num_samples
+    f_qa = sum(row['evaluation']['fashion_knowledge_qa'] for row in data if 'evaluation' in row) / num_samples
+    faith = sum(row['evaluation']['faithfulness'] for row in data if 'evaluation' in row) / num_samples
+    hall = sum(row['evaluation']['hallucination'] for row in data if 'evaluation' in row) / num_samples
+    avg_tot = (k_ret + c_acc + f_qa + faith + hall) / 5.0
+    
     metrics = {
-        "Total_Samples_Evaluated": total_samples,
-        "Average_Judge_Score_1_to_5": round(total_judge_score / total_samples, 2)
+        "Size": num_samples,
+        "Retrieval": round(k_ret, 2),
+        "Citation": round(c_acc, 2),
+        "Fashion QA": round(f_qa, 2),
+        "Faithfulness": round(faith, 2),
+        "Hallucination": round(hall, 2),
+        "Average Total": round(avg_tot, 2)
     }
     return metrics
 
@@ -448,18 +561,18 @@ def evaluate_model_file(filepath, limit=None):
 # GIAI ĐOẠN CHẠY GỘP CÁC MÔ HÌNH
 # ==========================================
 if __name__ == "__main__":
-    # ĐIỀN ĐÚNG TÊN FILE MÀ BẠN ĐÃ LƯU TRONG QUÁ TRÌNH INFERENCE
+    # Danh sách 4 mô hình đã được bạn test và lưu trong thư mục tested/
     models_to_test = [
-        "t1_qwen3_vl_8b_thinking_outputs_part1.json",
-        "t2_qwen35_9b_outputs_part1.json",
-        "t3_qwen3_vl_8b_instruct_outputs_part1.json", 
-        "t4_gemma_outputs_part1.json"
+        "qwen3vl8b-thinking-lora-p1.json",
+        "qwen35-9b-bnb4-lora-p1.json",
+        "qwen3vl8b-instruct-lora-p1.json", 
+        "gemma4-12b-it-lora-p1.json"
     ]
     
     base_dir = os.path.dirname(os.path.abspath(__file__))
     final_report = {}
     for model_file in models_to_test:
-        full_path = os.path.join(base_dir, model_file)
+        full_path = os.path.join(base_dir, "tested", model_file)
         results = evaluate_model_file(full_path, limit=LIMIT_SAMPLES)
         if results:
             final_report[model_file] = results

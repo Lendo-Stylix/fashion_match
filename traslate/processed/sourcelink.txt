@@ -4,43 +4,65 @@
       "suggested_keywords": ["Office wear dress code", "business professional vs business casual", "smart-casual office attire"],
       "urls": [
 	https://www.whowhatwear.com/smart-casual-dress-code
-	https://voguenthreads.com/blogs/blog/british-gentlemans-guide-to-business-casual
-	https://vogue.sg/how-to-dress-for-work-this-summer/]
+	https://www.whowhatwear.com/fashion/office/gen-z-office-outfits
+	https://www.whowhatwear.com/fashion/office/gen-z-office-outfits
+  https://www.esquire.com/uk/style/a63826817/business-casual-dress-code/
+  https://www.esquire.com/style/mens-fashion/a61438962/mens-smart-casual/
+  https://www.mrporter.com/en-us/journal/fashion/summer-office-menswear-25241386
+  ]
     },
     "wedding_and_evening": {
       "suggested_keywords": ["Wedding guest dress code", "formal evening wear", "cocktail attire"],
       "urls": [
-	https://theweddingnotebook.com/inspire/fashion-and-beauty/deciphering-the-wedding-guest-dress-code
-	https://www.harpersbazaar.com/uk/fashion/shopping/a62826751/cocktail-dress-code/
-	https://www.harpersbazaar.com/fashion/trends/g42827562/cocktail-attire-for-women/]
+  https://www.whowhatwear.com/uk/cocktail-attire-for-women
+  https://www.harpersbazaar.com/fashion/trends/g42827562/cocktail-attire-for-women/
+  https://www.harpersbazaar.com/uk/fashion/shopping/a46096824/black-tie-dress-code-explained/
+  https://www.esquire.com/style/mens-fashion/g19851288/wedding-dress-code-guide-men/
+  https://www.esquire.com/style/mens-fashion/a45210983/cocktail-attire-for-men/
+  https://www.mrporter.com/en-hk/journal/fashion/what-to-wear-to-ever-kind-of-summer-wedding-17412428
+  ]
     },
     "weekend_casual": {
       "suggested_keywords": ["Casual chic", "elevated casual style", "weekend wardrobe"],
       "urls": [
 	https://www.whowhatwear.com/fashion/basics/mindful-capsule-wardrobe-2025
-	https://www.bootlegger.com/blog-trending-now/elevated-casual.html
-	https://www.slam.com/blogs/slam-stories/casual-chic-summer-outfit-2025]
+	https://www.harpersbazaar.com/fashion/trends/a70641742/fall-2026-paris-fashion-week-street-style-trends/
+	https://www.whowhatwear.com/celebrity-outfits
+  https://www.esquire.com/style/mens-fashion/a61438962/mens-smart-casual/
+  https://www.esquire.com/style/mens-fashion/a69976161/winter-outfits-for-men/
+  https://www.mrporter.com/en-ae/journal/fashion/partnership-h%C3%A5ndvaerk-aw20-wfh-basics-loungewear-sustainable-1520658]
     },
     "sporty_athleisure": {
       "suggested_keywords": ["Athleisure styling", "sporty chic outfits"],
       "urls": [
-	https://www.elle.vn/xu-huong-thoi-trang/4-cach-phoi-quan-the-thao-cho-co-nang-yeu-thich-phong-cach-sporty-chic/
-	https://lecoqsportif.com.vn/blogs/news/athleisure-la-gi-vi-sao-phong-cach-sport-chic-len-ngoi-nam-2026
-	https://elleuzbekistan.com/en/sporty-chic/]
+	https://www.whowhatwear.com/fashion/trends/sportif-trend-2026
+	https://www.harpersbazaar.com/fashion/trends/a68815316/paris-fashion-week-street-style-trends-spring-2026/
+	https://www.whowhatwear.com/fashion/outfit-ideas/baseball-game-outfit-ideas
+  https://www.esquire.com/style/mens-fashion/a69976161/winter-outfits-for-men/
+  https://www.esquire.com/style/mens-fashion/a60603594/tennis-core-fashion/
+  https://www.mrporter.com/en-hk/journal/fashion/tunnel-fit-football-25147858
+  ]
     },
     "beach_and_resort": {
       "suggested_keywords": ["Beachwear styling", "resort wear"],
       "urls": [
-	https://www.elle.com/fashion/shopping/a70772271/best-resort-wear-brands-women/
-	https://www.harpersbazaar.com/fashion/trends/g71746183/best-beach-cover-ups-2026/
-	https://oracleoftime.com/beachwear-for-men-achieve-that-laidback-look/]
+	https://www.harpersbazaar.com/fashion/trends/a71523321/italy-outfit-ideas/
+	https://www.whowhatwear.com/fashion/vacation/vacation-fashion-trends-2024
+	https://www.harpersbazaar.com/fashion/trends/g64756924/best-vacation-dresses-for-women/
+  https://www.mrporter.com/en-sa/journal/fashion/packing-guide-summer-25519290
+  https://www.esquire.com/style/mens-fashion/a71617768/summer-wedding-outfits/
+  https://www.esquire.com/uk/style/fashion/a65641998/how-to-dress-summer-heat/
+  ]
     },
     "after_work_transition": {
       "suggested_keywords": ["Day-to-night outfit transition", "after work outfit"],
       "urls": [
-	https://www.harpersbazaar.com/fashion/trends/a71293882/spring-summer-transitional-outfits-2026/
-	https://www.creaturesofhabit.in/blogs/news/how-to-transition-your-t-shirts-from-day-to-night-styling-tips-for-men
-	https://stylingdrop.com/day-to-night-dressing/]
+	https://www.whowhatwear.com/uk/day-to-night-looks
+	https://www.harpersbazaar.com/uk/fashion/shopping/a64299785/what-to-wear-with-wide-leg-trousers/
+	https://www.harpersbazaar.com/fashion/a65859293/how-to-style-dramatic-draping-trend/
+  https://www.mrporter.com/en-hk/journal/fashion/partnership-canali-smart-casual-hybrid-party-season-men-23646696
+  https://www.mrporter.com/en-ca/journal/fashion/five-new-shoe-styles-to-take-you-from-work-to-play-562606
+  https://theadultman.com/fashion-and-style/key-pieces-day-night-transition/]
     }
   },
 
@@ -48,44 +70,62 @@
     "capsule_wardrobe": {
       "suggested_keywords": ["Capsule wardrobe guide"],
       "urls": [
+	https://www.harpersbazaar.com/uk/fashion/shopping/a29204515/how-to-build-capsule-wardrobe/
 	https://www.whowhatwear.com/uk/how-to-capsule-wardrobe
-	https://www.harpersbazaar.com/uk/fashion/a41978744/capsule-dressing-advice/
-	https://www.harpersbazaar.com/uk/fashion/shopping/a29204515/how-to-build-capsule-wardrobe/]
+	https://www.harpersbazaar.com/fashion/trends/g71855214/summer-capsule-wardrobe-2026/
+  https://www.mrporter.com/en-ca/journal/fashion/mens-capsule-closet-25161688
+  https://www.esquire.com/style/a68019559/best-fall-capsule-wardrobe-outfits-ideas/
+  https://www.mrporter.com/en-ca/journal/fashion/can-you-craft-the-perfect-capsule-wardrobe-24384972]
     },
     "timeless_fashion": {
       "suggested_keywords": ["Timeless fashion principles"],
       "urls": [
-	https://www.whowhatwear.com/fashion/shopping/timeless-wardrobe-advice
+	https://www.whowhatwear.com/uk/how-to-capsule-wardrobe
 	https://www.whowhatwear.com/how-to-look-timeless
-	https://www.elle.com/uk/fashion/trends/a62463649/carolyn-bessette-kennedy-timeless-style/]
+	https://www.marieclaire.com/fashion/quiet-luxury/
+  https://www.esquire.com/uk/style/a64100071/how-to-dress-in-your-40s/
+  https://www.esquire.com/uk/style/a64317717/how-to-dress-in-your-50s/
+  https://www.mrporter.com/en-ca/journal/fashion/derek-guy-timeless-style-25197344]
     },
     "sustainable_fashion": {
       "suggested_keywords": ["Sustainable fashion practices"],
       "urls": [
 	https://www.harpersbazaar.com/uk/fashion/shopping/a41158/how-to-be-sustainable-fashion/
-	https://www.elle.com/uk/fashion/a29887/sustainable-fashion-how-to-shop-more-ethically/
-	https://hespokestyle.com/sustainable-wardrobe-menswear/]
+	https://www.whowhatwear.com/sustainable-fashion-tips
+	https://www.whowhatwear.com/how-to-dress-more-sustainably
+  https://www.mrporter.com/en-us/journal/fashion/small-world-collection-craftsmanship-code-sustainability-2015702
+  https://www.mrporter.com/en-us/journal/fashion/how-to-care-for-your-clothing-sustainably-1063218
+  https://www.esquire.com/uk/style/a23298774/green-fashion-brands-men/]
     },
     "parisian_chic_and_minimalism": {
       "suggested_keywords": ["Parisian chic styling", "minimalist wardrobe"],
       "urls": [
-	https://www.whowhatwear.com/fashion/shopping/french-girl-transitional-wardrobe-2026
-	https://www.mrporter.com/en-ca/journal/fashion/how-to-dress-like-a-parisian-536552
-	https://www.elle.com/fashion/shopping/a61738823/french-fashion-essentials/]
+	https://www.whowhatwear.com/fashion/shopping/2026-french-capsule-wardrobe
+	https://www.harpersbazaar.com/fashion/trends/a68815316/paris-fashion-week-street-style-trends-spring-2026/
+	https://www.whowhatwear.com/fashion/shopping/french-summer-shopping-list-2026
+  https://www.mrporter.com/en-ca/journal/fashion/how-to-dress-like-a-parisian-536552
+  https://www.mrporter.com/en-se/journal/fashion/what-french-men-can-teach-you-about-style-904394
+  https://www.mrporter.com/en-gb/mens/the-curated-style-guide/the-minimalist-style-guide]
     },
     "layering": {
       "suggested_keywords": ["Clothing layering guide", "layering techniques"],
       "urls": [
 	https://www.harpersbazaar.com/fashion/trends/a62544329/best-layering-clothes-outfits/
-	https://www.whowhatwear.com/uk/layering-clothes
-	https://www.mrporter.com/en-ca/journal/fashion/how-to-layer-clothes-25105698]
+  https://www.whowhatwear.com/uk/fashion/outfit-ideas/layering-outfit-ideas-2026
+  https://www.whowhatwear.com/fashion/outfit-ideas/layering-ideas
+  https://www.mrporter.com/en-ca/journal/fashion/how-to-layer-clothes-25105698
+  https://www.esquire.com/uk/style/fashion/a43892229/layering-mens-style/
+  https://www.mrporter.com/en-ca/journal/fashion/how-to-stay-warm-winter-layering-style-24815536]
     },
     "outfit_transition": {
       "suggested_keywords": ["Outfit transition styling"],
       "urls": [
 	https://www.harpersbazaar.com/fashion/trends/a71293882/spring-summer-transitional-outfits-2026/
-	https://www.mrporter.com/en-hk/journal/fashion/lightweight-coats-jackets-spring-2021-1672864
-	https://www.whowhatwear.com/fashion/shopping/winter-to-spring-transitional-capsule-wardrobe-2026]
+	https://www.whowhatwear.com/fashion/shopping/winter-to-spring-transitional-capsule-wardrobe-2026
+	https://www.whowhatwear.com/fashion/outfit-ideas/transitional-winter-to-spring-outfits-2026
+  https://theadultman.com/fashion-and-style/key-pieces-day-night-transition/
+  https://www.mrporter.com/en-ca/journal/fashion/spring-menswear-what-to-wear-2023-24029660
+  https://www.esquire.com/uk/style/a62528905/yes-you-are-a-sweater-vest-guy/]
     }
   },
 
@@ -93,23 +133,29 @@
     "tops_and_outerwear": {
       "suggested_keywords": ["Classic outerwear styles", "blazer styling", "shirt fits"],
       "urls": [
-	https://www.mrporter.com/en-nl/journal/fashion/blazers-for-men-25432260
 	https://www.harpersbazaar.com/uk/fashion/a70309573/best-blazer-outfit-ideas-for-women/
-	https://www.elle.com/uk/fashion/what-to-wear/a63406997/how-to-style-a-blazer/]
+	https://www.whowhatwear.com/white-button-down-outfit-ideas
+	https://www.harpersbazaar.com/uk/fashion/a39267/tips-for-dressing-well-in-winter/
+  https://www.esquire.com/style/mens-fashion/a69167973/how-to-wear-blazer-and-jeans-guide/
+  https://www.esquire.com/uk/style/a32880944/best-blazers-men/
+  https://www.esquire.com/style/mens-fashion/g33418169/best-mens-linen-shirts/]
     },
     "bottoms": {
       "suggested_keywords": ["Denim fits guide", "trouser tailoring", "wide-leg styling"],
       "urls": [
+	https://www.harpersbazaar.com/fashion/trends/a65837104/wide-leg-jeans-outfit-ideas/
+	https://www.whowhatwear.com/best-inseam-length-jeans
 	https://www.whowhatwear.com/types-of-jean-fits
-	https://www.mrporter.com/en-jp/journal/lifestyle/trousers-pants-fit-men-25417410
-	https://www.whowhatwear.com/uk/tag/wide-leg-jeans
+  https://www.mrporter.com/journal/fashion/wide-leg-pants-men-guide-25329258
+  https://www.esquire.com/uk/style/a60159293/robert-downey-jr-wide-leg-suits-2024-oscars/
+  https://www.esquire.com/uk/style/a63018028/how-to-buy-selvedge-jeans-guide/
 	]
     },
     "dresses_and_skirts": {
       "suggested_keywords": ["Timeless dress styles", "skirt silhouettes"],
       "urls": [
 	https://www.whowhatwear.com/uk/types-of-dresses
-	https://www.harpersbazaar.com/uk/fashion/shopping/a69795660/best-little-black-dresses-2025/
+	https://www.whowhatwear.com/uk/skirt-outfits
 	https://www.whowhatwear.com/tops-with-skirts-fall]
     }
   },
@@ -118,144 +164,328 @@
     "safety_recommendations": {
       "suggested_keywords": ["Safe clothing recommendations", "weather appropriate clothing"],
       "urls": [
-	https://www.whowhatwear.com/fashion/shopping/winter-to-spring-transitional-capsule-wardrobe-2026
-	https://www.harpersbazaar.com/fashion/trends/a71293882/spring-summer-transitional-outfits-2026/
-	https://www.mrporter.com/en-sa/journal/fashion/packing-guide-summer-25519290]
+	https://www.harpersbazaar.com/fashion/trends/a70805264/how-to-style-windbreakers/
+	https://www.whowhatwear.com/what-to-wear-in-30-degree-weather
+	https://www.harpersbazaar.com/fashion/trends/a71330408/jean-shorts-outfits/
+  https://www.mrporter.com/en-gb/journal/fashion/how-to-dress-early-spring-menswear-transitional-guide-24909384
+  https://www.mrporter.com/en-hk/journal/fashion/guide-how-to-wear-blazer-smart-casual-1359196
+  https://www.esquire.com/style/a70885434/spring-shoe-trends-2026/]
     },
     "clarifying_customer_needs": {
       "suggested_keywords": ["Fashion consultation questions", "clothing recommendation workflow"],
       "urls": [
-	https://www.mrporter.com/en-au/journal/fashion/personal-style-25002900
-	https://www.harpersbazaar.com/uk/fashion/shopping/a33146/how-to-detox-your-wardrobe/
-	https://www.whowhatwear.com/fashion/shopping/luxury-capsule-wardrobe-spring]
+	https://www.harpersbazaar.com/uk/fashion/a61761364/personal-style-tips/
+	https://www.whowhatwear.com/who-what-wear-podcast-allison-bornstein-book
+	https://www.whowhatwear.com/uk/how-to-find-define-personal-style-2014
+  https://www.esquire.com/uk/style/fashion/how-to/a7973/how-to-develop-a-signature-style/
+  https://www.esquire.com/style/mens-fashion/g45564020/clothing-subscription-boxes-for-men/
+  https://www.esquire.com/uk/style/a63810052/i-asked-ai-to-be-my-stylist-heres-what-happened/]
     },
     "refusing_out_of_scope_requests": {
       "suggested_keywords": ["Prompt injection refusal", "domain-specific assistant behavior"],
       "urls": [
 	https://learn.microsoft.com/en-us/security/zero-trust/sfi/defend-indirect-prompt-injection
+  https://openai.com/index/designing-agents-to-resist-prompt-injection/
+  https://dev.to/apssouza22/building-a-production-ready-ai-agent-harness-2570
 	https://www.rtinsights.com/domain-specific-llms-how-to-make-ai-useful-for-your-business/
-	https://arxiv.org/pdf/2601.17911]
+	https://arxiv.org/pdf/2601.17911
+  https://arxiv.org/html/2607.02914v1]
     }
   },
 
   "9_fashion_styles": {
     "business_formal": {
       "suggested_keywords": ["Business formal attire"],
-      "urls": []
+      "urls": [
+  https://www.mrporter.com/en-fr/journal/fashion/you-asked-how-should-a-corporate-lawyer-dress-536978
+  https://www.mrporter.com/journal/fashion/all-the-presidents-menswear-812370
+  https://www.esquire.com/uk/style/a32880944/best-blazers-men/
+  https://www.whowhatwear.com/dress-codes
+  https://www.elle.com/fashion/shopping/g26709/interview-outfits-under-200/
+  https://www.whowhatwear.com/what-to-wear-to-a-networking-event
+      ]
     },
     "business_casual": {
       "suggested_keywords": ["Business casual outfits"],
-      "urls": []
+      "urls": [
+  https://www.esquire.com/uk/style/a63826817/business-casual-dress-code/
+  https://www.mrporter.com/en-be/journal/fashion/stylish-workwear-mens-25325350
+  https://www.mrporter.com/en-us/journal/fashion/summer-office-menswear-25241386
+  https://www.whowhatwear.com/business-attire-for-women
+  https://www.whowhatwear.com/smart-casual-dress-code
+  https://www.harpersbazaar.com/culture/features/a17578/how-should-women-dress-at-work/
+      ]
     },
     "smart_casual": {
       "suggested_keywords": ["Smart casual guide"],
-      "urls": []
+      "urls": [
+  https://www.esquire.com/uk/style/fashion/a29890440/mens-smart-casual/
+  https://www.esquire.com/style/mens-fashion/a61438962/mens-smart-casual/
+  https://www.mrporter.com/en-be/journal/fashion/shirt-guide-men-25470434
+  https://www.whowhatwear.com/smart-casual-dress-code
+  https://www.harpersbazaar.com/uk/fashion/shopping/a70842235/how-to-wear-jeans-and-blazer/
+  https://www.whowhatwear.com/fashion/outfit-ideas/what-to-wear-to-a-cultural-event
+      ]
     },
     "casual_chic": {
       "suggested_keywords": ["Casual chic outfits"],
-      "urls": []
+      "urls": [
+  https://www.whowhatwear.com/simple-french-girl-outfits
+  https://www.whowhatwear.com/celebrity-outfits
+  https://www.harpersbazaar.com/fashion/trends/g65051050/summer-capsule-wardrobe-for-women/
+  https://www.esquire.com/style/mens-fashion/a61438962/mens-smart-casual/
+  https://www.mrporter.com/en-ae/journal/fashion/how-to-master-summer-smart-casual-660600
+  https://www.esquire.com/uk/style/fashion/a65058267/how-to-dress-smart-casual-summer/
+      ]
     },
     "athleisure_sporty_chic": {
       "suggested_keywords": ["Athleisure styling"],
-      "urls": []
+      "urls": [
+  https://www.harpersbazaar.com/fashion/trends/a71223916/gym-outfits-without-leggings/
+  https://www.harpersbazaar.com/uk/fashion/a71095428/what-your-workout-outfit-says-about-you/
+  https://www.whowhatwear.com/fashion/trends/2000s-activewear-trends-2026
+  https://www.mrporter.com/en-ca/journal/fashion/running-gear-for-men-25362188
+  https://www.mrporter.com/en-pl/journal/fashion/best-sportswear-for-men-25146618
+  https://www.esquire.com/style/mens-fashion/a70250828/apres-ski-style-guide/
+      ]
     },
     "vintage_classic": {
       "suggested_keywords": ["Vintage fashion styling", "classic wardrobe"],
-      "urls": []
+      "urls": [
+  https://www.whowhatwear.com/fashion/shopping/2026-new-york-city-capsule-wardrobe
+  https://www.whowhatwear.com/vintage-wardrobe-basics
+  https://www.whowhatwear.com/how-to-shop-vintage-like-a-fashion-editor
+  https://www.esquire.com/uk/style/fashion/interviews/a13554/paul-oneill-my-style-rules/
+  https://www.mrporter.com/en-kr/journal/fashion/vintage-menswear-we-would-wear-today-816946
+  https://www.esquire.com/style/mens-fashion/a63159146/ralph-lauren-clothing-guide/
+      ]
     }
   },
 
   "10_tailoring_and_garment_construction": {
     "fit_and_tailoring": {
       "suggested_keywords": ["Garment fit guide", "tailoring basics"],
-      "urls": []
+      "urls": [
+  https://www.esquire.com/style/advice/a32775/suit-fit-advice-2013/
+  https://www.mrporter.com/en-gb/journal/fashion/too-long-trousers-tailoring-guide-1168662
+  https://www.esquire.com/style/mens-fashion/a65092586/todd-snyder-nashville-store/
+  https://www.harpersbazaar.com/uk/fashion/shopping/a39628246/womens-oversized-suits/
+  https://www.harpersbazaar.com/uk/fashion/a27453062/rosie-huntington-whiteley-oversized-tailoring-style/
+  https://www.net-a-porter.com/en-ca/porter/article-2f63a6288f3e60a7/fashion/fashion-memo/workwear
+      ]
     },
     "silhouette": {
       "suggested_keywords": ["Fashion silhouettes", "clothing proportions"],
-      "urls": []
+      "urls": [
+  https://www.whowhatwear.com/fashion/summer/trending-silhouettes-summer-2026
+  https://www.whowhatwear.com/fashion/flattering-fashion-2026
+  https://www.whowhatwear.com/fashion/personal-style-2026
+  https://www.mrporter.com/en-us/journal/fashion/body-type-style-for-men-25477184
+  https://www.mrporter.com/en-de/journal/fashion/size-fit-guide-for-men-25470076
+  https://www.mrporter.com/journal/fashion/how-to-dress-for-your-body-shape-333680
+      ]
     },
     "construction_quality": {
       "suggested_keywords": ["Suit construction", "garment quality indicators"],
-      "urls": []
+      "urls": [
+  https://www.mrporter.com/en-de/journal/fashion/men-suit-cost-tailor-half-fully-canvassed-price-24263946
+  https://www.esquire.com/uk/style/a64048243/guide-to-mens-suits/
+  https://www.esquire.com/uk/style/a62715168/suit-tailoring-mistakes/
+  https://www.harpersbazaar.com/uk/fashion/a70234303/best-affordable-brands-wardrobe-staples/
+  https://www.harpersbazaar.com/culture/features/a15510/are-handmade-clothes-really-better-than-machine-made-clothes/
+  https://www.whowhatwear.com/fashion/shopping/high-quality-basics
+      ]
     }
   },
 
   "4_accessories_and_footwear": {
     "footwear": {
       "suggested_keywords": ["Classic footwear essentials", "formal vs casual shoes"],
-      "urls": []
+      "urls": [
+  https://www.mrporter.com/en-dk/journal/fashion/the-worlds-best-shoes-792192
+  https://www.esquire.com/style/mens-accessories/g2092/10-shoes-every-man-needs-this-spring/
+  https://www.mrporter.com/en-fr/journal/fashion/john-lobb-794454
+  https://www.whowhatwear.com/fashion/shoes/shoe-capsule-wardrobe-2025
+  https://www.whowhatwear.com/what-shoes-to-buy-this-year
+  https://www.whowhatwear.com/fashion/shoes/autumn-shoe-capsule-wardrobe
+      ]
     },
     "accessories": {
       "suggested_keywords": ["Fashion accessories styling", "classic handbags", "jewelry styling"],
-      "urls": []
+      "urls": [
+  https://www.harpersbazaar.com/fashion/street-style/g7013/how-to-style-accessories/
+  https://www.whowhatwear.com/uk/classic-handbags
+  https://www.whowhatwear.com/mixing-metals-in-jewelry
+  https://www.esquire.com/uk/style/a32681280/mens-it-bag-trend/
+  https://www.mrporter.com/en-it/journal/fashion/mens-wardrobe-essentials-24856164?cm_sp=homepage-_-C1-_-mens-wardrobe-essentials-_-29-06-26
+  https://www.esquire.com/style/mens-accessories/g71297560/best-jewelry-brands-for-men/
+      ]
     }
   },
 
   "5_fabrics_and_materials": {
     "natural_fabrics": {
       "suggested_keywords": ["Natural fabrics in fashion", "wool grades", "silk vs cotton"],
-      "urls": []
+      "urls": [
+  https://www.mrporter.com/en-de/journal/fashion/how-to-buy-a-suit-online-tailoring-shopping-guide-1874472
+  https://www.mrporter.com/en-nl/journal/fashion/the-ultimate-guide-to-wool-trousers-692958
+  https://www.esquire.com/style/mens-fashion/g70192790/merino-wool-essentials/
+  https://www.harpersbazaar.com/fashion/trends/a69032401/best-button-up-shirts-for-women/
+  https://www.whowhatwear.com/uk/expensive-fabrics
+  https://www.whowhatwear.com/how-to-build-a-sustainable-wardrobe
+      ]
     },
     "common_fabrics": {
       "suggested_keywords": ["Denim guide", "Tencel properties", "stretch fabrics"],
-      "urls": []
+      "urls": [
+  https://www.esquire.com/uk/style/fashion/a70367809/how-to-find-good-denim/
+  https://www.mrporter.com/en-se/journal/fashion/ultimate-guide-mens-jeans-denim-care-styles-washes-1413580
+  https://www.esquire.com/style/mens-fashion/g70192790/merino-wool-essentials/
+  https://www.whowhatwear.com/fashion/denim/best-stretch-jeans
+  https://www.whowhatwear.com/baggy-denim-jeans
+  https://www.harpersbazaar.com/uk/fashion/shopping/a45557017/unstitched-elv-denim/
+      ]
     },
     "technical_fabrics": {
       "suggested_keywords": ["Waterproof breathable fabrics", "thermal clothing technology"],
-      "urls": []
+      "urls": [
+  https://www.esquire.com/style/mens-fashion/a70250828/apres-ski-style-guide/
+  https://www.esquire.com/style/mens-fashion/g69810792/best-waffle-thermal-layers/
+  https://www.esquire.com/style/mens-fashion/g71838294/best-mens-waterproof-sneakers/
+  https://www.harpersbazaar.com/fashion/trends/g69945757/best-winter-thermals-for-women/
+  https://www.whowhatwear.com/fashion/outfit-ideas/layering-outfit-ideas-2026
+  https://www.whowhatwear.com/cold-weather-fashion-essentials
+      ]
     },
     "sustainable_materials": {
       "suggested_keywords": ["Sustainable fabrics", "eco-friendly fashion materials"],
-      "urls": []
+      "urls": [
+  https://www.whowhatwear.com/sustainable-fabrics
+  https://www.whowhatwear.com/how-to-build-a-sustainable-wardrobe
+  https://www.harpersbazaar.com/uk/fashion/shopping/a43586805/sustainable-everyday-expert-tips/
+  https://www.esquire.com/uk/style/a23298774/green-fashion-brands-men/
+  https://www.mrporter.com/en-se/journal/fashion/ultimate-guide-mens-jeans-denim-care-styles-washes-1413580
+  https://www.esquire.com/uk/style/fashion/a62826942/gramicci-partners-with-greater-goods/
+      ]
     }
   },
 
   "6_color_theory_and_patterns": {
     "color_theory": {
       "suggested_keywords": ["Fashion color theory", "neutral color palette"],
-      "urls": []
+      "urls": [
+  https://www.harpersbazaar.com/fashion/trends/g71855214/summer-capsule-wardrobe-2026/
+  https://www.whowhatwear.com/fashion/shopping/2026-capsule-wardrobe
+  https://www.whowhatwear.com/uk/how-to-capsule-wardrobe
+  https://www.esquire.com/uk/style/fashion/advice/a13997/mens-style-colour-combinations/
+  https://www.mrporter.com/en-ca/journal/fashion/street-style-guide-wearing-brown-neutral-colours-menswear-10149824
+  https://www.esquire.com/uk/style/fashion/a29890440/mens-smart-casual/
+      ]
     },
     "patterns": {
       "suggested_keywords": ["Classic fashion patterns", "pattern matching"],
-      "urls": []
+      "urls": [
+  https://www.mrporter.com/en-nl/journal/fashion/how-to-mix-stripes-with-checks-686194
+  https://www.mrporter.com/en-hk/journal/fashion/how-to-match-your-shirt-and-tie-788420
+  https://www.mrporter.com/en-se/journal/fashion/how-to-wear-prints-style-floral-patchwork-tie-dye-10526878
+  https://www.whowhatwear.com/print-mixing-ideas
+  https://www.whowhatwear.com/mixing-prints-for-fall
+  https://www.harpersbazaar.com/fashion/trends/a12738/how-to-wear-prints-by-occasion/
+      ]
     }
   },
 
   "1_body_shapes_and_proportions": {
     "pear_body_shape": {
       "suggested_keywords": ["Pear body shape styling", "styling for wide hips", "bottom-heavy figure rules"],
-      "urls": []
+      "urls": [
+  https://www.whowhatwear.com/uk/how-to-dress-for-body-type-pear-apple-hourglass
+  https://www.harpersbazaar.com/fashion/trends/g4485/how-to-dress-for-your-body-type/
+  https://www.whowhatwear.com/how-dress-pear-body-shape
+  https://www.esquire.com/uk/style/fashion/advice/a14999/jonah-hill-mens-style-inspiration/
+  https://www.mrporter.com/en-gb/journal/fashion/how-to-dress-for-your-body-shape-724262
+  https://www.mrporter.com/journal/fashion/how-to-dress-for-your-body-shape-333680
+      ]
     },
     "apple_body_shape": {
       "suggested_keywords": ["Apple body shape outfits", "styling for midsection weight"],
-      "urls": []
+      "urls": [
+  https://www.sumissura.com/en-us/blog/apple-body-shape
+  https://www.whowhatwear.com/plus-size-denim-in-fashion
+  https://www.marieclaire.com/fashion/summer-fashion/best-plus-size-workwear-brands-summer-sarah-chiwaya/
+  https://www.whowhatwear.com/uk/how-to-dress-for-body-type-pear-apple-hourglass
+  https://www.esquire.com/uk/style/fashion/a42799451/plus-size-menswear/
+  https://www.mrporter.com/en-vn/journal/fashion/how-to-dress-for-your-body-shape-333680
+      ]
     },
     "inverted_triangle_body_shape": {
       "suggested_keywords": ["Inverted triangle body shape", "broad shoulders styling tips"],
-      "urls": []
+      "urls": [
+  https://www.whowhatwear.com/uk/how-to-find-body-shape-calculator
+  https://www.whowhatwear.com/uk/pant-trouser-styles-body-type
+  https://www.whowhatwear.com/uk/most-flattering-zara-pieces
+  https://www.esquire.com/uk/style/fashion/how-to/a7973/how-to-develop-a-signature-style/
+  https://www.esquire.com/uk/style/fashion/advice/a14376/how-to-buy-a-suit-men/
+  https://www.mrporter.com/en-ca/journal/fashion/how-to-wear-a-suit-24987256
+      ]
     },
     "body_proportions_and_balance": {
       "suggested_keywords": ["Body proportions in fashion", "balancing body silhouette"],
-      "urls": []
+      "urls": [
+  https://www.whowhatwear.com/uk/how-to-find-body-shape-calculator
+  https://www.whowhatwear.com/uk/how-to-dress-for-body-type-pear-apple-hourglass
+  https://www.harpersbazaar.com/fashion/trends/a17428/how-to-update-wardrobe/
+  https://www.mrporter.com/en-gb/journal/fashion/how-to-dress-for-your-body-shape-724262
+  https://www.esquire.com/uk/style/a62782429/how-dress-trousers-jeans-fit-guide/
+  https://www.mrporter.com/en-us/journal/fashion/body-type-style-for-men-25477184
+      ]
     }
   },
 
   "8_seasons_and_weather": {
     "cold_winter": {
       "suggested_keywords": ["Winter layering", "cold weather outfits"],
-      "urls": []
+      "urls": [
+  https://www.whowhatwear.com/fashion/shopping/what-to-wear-in-the-snow
+  https://www.whowhatwear.com/best-basics-winter-coat
+  https://www.whowhatwear.com/fashion/celebrity-style/snow-day-fashion-trends
+  https://www.esquire.com/style/mens-fashion/g69810792/best-waffle-thermal-layers/
+  https://www.mrporter.com/en-ca/journal/fashion/dress-code-best-coats-for-men-autumn-24546308
+  https://www.mrporter.com/en-ae/journal/fashion/winter-essentials-outdoor-style-jackets-wool-boots-2022-23675818
+      ]
     },
     "hot_summer": {
       "suggested_keywords": ["Summer styling", "breathable fabrics"],
-      "urls": []
+      "urls": [
+  https://www.harpersbazaar.com/fashion/trends/g71855214/summer-capsule-wardrobe-2026/
+  https://www.marieclaire.com/fashion/best-linen-dress-outfits/
+  https://www.marieclaire.com/fashion/drop-waist-dress-trend/
+  https://www.mrporter.com/en-us/journal/fashion/summer-office-menswear-25241386
+  https://www.esquire.com/style/mens-fashion/a71151686/esquire-guide-to-linen-clothes/
+  https://www.esquire.com/style/mens-fashion/a71617768/summer-wedding-outfits/
+      ]
     },
     "rainy_season": {
       "suggested_keywords": ["Waterproof fashion", "rainy day outfits"],
-      "urls": []
+      "urls": [
+  https://www.whowhatwear.com/uk/rainy-day-outfits
+  https://www.whowhatwear.com/fall-rainy-day-outfits
+  https://www.whowhatwear.com/cute-rainy-day-outfits
+  https://www.mrporter.com/en-dk/journal/fashion/how-to-look-good-in-bad-weather-695532
+  https://www.mrporter.com/en-us/journal/fashion/how-to-look-good-in-the-rain-774792
+  https://www.mrporter.com/en-fr/journal/fashion/whats-new-utilitarian-wardrobe-upgrades-873454
+      ]
     },
     "transitional_weather": {
       "suggested_keywords": ["Transitional weather outfits"],
-      "urls": []
+      "urls": [
+  https://www.whowhatwear.com/fashion/shopping/winter-to-spring-transitional-capsule-wardrobe-2026
+  https://www.harpersbazaar.com/fashion/trends/a40993428/transitional-weather-essentials/
+  https://www.whowhatwear.com/fashion/shopping/turtleneck-trend
+  https://www.mrporter.com/en-us/journal/fashion/guide-how-to-wear-blazer-smart-casual-1359196
+  https://www.mrporter.com/en-us/journal/fashion/how-to-wear-style-a-gilet-vest-menswear-outfit-guide-24545762
+  https://www.mrporter.com/en-us/journal/fashion/why-youll-be-wearing-brown-in-september-567148
+      ]
     }
   }
 }
