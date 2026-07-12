@@ -41,7 +41,12 @@ DEFAULT_MODEL = "unsloth/Qwen3-VL-8B-Thinking-bnb-4bit"  # T3 base
 DEFAULT_OUTPUT = "outputs/t3-grpo-lora"
 
 
-def build_dataset(max_per_type: int | None = None, canonical: bool = False):
+def build_dataset(
+    max_per_type: int | None = None,
+    canonical: bool = False,
+    no_think: bool = False,
+    item_type: str | None = None,
+):
     """Build the GRPO prompt dataset.
 
     Each row has a ``prompt`` column (chat messages) + ``item`` (ground-truth
@@ -52,10 +57,18 @@ def build_dataset(max_per_type: int | None = None, canonical: bool = False):
     except ImportError as exc:  # pragma: no cover
         raise SystemExit("datasets library required: uv add datasets") from exc
 
-    items = canonical_prompt_pool() if canonical else build_fashion_prompt_pool(max_per_type)
+    all_items = canonical_prompt_pool() if canonical else build_fashion_prompt_pool(max_per_type)
+    if item_type is not None:
+        all_items = [it for it in all_items if it.get("item_type") == item_type]
+    items = all_items
     rows = []
     for item in items:
         prompt = item.get("prompt", "")
+        if no_think:
+            # Qwen3-VL chat template directive: disable reasoning for this turn.
+            # Lets short completion budgets (8GB VRAM) yield a direct answer instead
+            # of being truncated inside the <think> reasoning trace.
+            prompt = "/no_think\n" + prompt
         messages = [
             {
                 "role": "system",
@@ -80,11 +93,33 @@ def main() -> None:
     parser.add_argument("--max-steps", type=int, default=500)
     parser.add_argument("--max-per-type", type=int, default=None, help="Cap prompts per task type")
     parser.add_argument("--canonical", action="store_true", help="Use 28-item canonical pool")
+    parser.add_argument(
+        "--no-think",
+        action="store_true",
+        default=True,
+        help="Prepend /no_think directive to prompts (default True; needed for 8GB VRAM",
+    )
+    parser.add_argument(
+        "--think",
+        action="store_true",
+        help="Force thinking mode (overrides --no-think). Needs large max-completion-length.",
+    )
     parser.add_argument("--lr", type=float, default=1e-5)
     parser.add_argument("--beta", type=float, default=0.04, help="Drift KL coefficient")
     parser.add_argument("--num-generations", type=int, default=8)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--max-completion-length", type=int, default=256)
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=0.9,
+        help="GRPO sampling temperature (lower = more deterministic, e.g. 0.3).",
+    )
+    parser.add_argument(
+        "--item-type",
+        default=None,
+        help="Filter dataset to a single item_type to isolate signal.",
+    )
     parser.add_argument("--lora-r", type=int, default=32)
     parser.add_argument("--push-to-hub", default=None, help="HF repo id to push adapter")
     parser.add_argument(
@@ -101,7 +136,18 @@ def main() -> None:
     os.environ.setdefault("HF_HUB_CACHE", "D:/Models/hf_hub")
     os.environ.setdefault("HF_HOME", "D:/Models/hf_home")
 
-    dataset = build_dataset(max_per_type=args.max_per_type, canonical=args.canonical)
+    no_think_enabled = args.no_think and not args.think
+    dataset = build_dataset(
+        max_per_type=args.max_per_type,
+        canonical=args.canonical,
+        no_think=no_think_enabled,
+        item_type=args.item_type,
+    )
+    logger.info(
+        "No-think mode: %s (prompt prefix /no_think %s)",
+        no_think_enabled,
+        "ON" if no_think_enabled else "OFF",
+    )
     logger.info(
         "Dataset: %d rows; task distribution: %s",
         len(dataset),
@@ -171,6 +217,7 @@ def main() -> None:
         per_device_train_batch_size=args.batch_size,
         num_generations=args.num_generations,
         max_completion_length=args.max_completion_length,
+        temperature=args.temperature,
         beta=args.beta,
         optim="paged_adamw_8bit",
         fp16=True,

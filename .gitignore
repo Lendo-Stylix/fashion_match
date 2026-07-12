@@ -70,3 +70,7 @@ progress.md
 # RL/training artifacts
 outputs/
 _grpo_smoke.log
+
+_grpo_*.log
+
+_probe_reward.*
