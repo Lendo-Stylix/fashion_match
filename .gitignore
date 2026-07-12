@@ -74,3 +74,6 @@ _grpo_smoke.log
 _grpo_*.log
 
 _probe_reward.*
+
+_grpo_len*.log
+_grpo_len*.err
