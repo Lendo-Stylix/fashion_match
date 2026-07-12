@@ -239,13 +239,13 @@ def main() -> None:
 
         _is_vl = True
     except ImportError:
-        from transformers import AutoModelForCausalLM as _AutoModel
+        from transformers import AutoModelForCausalLM as _AutoModel  # type: ignore[assignment]
 
         _is_vl = False
     _cfg = _AutoConfig.from_pretrained(args.model)
     _is_vl = _is_vl or "VL" in type(_cfg).__name__ or "vl" in args.model.lower()
     if not _is_vl:
-        from transformers import AutoModelForCausalLM as _AutoModel
+        from transformers import AutoModelForCausalLM as _AutoModel  # type: ignore[assignment]
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_compute_dtype=torch.float16,
@@ -266,7 +266,7 @@ def main() -> None:
     # PeftModel; for VL models that don't have it, set the dict manually so
     # the attribute access succeeds after get_peft_model wrapping.
     if not hasattr(model, "warnings_issued"):
-        model.warnings_issued = {}
+        model.warnings_issued = {}  # type: ignore[assignment]
     trainer = GRPOTrainer(
         model=model,
         reward_funcs=list(FASHION_REWARD_FUNCS),
