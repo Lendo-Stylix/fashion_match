@@ -276,8 +276,8 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
         import random
         random.seed(abs(hash(prompt)))
         return {
-            'knowledge_retrieval': random.randint(3, 5),
-            'citation_accuracy': random.randint(3, 5),
+            'context_utilization': random.randint(3, 5),
+            'trend_compliance': random.randint(3, 5),
             'fashion_knowledge_qa': random.randint(3, 5),
             'faithfulness': random.randint(3, 5),
             'hallucination': random.randint(3, 5),
@@ -287,16 +287,16 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
     judge_prompt = f"""
     Bạn là một Giám khảo thời trang khách quan. Hãy chấm điểm câu trả lời của AI dựa trên Câu trả lời MẪU (Chuẩn) và Yêu cầu của khách hàng.
     Hãy chấm điểm từ 1 đến 5 (số nguyên) cho 5 tiêu chí sau:
-    1. knowledge_retrieval (Truy xuất Tri thức): Khả năng áp dụng quy tắc phối đồ/thông tin sản phẩm hữu ích từ tài liệu.
-    2. citation_accuracy (Độ chính xác trích dẫn): Trích dẫn đúng, đủ URL nguồn tương ứng với danh mục câu hỏi (không bịa link, link rác).
+    1. context_utilization (Khai thác và Áp dụng Ngữ cảnh): Khả năng đọc hiểu, chắt lọc và tổng hợp thông tin từ ngữ cảnh để giải quyết trọn vẹn yêu cầu.
+    2. trend_compliance (Nắm bắt Xu hướng & Tuân thủ Phong cách): Đề xuất key_items phù hợp và né tránh các outdated_trends_to_avoid trong đồ thị tri thức.
     3. fashion_knowledge_qa (Hỏi đáp Kiến thức Thời trang): Tư vấn thời trang chuẩn xác, logic chuyên nghiệp, không khuyên phản thẩm mỹ.
     4. faithfulness (Tính trung thực với ngữ cảnh): Tất cả thông tin tư vấn đều có căn cứ từ ngữ cảnh cung cấp, không suy diễn quá đà.
     5. hallucination (Chống ảo giác): Không bịa đặt sản phẩm, giá tiền, hoặc link không tồn tại.
 
     Hãy trả về một JSON object duy nhất có cấu trúc chính xác như dưới đây. Không kèm bất kỳ lời dẫn hay văn bản thừa nào ngoài JSON.
     {{
-      "knowledge_retrieval": [số nguyên từ 1 đến 5],
-      "citation_accuracy": [số nguyên từ 1 đến 5],
+      "context_utilization": [số nguyên từ 1 đến 5],
+      "trend_compliance": [số nguyên từ 1 đến 5],
       "fashion_knowledge_qa": [số nguyên từ 1 đến 5],
       "faithfulness": [số nguyên từ 1 đến 5],
       "hallucination": [số nguyên từ 1 đến 5],
@@ -380,7 +380,7 @@ def llm_as_a_judge(prompt, generated_text, reference_text):
             return None
             
         # Đảm bảo các trường điểm số hợp lệ
-        for k in ['knowledge_retrieval', 'citation_accuracy', 'fashion_knowledge_qa', 'faithfulness', 'hallucination']:
+        for k in ['context_utilization', 'trend_compliance', 'fashion_knowledge_qa', 'faithfulness', 'hallucination']:
             if k not in parsed_result:
                 parsed_result[k] = 3 # Trị số mặc định trung bình
             else:
@@ -428,10 +428,10 @@ def evaluate_model_file(filepath, limit=None):
                         "answer": row.get("generated_text") or ""
                     }
                     # Nếu đã có đánh giá
-                    if "judge_score" in row or "knowledge_retrieval" in row:
+                    if "judge_score" in row or "context_utilization" in row or "knowledge_retrieval" in row:
                         item["evaluation"] = {
-                            "knowledge_retrieval": round(row.get("knowledge_retrieval", row.get("judge_score", 3.0)) / 5.0, 2),
-                            "citation_accuracy": round(row.get("citation_accuracy", row.get("judge_score", 3.0)) / 5.0, 2),
+                            "context_utilization": round(row.get("context_utilization", row.get("knowledge_retrieval", row.get("judge_score", 3.0))) / 5.0, 2),
+                            "trend_compliance": round(row.get("trend_compliance", row.get("citation_accuracy", row.get("judge_score", 3.0))) / 5.0, 2),
                             "fashion_knowledge_qa": round(row.get("fashion_knowledge_qa", row.get("judge_score", 3.0)) / 5.0, 2),
                             "faithfulness": round(row.get("faithfulness", row.get("judge_score", 3.0)) / 5.0, 2),
                             "hallucination": round(row.get("hallucination", row.get("judge_score", 3.0)) / 5.0, 2),
@@ -469,7 +469,7 @@ def evaluate_model_file(filepath, limit=None):
 
     completed_samples = 0
     for row in data:
-        has_eval = 'evaluation' in row and all(k in row['evaluation'] for k in ['knowledge_retrieval', 'citation_accuracy', 'fashion_knowledge_qa', 'faithfulness', 'hallucination'])
+        has_eval = 'evaluation' in row and all(k in row['evaluation'] for k in ['context_utilization', 'trend_compliance', 'fashion_knowledge_qa', 'faithfulness', 'hallucination'])
         if has_eval:
             completed_samples += 1
             
@@ -478,7 +478,7 @@ def evaluate_model_file(filepath, limit=None):
 
     for i, row in enumerate(data):
         # Bỏ qua nếu đã được chấm điểm đủ các tiêu chí mới
-        has_eval = 'evaluation' in row and all(k in row['evaluation'] for k in ['knowledge_retrieval', 'citation_accuracy', 'fashion_knowledge_qa', 'faithfulness', 'hallucination'])
+        has_eval = 'evaluation' in row and all(k in row['evaluation'] for k in ['context_utilization', 'trend_compliance', 'fashion_knowledge_qa', 'faithfulness', 'hallucination'])
         if has_eval:
             continue
             
@@ -503,8 +503,8 @@ def evaluate_model_file(filepath, limit=None):
             print(f"  ⚠️ Cảnh báo: Không thể nhận kết quả từ Judge cho mẫu thứ {completed_samples + 1} sau 3 lần thử.")
             print("  -> Tự động gán điểm mặc định (3/5) để tiếp tục tiến trình.")
             judge_res = {
-                'knowledge_retrieval': 3,
-                'citation_accuracy': 3,
+                'context_utilization': 3,
+                'trend_compliance': 3,
                 'fashion_knowledge_qa': 3,
                 'faithfulness': 3,
                 'hallucination': 3,
@@ -513,8 +513,8 @@ def evaluate_model_file(filepath, limit=None):
             
         # Lưu các điểm số riêng lẻ và chuẩn hóa về thang 0.0 - 1.0
         row['evaluation'] = {
-            'knowledge_retrieval': round(judge_res['knowledge_retrieval'] / 5.0, 2),
-            'citation_accuracy': round(judge_res['citation_accuracy'] / 5.0, 2),
+            'context_utilization': round(judge_res['context_utilization'] / 5.0, 2),
+            'trend_compliance': round(judge_res['trend_compliance'] / 5.0, 2),
             'fashion_knowledge_qa': round(judge_res['fashion_knowledge_qa'] / 5.0, 2),
             'faithfulness': round(judge_res['faithfulness'] / 5.0, 2),
             'hallucination': round(judge_res['hallucination'] / 5.0, 2),
@@ -539,8 +539,8 @@ def evaluate_model_file(filepath, limit=None):
     if num_samples == 0:
         return None
         
-    k_ret = sum(row['evaluation']['knowledge_retrieval'] for row in data if 'evaluation' in row) / num_samples
-    c_acc = sum(row['evaluation']['citation_accuracy'] for row in data if 'evaluation' in row) / num_samples
+    k_ret = sum(row['evaluation']['context_utilization'] for row in data if 'evaluation' in row) / num_samples
+    c_acc = sum(row['evaluation']['trend_compliance'] for row in data if 'evaluation' in row) / num_samples
     f_qa = sum(row['evaluation']['fashion_knowledge_qa'] for row in data if 'evaluation' in row) / num_samples
     faith = sum(row['evaluation']['faithfulness'] for row in data if 'evaluation' in row) / num_samples
     hall = sum(row['evaluation']['hallucination'] for row in data if 'evaluation' in row) / num_samples
@@ -548,8 +548,8 @@ def evaluate_model_file(filepath, limit=None):
     
     metrics = {
         "Size": num_samples,
-        "Retrieval": round(k_ret, 2),
-        "Citation": round(c_acc, 2),
+        "Context Util": round(k_ret, 2),
+        "Trend Comp": round(c_acc, 2),
         "Fashion QA": round(f_qa, 2),
         "Faithfulness": round(faith, 2),
         "Hallucination": round(hall, 2),

@@ -230,8 +230,8 @@ def llm_as_a_judge(prompt, generated_text, reference_text, provider, model, mock
         import random
         random.seed(abs(hash(prompt)))
         return {
-            'knowledge_retrieval': random.randint(3, 5),
-            'citation_accuracy': random.randint(3, 5),
+            'context_utilization': random.randint(3, 5),
+            'trend_compliance': random.randint(3, 5),
             'fashion_knowledge_qa': random.randint(3, 5),
             'faithfulness': random.randint(3, 5),
             'hallucination': random.randint(3, 5),
@@ -241,16 +241,16 @@ def llm_as_a_judge(prompt, generated_text, reference_text, provider, model, mock
     judge_prompt = f"""
     Bạn là một Giám khảo thời trang khách quan. Hãy chấm điểm câu trả lời của AI dựa trên Câu trả lời MẪU (Chuẩn) và Yêu cầu của khách hàng.
     Hãy chấm điểm từ 1 đến 5 (số nguyên) cho 5 tiêu chí sau:
-    1. knowledge_retrieval (Truy xuất Tri thức): Khả năng áp dụng quy tắc phối đồ/thông tin sản phẩm hữu ích từ tài liệu.
-    2. citation_accuracy (Độ chính xác trích dẫn): Trích dẫn đúng, đủ URL nguồn tương ứng với danh mục câu hỏi (không bịa link, link rác).
+    1. context_utilization (Khai thác và Áp dụng Ngữ cảnh): Khả năng đọc hiểu, chắt lọc và tổng hợp thông tin từ ngữ cảnh để giải quyết trọn vẹn yêu cầu.
+    2. trend_compliance (Nắm bắt Xu hướng & Tuân thủ Phong cách): Đề xuất key_items phù hợp và né tránh các outdated_trends_to_avoid trong đồ thị tri thức.
     3. fashion_knowledge_qa (Hỏi đáp Kiến thức Thời trang): Tư vấn thời trang chuẩn xác, logic chuyên nghiệp, không khuyên phản thẩm mỹ.
     4. faithfulness (Tính trung thực với ngữ cảnh): Tất cả thông tin tư vấn đều có căn cứ từ ngữ cảnh cung cấp, không suy diễn quá đà.
     5. hallucination (Chống ảo giác): Không bịa đặt sản phẩm, giá tiền, hoặc link không tồn tại.
 
     Hãy trả về một JSON object duy nhất có cấu trúc chính xác như dưới đây. Không kèm bất kỳ lời dẫn hay văn bản thừa nào ngoài JSON.
     {{
-      \"knowledge_retrieval\": [số nguyên từ 1 đến 5],
-      \"citation_accuracy\": [số nguyên từ 1 đến 5],
+      \"context_utilization\": [số nguyên từ 1 đến 5],
+      \"trend_compliance\": [số nguyên từ 1 đến 5],
       \"fashion_knowledge_qa\": [số nguyên từ 1 đến 5],
       \"faithfulness\": [số nguyên từ 1 đến 5],
       \"hallucination\": [số nguyên từ 1 đến 5],
@@ -316,7 +316,7 @@ def llm_as_a_judge(prompt, generated_text, reference_text, provider, model, mock
         if not parsed_result:
             return None
             
-        for k in ['knowledge_retrieval', 'citation_accuracy', 'fashion_knowledge_qa', 'faithfulness', 'hallucination']:
+        for k in ['context_utilization', 'trend_compliance', 'fashion_knowledge_qa', 'faithfulness', 'hallucination']:
             if k not in parsed_result:
                 parsed_result[k] = 3
             else:
@@ -404,10 +404,10 @@ def main():
                         "retrieved_contexts": row.get("retrieved_contexts") or [],
                         "answer": row.get("generated_text") or ""
                     }
-                    if "judge_score" in row or "knowledge_retrieval" in row:
+                    if "judge_score" in row or "context_utilization" in row or "knowledge_retrieval" in row:
                         item["evaluation"] = {
-                            "knowledge_retrieval": round(row.get("knowledge_retrieval", row.get("judge_score", 3.0)) / 5.0, 2),
-                            "citation_accuracy": round(row.get("citation_accuracy", row.get("judge_score", 3.0)) / 5.0, 2),
+                            "context_utilization": round(row.get("context_utilization", row.get("knowledge_retrieval", row.get("judge_score", 3.0))) / 5.0, 2),
+                            "trend_compliance": round(row.get("trend_compliance", row.get("citation_accuracy", row.get("judge_score", 3.0))) / 5.0, 2),
                             "fashion_knowledge_qa": round(row.get("fashion_knowledge_qa", row.get("judge_score", 3.0)) / 5.0, 2),
                             "faithfulness": round(row.get("faithfulness", row.get("judge_score", 3.0)) / 5.0, 2),
                             "hallucination": round(row.get("hallucination", row.get("judge_score", 3.0)) / 5.0, 2),
@@ -448,7 +448,7 @@ def main():
     # 2. Vòng lặp chính chấm điểm từng câu
     print("\n✍️ Bắt đầu chấm điểm...")
     for idx, row in enumerate(data):
-        has_eval = 'evaluation' in row and all(k in row['evaluation'] for k in ['knowledge_retrieval', 'citation_accuracy', 'fashion_knowledge_qa', 'faithfulness', 'hallucination'])
+        has_eval = 'evaluation' in row and all(k in row['evaluation'] for k in ['context_utilization', 'trend_compliance', 'fashion_knowledge_qa', 'faithfulness', 'hallucination'])
         if has_eval:
             continue
             
@@ -468,8 +468,8 @@ def main():
             return
             
         row['evaluation'] = {
-            'knowledge_retrieval': round(judge_res['knowledge_retrieval'] / 5.0, 2),
-            'citation_accuracy': round(judge_res['citation_accuracy'] / 5.0, 2),
+            'context_utilization': round(judge_res['context_utilization'] / 5.0, 2),
+            'trend_compliance': round(judge_res['trend_compliance'] / 5.0, 2),
             'fashion_knowledge_qa': round(judge_res['fashion_knowledge_qa'] / 5.0, 2),
             'faithfulness': round(judge_res['faithfulness'] / 5.0, 2),
             'hallucination': round(judge_res['hallucination'] / 5.0, 2),
@@ -487,8 +487,8 @@ def main():
             
     # 3. Tính toán và hiển thị báo cáo tổng kết
     metrics = {
-        "Knowledge_Retrieval": [],
-        "Citation_Accuracy": [],
+        "Context_Utilization": [],
+        "Trend_Compliance": [],
         "Fashion_Knowledge_QA": [],
         "Faithfulness": [],
         "Hallucination": [],
@@ -498,27 +498,27 @@ def main():
     for row in data:
         if 'evaluation' in row:
             eval_data = row['evaluation']
-            metrics["Knowledge_Retrieval"].append(eval_data["knowledge_retrieval"])
-            metrics["Citation_Accuracy"].append(eval_data["citation_accuracy"])
+            metrics["Context_Utilization"].append(eval_data["context_utilization"])
+            metrics["Trend_Compliance"].append(eval_data["trend_compliance"])
             metrics["Fashion_Knowledge_QA"].append(eval_data["fashion_knowledge_qa"])
             metrics["Faithfulness"].append(eval_data["faithfulness"])
             metrics["Hallucination"].append(eval_data["hallucination"])
             
-            avg_score = sum(eval_data[k] for k in ['knowledge_retrieval', 'citation_accuracy', 'fashion_knowledge_qa', 'faithfulness', 'hallucination']) / 5.0
+            avg_score = sum(eval_data[k] for k in ['context_utilization', 'trend_compliance', 'fashion_knowledge_qa', 'faithfulness', 'hallucination']) / 5.0
             metrics["Average_Total"].append(avg_score)
             
     summary_report = {
         "Chỉ số đánh giá": [
-            "Knowledge Retrieval (Truy xuất tri thức)",
-            "Citation Accuracy (Độ chính xác trích dẫn)",
+            "Context Utilization (Khai thác ngữ cảnh)",
+            "Trend Compliance (Tuân thủ phong cách & xu hướng)",
             "Fashion Knowledge QA (Hỏi đáp kiến thức)",
             "Faithfulness (Trung thực với ngữ cảnh)",
             "Hallucination (Chống ảo giác)",
             "Average Score (Điểm trung bình cộng)"
         ],
         "Điểm trung bình (Thang 0 - 1.0)": [
-            round(sum(metrics["Knowledge_Retrieval"]) / len(metrics["Knowledge_Retrieval"]), 2) if metrics["Knowledge_Retrieval"] else 0,
-            round(sum(metrics["Citation_Accuracy"]) / len(metrics["Citation_Accuracy"]), 2) if metrics["Citation_Accuracy"] else 0,
+            round(sum(metrics["Context_Utilization"]) / len(metrics["Context_Utilization"]), 2) if metrics["Context_Utilization"] else 0,
+            round(sum(metrics["Trend_Compliance"]) / len(metrics["Trend_Compliance"]), 2) if metrics["Trend_Compliance"] else 0,
             round(sum(metrics["Fashion_Knowledge_QA"]) / len(metrics["Fashion_Knowledge_QA"]), 2) if metrics["Fashion_Knowledge_QA"] else 0,
             round(sum(metrics["Faithfulness"]) / len(metrics["Faithfulness"]), 2) if metrics["Faithfulness"] else 0,
             round(sum(metrics["Hallucination"]) / len(metrics["Hallucination"]), 2) if metrics["Hallucination"] else 0,

@@ -1,8 +1,13 @@
 import os
 import json
+import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+# Fix Windows console encoding issues
+if sys.platform.startswith('win'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 # Thiết lập phong cách hiển thị biểu đồ
 sns.set_theme(style="whitegrid")
@@ -14,10 +19,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Định nghĩa các mô hình và file đánh giá tương ứng
 eval_files = {
-    "Qwen3-VL-8B (Thinking)": os.path.join(BASE_DIR, "t1_qwen3_vl_8b_thinking_outputs_part1_eval.json"),
-    "Qwen3.5-9B": os.path.join(BASE_DIR, "t2_qwen35_9b_outputs_part1_eval.json"),
-    "Qwen3-VL-8B (Instruct)": os.path.join(BASE_DIR, "t3_qwen3_vl_8b_instruct_outputs_part1_eval.json"),
-    "Gemma": os.path.join(BASE_DIR, "t4_gemma_outputs_part1_eval.json")
+    "Qwen3-VL-8B (Thinking)": os.path.join(BASE_DIR, "evaluated", "qwen3vl8b-thinking-lora-p1_eval.json"),
+    "Qwen3.5-9B": os.path.join(BASE_DIR, "evaluated", "qwen35-9b-bnb4-lora-p1_eval.json"),
+    "Qwen3-VL-8B (Instruct)": os.path.join(BASE_DIR, "evaluated", "qwen3vl8b-instruct-lora-p1_eval.json"),
+    "Gemma": os.path.join(BASE_DIR, "evaluated", "gemma4-12b-it-lora-p1_eval.json")
 }
 
 # Đọc dữ liệu
@@ -33,7 +38,7 @@ for model_name, file_path in eval_files.items():
     for item in data:
         if 'evaluation' in item:
             eval_data = item['evaluation']
-            criteria_cols = ['knowledge_retrieval', 'citation_accuracy', 'fashion_knowledge_qa', 'faithfulness', 'hallucination']
+            criteria_cols = ['context_utilization', 'trend_compliance', 'fashion_knowledge_qa', 'faithfulness', 'hallucination']
             score = sum(eval_data.get(k, 0.0) for k in criteria_cols) / len(criteria_cols)
             row = {
                 "Model": model_name,
@@ -49,7 +54,7 @@ for model_name, file_path in eval_files.items():
                 "Prompt": item.get('prompt', ''),
                 "Score": item['judge_score'] / 5.0
             }
-            for k in ['knowledge_retrieval', 'citation_accuracy', 'fashion_knowledge_qa', 'faithfulness', 'hallucination']:
+            for k in ['context_utilization', 'trend_compliance', 'fashion_knowledge_qa', 'faithfulness', 'hallucination']:
                 row[k] = item.get(k, item['judge_score']) / 5.0
             records.append(row)
 
@@ -106,15 +111,20 @@ print(f"Đã lưu biểu đồ điểm trung bình tại: {output_avg}")
 # ----------------------------------------------------
 plt.figure(figsize=(12, 6))
 
-# Đếm tần suất điểm 1-5 cho mỗi model
-dist_df = df.groupby(["Model", "Score"]).size().reset_index(name="Count")
+# Phân nhóm điểm số thành 5 khoảng chất lượng tương ứng với Rubric
+bins = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+labels = ["0.0 - 0.2\n(Rất kém)", "0.2 - 0.4\n(Yếu)", "0.4 - 0.6\n(Trung bình)", "0.6 - 0.8\n(Tốt)", "0.8 - 1.0\n(Xuất sắc)"]
+df["ScoreRange"] = pd.cut(df["Score"], bins=bins, labels=labels, include_lowest=True)
+
+# Đếm tần suất mỗi khoảng điểm cho mỗi model
+dist_df = df.groupby(["Model", "ScoreRange"], observed=False).size().reset_index(name="Count")
 # Tính tỷ lệ phần trăm
 total_per_model = df.groupby("Model").size().reset_index(name="Total")
 dist_df = dist_df.merge(total_per_model, on="Model")
 dist_df["Percentage"] = (dist_df["Count"] / dist_df["Total"]) * 100
 
 ax2 = sns.barplot(
-    x="Score", 
+    x="ScoreRange", 
     y="Percentage", 
     hue="Model", 
     data=dist_df, 
@@ -135,7 +145,7 @@ for p in ax2.patches:
         )
 
 plt.title("Phần Trăm Phân Phối Điểm Số (Thang 0-1) Của Từng Mô Hình", fontsize=14, fontweight='bold', pad=15)
-plt.xlabel("Điểm số (Judge Score)", fontsize=12)
+plt.xlabel("Khoảng điểm số (Judge Score)", fontsize=12)
 plt.ylabel("Tỷ lệ (%)", fontsize=12)
 plt.ylim(0, 105)
 plt.legend(title="Mô hình", bbox_to_anchor=(1.05, 1), loc='upper left')
@@ -195,7 +205,7 @@ print(f"Đã lưu biểu đồ phân bố chi tiết tại: {output_combined}")
 # ----------------------------------------------------
 # BIỂU ĐỒ 4: SO SÁNH CHI TIẾT THEO 5 TIÊU CHÍ (Criteria Comparison Grouped Bar Chart)
 # ----------------------------------------------------
-criteria_cols = ['knowledge_retrieval', 'citation_accuracy', 'fashion_knowledge_qa', 'faithfulness', 'hallucination']
+criteria_cols = ['context_utilization', 'trend_compliance', 'fashion_knowledge_qa', 'faithfulness', 'hallucination']
 has_criteria = all(col in df.columns for col in criteria_cols)
 
 if has_criteria:
@@ -208,8 +218,8 @@ if has_criteria:
     )
     # Ánh xạ tên tiếng Việt/Anh đẹp mắt
     criteria_names_map = {
-        'knowledge_retrieval': 'Knowledge Retrieval',
-        'citation_accuracy': 'Citation Accuracy',
+        'context_utilization': 'Context Utilization',
+        'trend_compliance': 'Trend Compliance',
         'fashion_knowledge_qa': 'Fashion QA',
         'faithfulness': 'Faithfulness',
         'hallucination': 'Hallucination'

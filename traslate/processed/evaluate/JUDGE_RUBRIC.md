@@ -20,17 +20,17 @@ Tài liệu này định nghĩa chi tiết các tiêu chí chấm điểm và ph
 
 ## 1. Các Tiêu Chí Đánh Giá Chi Tiết
 
-### Tiêu chí 1.1. Knowledge Retrieval (Truy xuất Tri thức)
-*Đánh giá khả năng tìm kiếm và áp dụng thông tin hữu ích từ đồ thị tri thức (Knowledge Graph) hoặc tài liệu hướng dẫn phối đồ để trả lời câu hỏi.*
-* **5 điểm (Quy đổi: 1.0)**: Truy xuất và sử dụng chính xác các kiến thức, quy tắc phối đồ (consensus rules) hoặc thông tin sản phẩm thích hợp từ tài liệu/đồ thị tri thức.
-* **3 điểm (Quy đổi: 0.6)**: Có sử dụng thông tin từ tài liệu nhưng chưa đầy đủ, hoặc bỏ sót một số quy tắc phối đồ quan trọng.
-* **1 điểm (Quy đổi: 0.2)**: Không truy xuất được kiến thức liên quan, khuyên dùng các sản phẩm/quy tắc không có trong tài liệu/đồ thị tri thức.
+### Tiêu chí 1.1. Context Utilization (Khai thác và Áp dụng Ngữ cảnh)
+*Đánh giá khả năng đọc hiểu, chắt lọc và tổng hợp thông tin từ ngữ cảnh (retrieved_contexts) được cung cấp sẵn để giải quyết trọn vẹn yêu cầu của người dùng.*
+* **5 điểm (Quy đổi: 1.0)**: Mô hình khai thác triệt để và chính xác các thông tin có giá trị nhất từ ngữ cảnh. Câu trả lời tổng hợp đầy đủ các quy tắc phối đồ và chi tiết sản phẩm được cung cấp để giải quyết trực tiếp và trọn vẹn câu hỏi.
+* **3 điểm (Quy đổi: 0.6)**: Mô hình có sử dụng thông tin từ ngữ cảnh nhưng chỉ trích xuất được một phần. Bỏ sót các chi tiết, giải pháp hoặc quy tắc quan trọng có trong tài liệu, dẫn đến câu trả lời đúng nhưng chưa đủ sâu sắc.
+* **1 điểm (Quy đổi: 0.2)**: Mô hình phớt lờ hoàn toàn các thông tin hữu ích trong ngữ cảnh, hoặc trả lời chung chung không dựa trên tài liệu được cung cấp
 
-### Tiêu chí 1.2. Citation Accuracy (Độ chính xác trích dẫn)
-*Đánh giá tính chính xác của các URL nguồn được đính kèm vào cuối câu trả lời. URL có khớp với danh mục được phân loại của câu hỏi hay không.*
-* **5 điểm (Quy đổi: 1.0)**: Trích dẫn đúng và đủ URL nguồn tương ứng với danh mục câu hỏi (như định nghĩa trong `sourcelink.txt`). Không có link thừa, link hỏng hay link giả.
-* **3 điểm (Quy đổi: 0.6)**: Trích dẫn đúng nguồn nhưng bị thiếu link nếu câu hỏi thuộc nhiều danh mục, hoặc gán nhầm link của danh mục có độ tương đồng cao.
-* **1 điểm (Quy đổi: 0.2)**: Không trích dẫn link, hoặc tự bịa ra link không tồn tại trong hệ thống.
+### Tiêu chí 1.2. Trend Awareness & Style Compliance (Nắm bắt Xu hướng & Tuân thủ Phong cách)
+*Đánh giá mức độ nhạy bén về thời trang của mô hình thông qua việc đề xuất chính xác các món đồ chủ đạo (key_items) và khả năng né tránh tuyệt đối các phong cách/xu hướng đã lỗi thời (outdated_trends_to_avoid) được quy định trong đồ thị tri thức.*
+* **5 điểm (Quy đổi: 1.0)**: Mô hình khéo léo lồng ghép các key_items phù hợp vào câu trả lời để tư vấn cho người dùng. Tuyệt đối tuân thủ các quy tắc thẩm mỹ, không gợi ý bất kỳ món đồ hay cách phối nào nằm trong danh sách outdated_trends_to_avoid.
+* **3 điểm (Quy đổi: 0.6)**: Câu trả lời an toàn, có tư vấn trang phục nhưng các gợi ý khá mờ nhạt, không làm nổi bật được các key_items đặc trưng của phong cách đó. Hoặc, mô hình có nhắc đến một chi tiết nhỏ mang hơi hướng lỗi thời nhưng chưa làm hỏng tổng thể bộ trang phục.
+* **1 điểm (Quy đổi: 0.2)**: Mô hình đưa ra những lời khuyên thời trang đi ngược lại tiêu chuẩn của danh mục, trực tiếp khuyên người dùng sử dụng các món đồ, màu sắc hoặc cách phối nằm trong danh sách
 
 ### Tiêu chí 1.3. Fashion Knowledge QA (Hỏi đáp Kiến thức Thời trang)
 *Đánh giá khả năng tư vấn thời trang chuyên sâu và giải đáp thắc mắc của người dùng (phối màu, dáng người, chọn trang phục, xu hướng thời trang cần tránh) theo đúng logic thời trang chuyên nghiệp.*
@@ -68,10 +68,10 @@ Kết quả đánh giá của toàn bộ tập dữ liệu sẽ được lưu d�
     "answer": "Để có phong cách cổ điển, bạn nên chọn mũ fedora hoặc beret màu đen, navy...",
     
     "evaluation": {
-      "knowledge_retrieval": 1.0, 
+      "context_utilization": 1.0, 
       "faithfulness": 0.6, 
       "hallucination": 0.8,
-      "citation_accuracy": 0.2,
+      "trend_compliance": 0.2,
       "reasoning": "Faithfulness bị trừ điểm về mức 0.6 vì tự suy luận thêm một số loại vải không có trong retrieved_contexts."
     }
   }
