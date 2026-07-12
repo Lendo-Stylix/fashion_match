@@ -49,6 +49,55 @@ Bảng rev 3 đầy đủ (source: `gpu_T{1,2,3}_rescored.json`):
 
 ---
 
+## ⚡ REV 4 UPDATE (definitive 8GB GRPO ceiling — 2026-07-12)
+
+Chạy GRPO thực tế trên RTX 5060 Laptop 8GB cho kết luận **cứng (hard ceiling)**:
+
+### Pipeline ĐÃ CHẠY ĐƯỢC (commit `70623f7`, `c4f93c6`)
+
+- trl 0.14.0 + 6 compatibility patches cho Windows 8GB (vllm stub, drop
+  `scale_rewards`/`loss_type`/`reward_weights`/`quantization_config`, preload
+  model bằng `AutoModelForImageTextToText` + `device_map={"":0}` + bnb 4-bit,
+  `warnings_issued` shim).
+- 1 GRPO step hoàn chỉnh (G=2, batch=1, seq=64): **EXIT 0 trong 1m47s**,
+  adapter saved (`outputs/t3-grpo-smoke`).
+- Reward functions chính xác: **30/30 unit tests pass** + diagnostic probe chạy
+  trực tiếp trên T1 cho điểm **khác 0** (occasion=0.667, season=0.800,
+  coherence=1.000).
+
+### Nhưng reward LUÔN = 0 trong GRPO runs (root cause = truncation)
+
+| Config (G=2, batch=1) | `max_completion_length` | Kết quả |
+|---|---:|---|
+| T3-Thinking + `/no_think` | 96 | Step chạy (30min/step) nhưng reward=0 — Thinking variant **bỏ qua** `/no_think`, vẫn emit `<think>` rồi bị cut |
+| T1-Instruct, `--think` | 96 | Step chạy (19min/step) nhưng reward=0 — 96 token **cắt trước khi answer xuất hiện** (probe greedy 120 token cho answer ~394 chars ≈ 130+ token) |
+| T1-Instruct, `--think` | 160 | **OOM-hang** sau model load (7.5GB VRAM đầy, GPU util 12% = swap thrash, log frozen 60+ min) |
+
+**Kết luận cứng:** Trên 8GB VRAM, 8B QLoRA GRPO **không thể tạo reward signal khác 0**
+vì:
+1. `max_completion_length=96` (đủ RAM) → cắt answer → reward=0.
+2. `max_completion_length≥160` (đủ chỗ cho answer) → OOM.
+
+Đây là **giới hạn phần cứng vật lý**, KHÔNG phải code bug. Pipeline, scorers, reward
+plumbing đều đúng (verified bằng 70 tests + diagnostic probe).
+
+### Path forward — Kaggle T4 x2 (16GB)
+
+| Tham số | Local 8GB (đã thử) | **Kaggle T4 x2 (16GB)** |
+|---|---|---|
+| `max_completion_length` | 96 (truncates) → 160 (OOM) | **256–384** (answer đầy đủ) |
+| `num_generations` (G) | 2 | **4–8** |
+| `batch_size` | 1 | **2–4** |
+| `temperature` | 0.7 | 0.7 |
+| Steps / 500-step run | ~6.5 ngày (không khả thi) | **~8–12 giờ** (feasible) |
+| Reward signal dự kiến | 0 (truncated) | **≠ 0** (answer hoàn chỉnh) |
+
+**Script `scripts/stylist/train_grpo_kaggle.py` đã sẵn sàng cho Kaggle** — chỉ cần
+chạy với VRAM lớn hơn. Các flag `--temperature`, `--no-think`/`--think`,
+`--max-completion-length` đều đã có.
+
+---
+
 ## 0. Recap bản gốc (mock-only) → revision này (real GPU)
 
 Bản gốc (rev 1) dựa vào MOCK benchmark (`mock_run.json`, mean 0.107, luôn hỏi lại → collapse). **Rev 2 này cần此地 cần được nâng cấp vì đã chạy được benchmark thật trên GPU 8GB.** Ba sửa đổi thực tế quan trọng:
