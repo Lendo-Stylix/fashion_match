@@ -108,7 +108,44 @@ Trạng thái ký hiệu: ☐ todo · ⧗ đang làm · ✅ done · ⛔ blocked
 
 ---
 
-## E. Lịch sử thay đổi
+## E. RL / GRPO training
 
+| # | Việc | Trạng thái | Commit |
+|---|---|---|---|
+| E1 | Scorer fix: alias normalisation cho `occasion_formality` + body_shape/season advice | ✅ | `b893fcd` |
+| E2 | Rescore GPU benchmarks T1/T2/T3 với scorer đã fix | ✅ T1 0.4620, T2 0.5433, T3 0.5242 | — |
+| E3 | GRPO verifiable-reward strategy (6 scorers) + `grpo_rewards.py` (30 tests) | ✅ | `10685fe` |
+| E4 | `train_grpo_kaggle.py` + trl 0.14 Windows 8GB compat (6 patches) | ✅ 1 step EXIT 0 | `70623f7` |
+| E5 | GPU REAL benchmark T1/T2/T3 + RL strategy rev 2 | ✅ | `a1946c0` |
+| E6 | `--temperature` + `--no-think`/`--think` flags | ✅ | `c4f93c6` |
+| E7 | REV 4: definitive 8GB GRPO ceiling + Kaggle path | ✅ documented | `847db80` |
+| E8 | GRPO training với reward ≠ 0 | ⛔ **hardware-blocked** (8GB VRAM) | — |
+| E9 | Benchmark post-GRPO effectiveness | ⛔ blocked on E8 | — |
+| E10 | Loop until optimal (mean ≥ 0.55) | ⛔ blocked on E8 | — |
+
+### E8 blocker — 8GB VRAM hard ceiling
+
+3 data points (T1 Instruct, Qwen3-VL-8B-Instruct-bnb-4bit):
+
+| Config (G=2, batch=1) | `max_completion_length` | `temperature` | Result |
+|---|---:|---:|---|
+| T3-Thinking + `/no_think` | 96 | 0.9 | reward=0 (Thinking ignores `/no_think`) |
+| T1-Instruct | 96 | 0.9 | reward=0 (96 tokens truncates ~130-token answers) |
+| T1-Instruct | 128 | 0.3 | reward=0 (50 min/step; still 0 across 3 steps) |
+| T1-Instruct | 160 | 0.7 | OOM-hang (7.5GB VRAM full, swap thrash) |
+
+Diagnostic probe (greedy, 120 tokens) PROVES scorers work: occasion=0.667,
+season=0.800, coherence=1.000. All-zero is truncation/sampling, NOT a code bug.
+Pipeline, reward functions, scorers verified (70 tests + probe).
+
+**Path forward:** Kaggle T4 x2 (16GB) → `max_completion_length=256–384`, G=4–8,
+~8–12h/500-step run. Script `train_grpo_kaggle.py` đã sẵn sàng.
+
+---
+
+## F. Lịch sử thay đổi
+
+- 2026-07-12: REV 4 — definitive 8GB GRPO ceiling documented; 3 GRPO smoke runs (T1/T3, len 96/128/160) all reward=0; diagnostic probe proves scorers correct; `--temperature`/`--no-think` flags added; 70 fashion-eval+grpo-reward tests pass.
+- 2026-07-11: trl 0.14 Windows 8GB compat patches; GRPO pipeline runs (1 step EXIT 0); scorer alias fix (occasion_formality 0→0.74); GPU benchmarks rescored.
 - 2026-07-10: research mở rộng benchmark (FashionStylist V1, fashion-agent-benchmark, SEA-IFEval, MMMU-Pro, MM-Vet, τ-bench); `scripts/setup_models.py` pull models về D:/Models; `.env.example` HF cache config; `benchmark_resume.md` + `benchmark_template_per_model.md`.
 - 2026-07-09: tạo branch `feat/benchmark`; triển khai `stylist/fashion_eval.py` (6 item bank + 6 scorer + aggregator) với 34 test; cập nhật `docs/feature.md` + báo cáo này.
