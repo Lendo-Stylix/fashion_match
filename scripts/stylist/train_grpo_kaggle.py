@@ -123,6 +123,22 @@ def main() -> None:
     parser.add_argument("--lora-r", type=int, default=32)
     parser.add_argument("--push-to-hub", default=None, help="HF repo id to push adapter")
     parser.add_argument(
+        "--report-to",
+        default="none",
+        help="W&B logger target. Use 'wandb' on Kaggle for online logging "
+        "(requires WANDB_API_KEY in env). Default 'none' for local/offline.",
+    )
+    parser.add_argument(
+        "--wandb-project",
+        default="outfitmatch-stylist",
+        help="W&B project name (used when --report-to wandb).",
+    )
+    parser.add_argument(
+        "--wandb-run-name",
+        default=None,
+        help="W&B run name (used when --report-to wandb).",
+    )
+    parser.add_argument(
         "--dry-run", action="store_true", help="Build dataset + rewards, no training"
     )
     parser.add_argument("--seed", type=int, default=42)
@@ -226,7 +242,8 @@ def main() -> None:
         logging_steps=10,
         save_steps=100,
         seed=args.seed,
-        report_to="none",
+        report_to=args.report_to,
+        run_name=args.wandb_run_name,
         use_vllm=False,  # never use vllm on Windows; rely on HF generate()
     )
 
