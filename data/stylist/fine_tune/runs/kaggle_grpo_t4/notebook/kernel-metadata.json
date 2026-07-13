@@ -1,0 +1,16 @@
+{
+  "id": "nhatquangvominh/om-grpo-stylist-t4",
+  "title": "om-grpo-stylist-t4",
+  "code_file": "grpo_stylist.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_tpu": "false",
+  "enable_internet": "true",
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": [],
+  "machine_shape": "NvidiaTeslaT4"
+}
