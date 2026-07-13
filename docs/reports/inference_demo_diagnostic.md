@@ -120,7 +120,7 @@ outfit_id=f"OF_{index:05d}",    # index = vị trí trong list trả về
 | **D** | `outfit_id` = UUID5(sorted item_ids) → stable ID | schema | 🟢 nhỏ | ID nhất quán qua runs |
 | **E** | Hiển thị item `title_vi` + `product_url` trong output demo | script | 🟢 nhỏ | user thấy item cụ thể |
 
-**Đã apply A + E trong `run_inference_device.py`** (commit kế tiếp).
+**Đã apply A + E trong `run_inference_device.py`** (commit f18fdd8, verified).
 B/C/D để user quyết định (chạm core retrieval/schema — cần thiết kế kỹ).
 
 ---
