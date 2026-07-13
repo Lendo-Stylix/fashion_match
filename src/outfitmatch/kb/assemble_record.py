@@ -7,14 +7,28 @@ from typing import TYPE_CHECKING
 from scripts.data.scrape.config import STORES_BY_ID
 
 from outfitmatch.kb.generation import _aggregate_embedding, _combo_gender, _price_tier
+from outfitmatch.kb.ids import stable_outfit_id  # FIX D: stable outfit id
 from outfitmatch.kb.schema import OutfitRecord
 from outfitmatch.vocab import (
     BODY_SHAPE,
     FORMALITY_RANK,
     FORMALITY_RELEVANT_CATEGORIES,
     SEASON,
+    STYLE_SET,
     occasions_for_formality,
 )
+
+# Coarse formality band -> canonical STYLE enum values. Graph items carry no
+# per-item style tag (only formality), so we derive an item-level style hint
+# from its formality band and MERGE it with the store-level style_tags.
+# This replaces the old behavior where every item of a store (e.g. YODY) was
+# blindly tagged with the store's ('casual','sporty') regardless of formality.
+FORMALITY_STYLE: dict[str, frozenset[str]] = {
+    "formal": frozenset({"elegant", "classic"}),
+    "smart_casual": frozenset({"minimalist", "korean"}),
+    "casual": frozenset({"casual"}),
+    "athletic": frozenset({"sporty"}),
+}
 
 _BODY_SHAPE_RELEVANT_CATEGORIES = frozenset({"top", "bottom", "dress", "outerwear"})
 _SEASON_RELEVANT_CATEGORIES = frozenset({"top", "bottom", "dress", "outerwear"})
@@ -35,14 +49,24 @@ def _outfit_occasions(items: list[ItemRecord]) -> list[str]:
 
 
 def _outfit_styles(items: list[ItemRecord]) -> list[str]:
-    """Union store-level style tags across the outfit's items."""
+    """Derive outfit style from item-level formality + store-level tags.
+
+    FIX B: previously this only returned the store's style_tags, so every YODY
+    item (even formal blazers) was tagged ('casual','sporty'). Now we first add
+    the style hint implied by each item's formality band, then union the
+    store-level tags, keeping only canonical STYLE enum values.
+    """
     styles: set[str] = set()
     for item in items:
+        # item-level hint from formality (the only per-item style signal)
+        styles.update(FORMALITY_STYLE.get(item.formality, frozenset()))
+        # store-level tags (kept as a secondary signal)
         store_id = str(item.store.get("store_id") or "")
         store = STORES_BY_ID.get(store_id)
         if store is not None:
             styles.update(store.style_tags)
-    return sorted(styles)
+    # keep only canonical STYLE enum values (defensive against bad config)
+    return sorted(styles & STYLE_SET)
 
 
 def _outfit_colors(items: list[ItemRecord]) -> list[str]:
@@ -115,10 +139,14 @@ def _derive_outfit_seasons(items: list[ItemRecord]) -> list[str]:
 
 
 def to_outfit_record(items: list[ItemRecord], score: float, *, index: int = 1) -> OutfitRecord:
-    """Build an OutfitRecord from graph-assembled items."""
+    """Build an OutfitRecord from graph-assembled items.
+
+    FIX D: outfit_id is derived from the item set (stable across runs), NOT the
+    positional index. ``index`` is kept for API compatibility but unused for id.
+    """
     price_total = sum(int(item.store.get("price_vnd") or 0) for item in items)
     return OutfitRecord(
-        outfit_id=f"OF_{index:05d}",
+        outfit_id=stable_outfit_id([it.item_id for it in items]),
         schema_version="3.1",
         items=items,
         outfit_embedding=_aggregate_embedding(items),

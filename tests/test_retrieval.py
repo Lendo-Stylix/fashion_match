@@ -73,7 +73,13 @@ def test_search_outfits_falls_back_to_graph_scan(tmp_path: Path):
         qdrant_url=f"path://{tmp_path.as_posix()}",
     )
     assert records
-    assert records[0].outfit_id == "OF_00001"
+    # FIX D: outfit_id is now a stable hex derived from the item set, not a
+    # positional OF_00001. Just assert the OF_ prefix + stable 8-hex format,
+    # and that the same request yields identical ids across calls.
+    assert records[0].outfit_id.startswith("OF_")
+    assert len(records[0].outfit_id) == 11  # 'OF_' + 8 hex
+    records2 = search_outfits(request, graph=graph, qdrant_url=f"path://{tmp_path.as_posix()}")
+    assert [r.outfit_id for r in records] == [r.outfit_id for r in records2]
 
 
 def test_qdrant_filter_seed_ids_returns_anchor_items(tmp_path: Path):
