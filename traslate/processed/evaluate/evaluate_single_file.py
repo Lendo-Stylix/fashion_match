@@ -14,11 +14,8 @@ import anthropic
 load_dotenv()
 
 # Cấu hình API Keys dự phòng cho Groq
-groq_keys = [
-    os.environ.get("GROQ_API_KEY"),
-    "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"
-]
-groq_keys = [k.strip() for k in groq_keys if k and k.strip()]
+groq_keys = os.environ.get("GROQ_API_KEY", "").split(",")
+groq_keys = [k.strip() for k in groq_keys if k.strip()]
 
 class RotatingGroqClient:
     def __init__(self, keys):
