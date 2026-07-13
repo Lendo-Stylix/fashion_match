@@ -203,19 +203,43 @@ def execute_tool_call(tool_call: dict, graph, top_n: int = 5):
         f"price_max={request.price_max}"
     )
     records = search_outfits(request, graph=graph, top_n=top_n)
+    # Warn if price_max is so aggressive that the best result sits far below it:
+    # real wedding outfits are 2M+ VND, so a 1M cap drops them and leaves only
+    # cheap-sale outliers clustered near the floor. Fire when the max returned
+    # price is < 50% of the cap (meaning the filter excluded everything near cap).
+    if request.price_max is not None and records:
+        best = max(rec.price_total_vnd for rec in records)
+        if best < 0.5 * request.price_max:
+            print(
+                f"\n[warn] outfit đắt nhất chỉ {best:,} VND (< 50% price_max="
+                f"{request.price_max:,} VND) cho occasion='{request.occasion}'. "
+                f"price_max quá hẹp đã loại bỏ outfit {request.occasion} thật (thường "
+                f"2-3 triệu VND). Thử tăng ngân sách hoặc bỏ price_max.",
+                file=sys.stderr,
+            )
     return brief, records
 
 
 def format_outfit(record) -> str:
-    """One-line human-readable outfit summary."""
-    cats = [it.category for it in record.items]
-    stores = sorted({(it.store.get("store_name") or "?") for it in record.items})
-    return (
+    """Multi-line human-readable outfit summary with real item details."""
+    header = (
         f"{record.outfit_id}  score={record.compatibility_score:.2f}  "
-        f"price={record.price_total_vnd:,} VND  "
-        f"items=[{' + '.join(cats)}]  "
-        f"style={record.style}  store={','.join(stores)}"
+        f"price={record.price_total_vnd:,} VND  style={record.style}"
     )
+    lines = [header]
+    for it in record.items:
+        title = (it.store.get("title_vi") or it.store.get("title") or "?")[:48]
+        price = int(it.store.get("price_vnd") or 0)
+        store = it.store.get("store_name") or "?"
+        url = (it.store.get("product_url") or "")
+        # shorten url for display
+        short_url = url[:60] + "..." if len(url) > 60 else url
+        lines.append(
+            f"      [{it.category:10s}] {title:48s} {price:>8,} VND  {store:12s}"
+        )
+        if short_url:
+            lines.append(f"                  -> {short_url}")
+    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
