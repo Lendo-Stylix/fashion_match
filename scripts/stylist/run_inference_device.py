@@ -60,6 +60,25 @@ CATALOG_PARQUET = CATALOG_DIR / "catalog_metadata.parquet"
 LINKS_PARQUET = CATALOG_DIR / "item_store_links.parquet"
 EDGES_PARQUET = _REPO_ROOT / "data" / "custom" / "graph" / "item_edges.parquet"
 
+# Model registry: each entry maps a CLI --model key to its local base/adapter
+# dirs + how to load it. kind tells load_stylist whether it is a vision-LM
+# (Qwen3-VL, AutoModelForImageTextToText + AutoProcessor) or a text-LM
+# (Qwen3.5, AutoModelForCausalLM + AutoTokenizer). All are bnb-4bit.
+MODELS: dict[str, dict] = {
+    "T3": {
+        "kind": "vl",
+        "base": _HF_HUB_CACHE / "unsloth--Qwen3-VL-8B-Thinking-bnb-4bit",
+        "adapter": _ADAPTERS_DIR / "Nhat-Quang--outfitmatch-stylist-final-qwen3vl8b-thinking-lora",
+        "label": "Qwen3-VL-8B-Thinking + stylist LoRA",
+    },
+    "T2": {
+        "kind": "text",
+        "base": _HF_HUB_CACHE / "techwithsergiu--Qwen3.5-text-9B-bnb-4bit",
+        "adapter": _ADAPTERS_DIR / "Nhat-Quang--outfitmatch-stylist-final-qwen35-9b-bnb4-lora",
+        "label": "Qwen3.5-text-9B + stylist LoRA",
+    },
+}
+
 
 # ---------------------------------------------------------------------------
 # System prompt — forces tool-call via few-shot examples.
@@ -97,24 +116,44 @@ SYSTEM_PROMPT = (
 )
 
 
-def load_stylist(base_path: Path, adapter_path: Path | None):
-    """Load T3 Qwen3-VL-8B Thinking 4-bit + optional LoRA adapter.
+def load_stylist(base_path: Path, adapter_path: Path | None, kind: str = "vl"):
+    """Load a bnb-4bit base model + optional LoRA adapter from local dirs.
 
-    Applies the 3 learned bnb-4bit / Qwen-VL fixes:
-      - device_map={'': 0} (NOT 'auto') to skip the bnb CPU-dispatch ValueError
-      - torch_dtype='auto' (lm_head of T3 is BFloat16; float16 downcasts it)
-      - processor(text=[prompt], images=None) at call time (text-only path)
+    Args:
+        base_path: local base model dir (e.g. Qwen3-VL-8B-Thinking-bnb-4bit).
+        adapter_path: local LoRA adapter dir, or None to skip the adapter.
+        kind: "vl" for vision-LM (AutoModelForImageTextToText + AutoProcessor)
+              or "text" for text-LM (AutoModelForCausalLM + AutoTokenizer).
+
+    Applies the learned bnb-4bit fixes:
+      - device_map={"": 0} (NOT "auto") to skip the bnb CPU-dispatch ValueError
+      - torch_dtype="auto" (lm_head of these checkpoints is BFloat16; float16
+        downcasts it -> RuntimeError at generate).
     """
     import torch
-    from transformers import AutoModelForImageTextToText, AutoProcessor
-
-    processor = AutoProcessor.from_pretrained(str(base_path), trust_remote_code=True)
-    model = AutoModelForImageTextToText.from_pretrained(
-        str(base_path),
-        trust_remote_code=True,
-        device_map={"": 0},
-        torch_dtype="auto",
+    from transformers import (
+        AutoModelForCausalLM,
+        AutoModelForImageTextToText,
+        AutoProcessor,
+        AutoTokenizer,
     )
+
+    if kind == "text":
+        processor = AutoTokenizer.from_pretrained(str(base_path), trust_remote_code=True)
+        model = AutoModelForCausalLM.from_pretrained(
+            str(base_path),
+            trust_remote_code=True,
+            device_map={"": 0},
+            torch_dtype="auto",
+        )
+    else:
+        processor = AutoProcessor.from_pretrained(str(base_path), trust_remote_code=True)
+        model = AutoModelForImageTextToText.from_pretrained(
+            str(base_path),
+            trust_remote_code=True,
+            device_map={"": 0},
+            torch_dtype="auto",
+        )
     if adapter_path is not None:
         from peft import PeftModel
 
@@ -130,7 +169,7 @@ def load_stylist(base_path: Path, adapter_path: Path | None):
     return model, processor
 
 
-def generate(model, processor, user_prompt: str, max_new_tokens: int = 512) -> str:
+def generate(model, processor, user_prompt: str, max_new_tokens: int = 512, kind: str = "vl") -> str:
     """Generate the stylist's response for one user prompt."""
     import torch
 
@@ -141,8 +180,12 @@ def generate(model, processor, user_prompt: str, max_new_tokens: int = 512) -> s
     prompt = processor.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True
     )
-    # Qwen3-VL text-only: pass text= explicitly to dodge 'Incorrect image source'.
-    inputs = processor(text=[prompt], images=None, return_tensors="pt")
+    # Qwen3-VL (vision-LM) needs text=[...] to dodge "Incorrect image source";
+    # Qwen3.5 (text-LM) tokenizes via processor(...) directly.
+    if kind == "text":
+        inputs = processor(prompt, return_tensors="pt")
+    else:
+        inputs = processor(text=[prompt], images=None, return_tensors="pt")
     device = next(model.parameters()).device
     inputs = {k: (v.to(device) if hasattr(v, "to") else v) for k, v in inputs.items()}
     input_len = inputs["input_ids"].shape[1]
@@ -257,12 +300,16 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--prompt", default=DEFAULT_PROMPT, help="Vietnamese user prompt.")
     p.add_argument(
-        "--base", type=Path, default=BASE_MODEL_DIR, help="Local base model dir."
+        "--model", type=str, default="T3", choices=list(MODELS.keys()),
+        help="Which local model+adapter to use (T3=Qwen3-VL-8B-Thinking, T2=Qwen3.5-9B).",
+    )
+    p.add_argument(
+        "--base", type=Path, default=None, help="Override local base model dir."
     )
     p.add_argument(
         "--adapter",
         type=Path,
-        default=ADAPTER_DIR,
+        default=None,
         help="Local LoRA adapter dir (use --no-adapter to skip).",
     )
     p.add_argument("--no-adapter", action="store_true", help="Skip LoRA adapter.")
@@ -274,18 +321,22 @@ def _build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
 
-    if not args.base.exists():
-        print(f"[error] base model not found at {args.base}", file=sys.stderr)
+    # Resolve model base/adapter/kind from the registry (or CLI overrides).
+    spec = MODELS[args.model]
+    base_path = args.base or spec["base"]
+    adapter_path = None if args.no_adapter else (args.adapter or spec["adapter"])
+    kind = spec["kind"]
+    if not base_path.exists():
+        print(f"[error] base model not found at {base_path}", file=sys.stderr)
         print(
-            "        run: uv run python scripts/setup_models.py --base --models T3",
+            f"        run: uv run python scripts/setup_models.py --base --models {args.model}",
             file=sys.stderr,
         )
         return 2
-    adapter_path = None if args.no_adapter else args.adapter
     if adapter_path is not None and not adapter_path.exists():
         print(f"[error] adapter not found at {adapter_path}", file=sys.stderr)
         print(
-            "        run: uv run python scripts/setup_models.py --adapters --models T3",
+            f"        run: uv run python scripts/setup_models.py --adapters --models {args.model}",
             file=sys.stderr,
         )
         return 2
@@ -301,7 +352,7 @@ def main(argv: list[str] | None = None) -> int:
     if adapter_path:
         print(f"       adapter= {adapter_path}", file=sys.stderr)
     t0 = time.time()
-    model, processor = load_stylist(args.base, adapter_path)
+    model, processor = load_stylist(base_path, adapter_path, kind=kind)
     print(f"[load] done in {time.time() - t0:.1f}s", file=sys.stderr)
 
     # 3. Generate.
@@ -309,7 +360,7 @@ def main(argv: list[str] | None = None) -> int:
     print("USER PROMPT:", file=sys.stderr)
     print(args.prompt, file=sys.stderr)
     print("-" * 72, file=sys.stderr)
-    answer = generate(model, processor, args.prompt, args.max_new_tokens)
+    answer = generate(model, processor, args.prompt, args.max_new_tokens, kind=kind)
 
     print("\n" + "=" * 72)
     print("MODEL OUTPUT:")
