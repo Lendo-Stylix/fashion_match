@@ -275,6 +275,10 @@ def main() -> None:
         device_map={"": 0},  # skip infer_auto_device_map (avoids CPU-dispatch ValueError)
         torch_dtype=torch.float16,
         low_cpu_mem_usage=True,
+        # Qwen3-VL + transformers 4.57 has a known SDPA attention-mask shape bug
+        # (RuntimeError: Expected key.size(1) == value.size(1)) during GRPO.
+        # 'eager' attention avoids the fused sdpa path that triggers it.
+        attn_implementation="eager",
     )
     model.config.use_cache = False
     logger.info("Loaded base model: %s (%s, VL=%s)", args.model, type(model).__name__, _is_vl)
