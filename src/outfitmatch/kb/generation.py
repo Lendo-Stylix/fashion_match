@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from outfitmatch.kb.schema import ItemRecord, OutfitRecord
 
+from outfitmatch.kb.ids import stable_outfit_id  # FIX D
 from outfitmatch.kb.schema import OutfitRecord
 from outfitmatch.vocab import FORMALITY_RELEVANT_CATEGORIES, formality_span_ok
 
@@ -86,7 +87,7 @@ def _make_outfit(
 ) -> OutfitRecord:
     price_total = sum(_item_price(item) for item in items)
     return OutfitRecord(
-        outfit_id=f"OF_{index:05d}",
+        outfit_id=stable_outfit_id([it.item_id for it in items]),  # FIX D: stable id
         schema_version="3.1",
         items=items,
         outfit_embedding=_aggregate_embedding(items),

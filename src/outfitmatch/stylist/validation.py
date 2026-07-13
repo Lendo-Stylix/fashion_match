@@ -13,8 +13,8 @@ from typing import Any
 
 from outfitmatch.stylist.tools import TOOL_CALL_PATTERN, validate_tool_call_payload
 
-# Matches OF_XXXXX where X is a digit — adjust if outfit_id format changes.
-_OUTFIT_ID_RE = re.compile(r"\bOF_\d{5,}\b")
+# Matches OF_ followed by >=5 alnum chars (legacy OF_00001 digits OR the new
+_OUTFIT_ID_RE = re.compile(r"\bOF_[0-9A-Za-z]{5,}\b")
 # Size only counts when explicitly written as "size X" / "cỡ X" to keep false
 # positives near zero in normal Vietnamese prose.
 _SIZE_MENTION_RE = re.compile(r"\b(?:size|cỡ)\s+([A-Za-z]{1,3}|\d{1,3})\b", re.IGNORECASE)

@@ -115,13 +115,25 @@ outfit_id=f"OF_{index:05d}",    # index = vị trí trong list trả về
 | # | Fix | Layer | Effort | Impact |
 |---|---|---|---|---|
 | **A** | Demo script: bỏ `price_max` mặc định + cảnh báo khi filter loại >50% seed | script | 🟢 nhỏ | giải quyết triệu chứng chính |
-| **B** | `_outfit_styles`: item-level style trước, store-level fallback | retrieval | 🟡 vừa | sửa style mismatch cho mọi occasion |
-| **C** | Audit YODY 49k prices: `original_price_vnd` vs sale; log outlier | data | 🟡 vừa | sửa giá bất thường |
-| **D** | `outfit_id` = UUID5(sorted item_ids) → stable ID | schema | 🟢 nhỏ | ID nhất quán qua runs |
+| **B** | `_outfit_styles`: item-level style (từ formality) trước, store-level fallback | retrieval | 🟡 vừa | sửa style mismatch cho mọi occasion |
+| **C** | Audit YODY 49k prices: `price_audit.flag_price_outliers` (per-store median) | data | 🟡 vừa | surfacing giá outlier thay vì xoá |
+| **D** | `outfit_id` = `OF_`+8-hex(uuid5(sorted item_ids)) → stable ID | schema | 🟢 nhỏ | ID nhất quán qua runs |
 | **E** | Hiển thị item `title_vi` + `product_url` trong output demo | script | 🟢 nhỏ | user thấy item cụ thể |
 
-**Đã apply A + E trong `run_inference_device.py`** (commit f18fdd8, verified).
-B/C/D để user quyết định (chạm core retrieval/schema — cần thiết kế kỹ).
+**Đã apply A + B + C + D + E (commit kế tiếp, verified):**
+- A/E: `run_inference_device.py` (commit f18fdd8)
+- B: `assemble_record._outfit_styles` — style giờ derive từ `formality` (formal→elegant/classic,
+  smart_casual→minimalist/korean) merge với store tags, clamp vào `STYLE_SET`.
+- C: mới `src/outfitmatch/kb/price_audit.py` (`flag_price_outliers` + `audit_prices`) + test
+  `tests/kb/test_price_audit.py`. Catalog KHÔNG có cột `original_price_vnd` — chỉ `price_vnd` +
+  `sale_price_vnd` (428 non-null) — nên audit thực chất là **price-outlier** (item < 20% median
+  store) chứ không phải original-vs-sale. Outlier KHÔNG bị xoá (hàng thật), chỉ surfaced.
+- D: mới `src/outfitmatch/kb/ids.py` (`stable_outfit_id`) — `to_outfit_record` + `_make_outfit`
+  dùng id ổn định; `validation.py` regex nới rộng `\bOF_[0-9A-Za-z]{5,}\b` để vẫn match id hex.
+
+**Lưu ý còn lại (không phải bug):** `price_max=1,000,000` trong demo là do **model tự generate**
+(tool_call của T3), không phải hardcode. FIX A chỉ cảnh báo; muốn outfit wedding đúng (2-3M) thì
+cần thư giãn budget trong prompt/system hoặc thêm re-rank theo price tier. Đây là hướng tương lai.
 
 ---
 
