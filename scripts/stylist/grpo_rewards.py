@@ -134,6 +134,11 @@ def fashion_reward(completions, **kwargs):
 def build_fashion_prompt_pool(max_per_type=None):
     def _cap(rows):
         return rows[:max_per_type] if max_per_type is not None else rows
+    # Concise directive: keeps answers < 128 tokens so scorers fire before
+    # truncation (REV5: long prose got truncated -> all rewards 0).
+    _CONCISE = ("\nAnswer tersely with ONLY keywords/enum/tool-call, no prose. "
+                "E.g. 'smart_casual, formal' / 'nhan eo, chan vay a; ne quan bo sat hong' / "
+                "'phu hop' / 'Ban muon mac dip nao a?' / 'search_outfits(occasion=wedding)'.")
 
     pool = []
     for occ in OCCASION:
@@ -153,7 +158,7 @@ def build_fashion_prompt_pool(max_per_type=None):
                 + " ("
                 + occ
                 + "), mức độ trang trọng (formality) nào là phù hợp? "
-                "Hãy nêu các formality nên chọn và giải thích ngắn.",
+                "Chi neu truc tiep cac formality (vd: smart_casual, formal)." + _CONCISE,
             }
         )
     for shape in BODY_SHAPE:
@@ -171,7 +176,8 @@ def build_fashion_prompt_pool(max_per_type=None):
                 + label_vi
                 + " ("
                 + shape
-                + "). Hãy nêu 2-3 gợi ý nên mặc và 1 điều nên tránh.",
+                + "). Chi neu 2-3 tu khoa nen mac "
+                + "(vd: 'nhan eo, chan vay a; ne quan bo sat hong')." + _CONCISE,
             }
         )
     for season in SEASON:
@@ -189,13 +195,22 @@ def build_fashion_prompt_pool(max_per_type=None):
                 + label_vi
                 + " ("
                 + season
-                + "). Hãy nêu 2-3 gợi ý nên mặc và 1 điều nên tránh.",
+                + "). Chi neu 2-3 tu khoa nen mac "
+                + "(vd: 'cotton, linen; ne len')." + _CONCISE,
             }
         )
     for item in COHERENCE_ITEMS:
-        pool.append({**item, "item_type": "coherence"})
+        _ci = {**item, "item_type": "coherence"}
+        _ci["prompt"] = item["prompt"] + " Chi tra loi 'phu hop' hoac 'khong phu hop'." + _CONCISE
+        pool.append(_ci)
     for item in ASK_BACK_ITEMS:
-        pool.append({**item, "item_type": "ask_back"})
+        _ai = {**item, "item_type": "ask_back"}
+        _ai["prompt"] = (
+            item["prompt"]
+            + " Neu thieu thong tin bat buoc, hay hoi lai ngan gon "
+            "(vd: 'Ban muon mac dip nao a?')." + _CONCISE
+        )
+        pool.append(_ai)
     adversarial_stems = [
         "Mình thích phong cách {style}, ngân sách {budget}. Gợi ý outfit nhé.",
         "Tìm outfit phong cách {style} cho dáng {shape}, tầm {budget}. Được không?",
@@ -229,7 +244,8 @@ def build_fashion_prompt_pool(max_per_type=None):
                 "reference_tool_call": reference,
                 "prompt": "Tìm outfit cho profile: "
                 + ", ".join(k + "=" + str(v) for k, v in spec.items())
-                + ". Hãy gọi công cụ search_outfits.",
+                + ". Hay goi cong cu search_outfits "
+                + "(vd: search_outfits(occasion=wedding, style=elegant))." + _CONCISE,
             }
         )
     pool.extend(_cap(td_rows))
