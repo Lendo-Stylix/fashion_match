@@ -39,6 +39,7 @@ dependencies = [
     # ── API + Demo UI ─────────────────────────────────────────────────────
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
+    "sse-starlette>=3.4",
     "httpx>=0.28",
     "python-multipart>=0.0.20",
     "gradio>=5.9",

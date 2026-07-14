@@ -43,3 +43,15 @@ bench-graph:
 
 bench-rl:
 	uv run python -m scripts.stylist.train_grpo_kaggle --dry-run --canonical
+
+serve:
+	.venv/Scripts/python.exe scripts/serve.py
+
+serve-dev:
+	.venv/Scripts/python.exe scripts/serve.py --reload --port 8001
+
+web-dev:
+	cd web && npm run dev
+
+web-build:
+	cd web && npm run build
