@@ -359,3 +359,10 @@ Override qua env: `GRPO_BATCH / GRPO_GENS / GRPO_LEN / GRPO_MAX_STEPS`.
 hoặc hạ `max_completion_length` xuống 128. REV 4 table (T4x2 fits 500-step) là lạc quan — thực tế 8B GRPO vượt T4 class.
 
 **Trạng thái:** GRPO RL ĐANG CHẠY trên Kaggle T4 16GB, log online W&B đã xác nhận (run `6sk8ezbl` running).
+
+**⚠️ VALIDATION RE-RUN (post-goal): REWARD = 0 tại MỌI bước (steps 0–60, global_step 60, runtime 8.8h).**
+- W&B run `6sk8ezbl` đạt `train/global_step=60` nhưng `train/reward` luôn = 0; cả 6 per-task reward = 0.
+- Nguyên nhân: `max_completion_length=128` **truncate** câu trả lời ~130-token của model → scorer nhận output lở → trả 0 (khớp giả thuyết REV4: probe greedy chứng minh scorer đúng trên câu đủ dài).
+- Hệ quả: GRPO **không có tín hiệu học** (reward=0 toàn cục) → adapter thực tế chưa được train dù chạy 60 step.
+- Kết luận: config bảo thủ (len=128) fit T4 16GB NHƯNG làm hỏng reward. Để RL có hiệu lực cần (1) `max_completion_length >= 256` (phải T4x2 + DeepSpeed, T4 16GB OOM ở len>=256) HOẶC (2) rút ngắn expected answer < 128 token qua few-shot/prompt để scorer kịp thưởng.
+- Run vẫn là minh chứng pipeline + W&B online logging hoạt động; chỉ config reward bị chết vì truncation.
