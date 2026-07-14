@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from outfitmatch.kb.graph_store import OutfitGraph
     from outfitmatch.kb.schema import ItemRecord, OutfitRecord
     from outfitmatch.quiz.schema import QuizAnswers
+    from outfitmatch.stylist.service import StylistService
 
 
 @dataclass
@@ -81,7 +82,8 @@ def recommend_outfit(
     graph: OutfitGraph | None = None,
     items: list[ItemRecord] | None = None,
     seed_ids: list[str] | None = None,
-    qdrant_url: str = "path://data/cache/qdrant",
+    qdrant_url: str | None = "path://data/cache/qdrant",
+    stylist: StylistService | None = None,
 ) -> RecommendResult:
     """Orchestrate Tầng 3 graph retrieval plus Tầng 4 rerank/sizing."""
     import time
@@ -114,10 +116,19 @@ def recommend_outfit(
         if records
         else {}
     )
+    explanation_vi = ""
+    if records:
+        if stylist is not None:
+            # Future: ask Qwen to summarise the top outfits.
+            explanation_vi = stylist._format_outfit_cards(records)[0].get("explanation_vi", "")
+        if not explanation_vi:
+            explanation_vi = records[0].stylist_explanation_vi or ""
+
     return RecommendResult(
         outfits=records,
         body_shape=request.body_shape or "",
         occasion=request.occasion,
+        explanation_vi=explanation_vi,
         latency_ms=round((time.perf_counter() - start) * 1000, 2),
         suggested_sizes=suggested_sizes,
     )

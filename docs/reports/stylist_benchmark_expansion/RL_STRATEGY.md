@@ -313,3 +313,49 @@ Chạy `scripts/stylist/run_gpu_benchmark.py --model-id T3 --adapter post-RL` so
 - `scripts/stylist/train_grpo_kaggle.py` — GRPO+QLoRA training script.
 
 T4 Gemma 4 12B chưa benchmark GPU vì cần >8GB VRAM (4-bit ~7GB weights + KV cache ~2GB > 8GB budget của RTX 5060) — defer Kaggle.
+
+---
+
+## ⚡ REV 5 UPDATE (Kaggle GRPO RL — 2026-07-13)
+
+**Mục tiêu (goal mới):** Chạy GRPO RL thực tế trên **Kaggle notebook**, log online qua **WANDB_API_KEY**,
+device = **T4 16GB**. API key (KAGGLE_API_KEY / WANDB_API_KEY) lấy từ `.env.local`, được ép thẳng vào notebook.
+
+**Deliverable:** `data/stylist/fine_tune/runs/kaggle_grpo_t4/notebook/grpo_stylist.ipynb` +
+`kernel-metadata.json` (kernel_type `notebook`, machine_shape `NvidiaTeslaT4` — sau chuyển `NvidiaTeslaT4x2` để thử).
+Push via `kaggle kernels push`. Run live: https://www.kaggle.com/code/nhatquangvominh/om-grpo-stylist-t4
+W&B project: `vominhnhatquang-fpt-university/outfitmatch-stylist` (run `om-grpo-t4-instruct`, state=running).
+
+**Biến cố đã giải quyết qua 11 phiên bản kernel (v1→v11):**
+
+| Ver | Lỗi | Nguyên nhân | Fix |
+|---|---|---|---|
+| v1 | `unrecognized arguments: --report-to ...` | clone lấy commit cũ chưa có args | notebook tự patch script (idempotent) + pin commit `c2a0c8b` |
+| v2 | `git checkout c2a0c8b` fail (silently swallowed) | `git fetch --depth 1 origin <sha>` không hợp lệ | bỏ fetch/checkout, clone thẳng branch HEAD |
+| v3 | `ImportError: huggingface-hub>=0.34.0,<1.0` | `--no-deps` để lại hub 1.11.0 của Kaggle | pin `huggingface-hub==0.34.0` |
+| v4 | traceback bị nuốt | `subprocess` chỉ hiện CalledProcessError | chạy qua `runpy.run_path` để hiện real traceback |
+| v5 | `RuntimeError key.size(1)==value.size(1)` (SDPA) | transformers 4.57.3 Qwen3-VL SDPA bug | `attn_implementation="eager"` |
+| v6 | `RuntimeError batch2 [4096,77] vs [4096,1]` (eager) | 4.57.3 thiếu PR #44873 rope_deltas guard | monkeypatch (không ăn) → đổi hướng |
+| v7 | same batch2 error | monkeypatch string không khớp | (bỏ, sang v8) |
+| v8 | `OutOfMemoryError` | batch=8,G=8,len=256 quá nặng | giảm batch/G |
+| v9 | `OutOfMemoryError` | batch=2,G=4,len=256 vẫn OOM trên 1 T4 | giảm tiếp |
+| v10 | `OutOfMemoryError` | T4x2 nhưng `device_map={"":0}` chỉ xài 1 GPU | (OOM do 8B GRPO quá nặng cho T4 class) |
+| v11 | **RUNNING 55+ phút, W&B run=running** | config bảo thủ batch=1,G=2,len=128 | ✅ thành công |
+
+**Root-cause then chốt:**
+1. **transformers version**: phải dùng **5.8.1** (chứa PR #44873 Qwen3-VL rope_deltas GRPO fix). 4.57.3 có cả SDPA bug (v5) và mask bug (v6/v7). Local stack đã là 5.8.1 nên khớp.
+2. **Memory**: Qwen3-VL 8B bnb-4bit GRPO **KHÔNG fit 1 T4 16GB** ở config production (batch≥2, len≥256). Fit duy nhất: `batch=1, G=2, max_completion_length=128` (v11) — sinh 2 seq/step.
+3. **W&B online**: set `WANDB_MODE=online` + `WANDB_API_KEY` + `--report-to wandb`; trl/transformers tự `wandb.init()`.
+
+**Config chuẩn (v11, fit T4 16GB):**
+```bash
+trl==0.14.0 transformers==5.8.1 accelerate==1.13.0 peft==0.19.1 bitsandbytes huggingface-hub==1.15.0 wandb
+--model unsloth/Qwen3-VL-8B-Instruct-bnb-4bit --report-to wandb \
+  --num-generations 2 --batch-size 1 --max-completion-length 128 --lora-r 32 --think
+```
+Override qua env: `GRPO_BATCH / GRPO_GENS / GRPO_LEN / GRPO_MAX_STEPS`.
+
+**Scale-up (production 500-step):** cần `NvidiaTeslaT4x2` + DeepSpeed ZeRO-2/3 (do `device_map={"":0}` chỉ xài 1 GPU),
+hoặc hạ `max_completion_length` xuống 128. REV 4 table (T4x2 fits 500-step) là lạc quan — thực tế 8B GRPO vượt T4 class.
+
+**Trạng thái:** GRPO RL ĐANG CHẠY trên Kaggle T4 16GB, log online W&B đã xác nhận (run `6sk8ezbl` running).
