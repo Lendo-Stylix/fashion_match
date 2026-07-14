@@ -119,7 +119,7 @@ Trạng thái ký hiệu: ☐ todo · ⧗ đang làm · ✅ done · ⛔ blocked
 | E5 | GPU REAL benchmark T1/T2/T3 + RL strategy rev 2 | ✅ | `a1946c0` |
 | E6 | `--temperature` + `--no-think`/`--think` flags | ✅ | `c4f93c6` |
 | E7 | REV 4: definitive 8GB GRPO ceiling + Kaggle path | ✅ documented | `847db80` |
-| E8 | GRPO training trên Kaggle T4 16GB | ⚠️ **CHẠY ĐƯỢC NHƯNG REWARD=0** — kernel RUNNING, W&B run `6sk8ezbl` tới global_step=60, NHƯNG `train/reward`=0 mọi bước (len=128 truncate câu ~130-token → scorer trả 0). Adapter thực tế chưa học. | `10f3835` + REV5 |
+| E8 | GRPO training trên Kaggle T4 16GB | 🔧 **FIX REV6**: prompt-tightening (<128 token via few-shot + terse directive) → local mock reward 0→0.059 (occasion=0.596, coherence=0.5, ask_back=1.0). Re-push v12 trên Kaggle để train thực tế. | `2227326` + REV6 |
 | E9 | Benchmark post-GRPO effectiveness | ⛔ blocked: reward=0 → adapter chưa cải thiện vs baseline | — |
 | E10 | Loop until optimal (mean ≥ 0.55) | ⛔ needs `max_completion_length>=256` (T4x2+DeepSpeed) hoặc câu trả lời <128 token | — |
 

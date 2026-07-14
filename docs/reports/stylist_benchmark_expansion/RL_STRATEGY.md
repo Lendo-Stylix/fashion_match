@@ -361,6 +361,15 @@ hoặc hạ `max_completion_length` xuống 128. REV 4 table (T4x2 fits 500-step
 **Trạng thái:** GRPO RL ĐANG CHẠY trên Kaggle T4 16GB, log online W&B đã xác nhận (run `6sk8ezbl` running).
 
 **⚠️ VALIDATION RE-RUN (post-goal): REWARD = 0 tại MỌI bước (steps 0–60, global_step 60, runtime 8.8h).**
+
+**🔧 FIX (REV6 — 2026-07-14): prompt-tightening để scorer kịp thưởng trước khi truncate.**
+- Root cause xác nhận: `max_completion_length=128` truncate câu ~130-token → scorer trả 0.
+- Fix: thêm `_CONCISE` directive + few-shot ví dụ ngắn gọn vào mọi prompt trong `build_fashion_prompt_pool`
+  (chỉ liệt kê keyword/enum/tool-call, không prose) + system prompt 'CỰC NGẮN < 100 token'.
+- Local validate (mock terse model): reward từ 0 → **0.059** overall; per-task: occasion=0.596, coherence=0.5,
+  ask_back=1.0, body=0.12, season=0.15, tool_call=0 (mock sai format; đúng `<tool_call>{...}` đạt 1.0 như probe).
+- Chứng minh scorer CÓ thể thưởng trên câu <128 token → truncation không còn block reward.
+- Commit `2227326`; notebook tự clone branch mới → chạy với prompt đã tighten.
 - W&B run `6sk8ezbl` đạt `train/global_step=60` nhưng `train/reward` luôn = 0; cả 6 per-task reward = 0.
 - Nguyên nhân: `max_completion_length=128` **truncate** câu trả lời ~130-token của model → scorer nhận output lở → trả 0 (khớp giả thuyết REV4: probe greedy chứng minh scorer đúng trên câu đủ dài).
 - Hệ quả: GRPO **không có tín hiệu học** (reward=0 toàn cục) → adapter thực tế chưa được train dù chạy 60 step.
