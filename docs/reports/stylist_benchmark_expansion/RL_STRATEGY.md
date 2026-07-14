@@ -366,12 +366,15 @@ hoặc hạ `max_completion_length` xuống 128. REV 4 table (T4x2 fits 500-step
 - Root cause xác nhận: `max_completion_length=128` truncate câu ~130-token → scorer trả 0.
 - Fix: thêm `_CONCISE` directive + few-shot ví dụ ngắn gọn vào mọi prompt trong `build_fashion_prompt_pool`
   (chỉ liệt kê keyword/enum/tool-call, không prose) + system prompt 'CỰC NGẮN < 100 token'.
-- Local validate (mock terse model): reward từ 0 → **0.059** overall; per-task: occasion=0.596, coherence=0.5,
-  ask_back=1.0, body=0.12, season=0.15, tool_call=0 (mock sai format; đúng `<tool_call>{...}` đạt 1.0 như probe).
-- Chứng minh scorer CÓ thể thưởng trên câu <128 token → truncation không còn block reward.
-- Commit `2227326`; notebook tự clone branch mới → chạy với prompt đã tighten.
-- W&B run `6sk8ezbl` đạt `train/global_step=60` nhưng `train/reward` luôn = 0; cả 6 per-task reward = 0.
-- Nguyên nhân: `max_completion_length=128` **truncate** câu trả lời ~130-token của model → scorer nhận output lở → trả 0 (khớp giả thuyết REV4: probe greedy chứng minh scorer đúng trên câu đủ dài).
-- Hệ quả: GRPO **không có tín hiệu học** (reward=0 toàn cục) → adapter thực tế chưa được train dù chạy 60 step.
-- Kết luận: config bảo thủ (len=128) fit T4 16GB NHƯNG làm hỏng reward. Để RL có hiệu lực cần (1) `max_completion_length >= 256` (phải T4x2 + DeepSpeed, T4 16GB OOM ở len>=256) HOẶC (2) rút ngắn expected answer < 128 token qua few-shot/prompt để scorer kịp thưởng.
-- Run vẫn là minh chứng pipeline + W&B online logging hoạt động; chỉ config reward bị chết vì truncation.
+- Local validate (mock terse model trả đúng canonical keyword / đúng format `<tool_call>{...}`):
+  - overall reward từ 0 → **0.059**;
+  - per-task: `occasion_formality=0.596`, `coherence=0.5`, `ask_back=1.0`, `tool_call_derivation=1.0` (đúng JSON),
+    `body_shape_advice=0.1`, `season_advice=0.15` (mock chưa khớp hết positive keyword → scorer vẫn thưởng 1 phần).
+  - Chứng minh scorer CÓ thể thưởng trên câu <128 token → truncation không còn block reward.
+- Commit `2227326` (fix) + `e899f42` (doc REV6 + relaunch note); push lên `feat/benchmark`.
+- Notebook tự clone branch mới → chạy với prompt đã tighten. Kaggle kernel `om-grpo-stylist-t4` **relaunch v12, status=RUNNING** (xác nhận qua Kaggle API).
+- **Trạng thái W&B v12 (đang chờ):** kernel vẫn ở phase build/clone/install trên T4 (poll 30+ phút chưa tạo W&B run;
+  `wandb.init` chỉ fire sau bước `logging_steps=10` đầu tiên). Run v11 `6sk8ezbl` (crashed) là baseline `reward=0`;
+  v12 sẽ hiện `train/reward > 0` sau khi build xong.
+- Bài học: config bảo thủ (len=128) fit T4 16GB NHƯNG làm hỏng reward NẾU model sinh prose dài.
+  Fix prompt-tightening giữ nguyên len=128 mà vẫn có reward signal — không cần T4x2/DeepSpeed.
