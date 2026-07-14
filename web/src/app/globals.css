@@ -1,26 +1,61 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ── Design tokens (OKLCH, warm-neutral + berry brand accent) ── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+:root {
+  /* Light */
+  --bg: oklch(0.98 0.005 350);
+  --surface: oklch(1 0 0);
+  --ink: oklch(0.20 0.02 350);
+  --muted: oklch(0.45 0.02 350);
+  --border: oklch(0.90 0.01 350);
+  --brand: oklch(0.55 0.17 350);
+  --brand-ink: oklch(0.98 0.01 350);
+  --brand-soft: oklch(0.94 0.02 350);
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Dark — same hue, deeper */
+    --bg: oklch(0.18 0.02 350);
+    --surface: oklch(0.22 0.02 350);
+    --ink: oklch(0.95 0.01 350);
+    --muted: oklch(0.70 0.02 350);
+    --border: oklch(0.30 0.02 350);
+    --brand: oklch(0.65 0.17 350);
+    --brand-ink: oklch(0.18 0.02 350);
+    --brand-soft: oklch(0.30 0.05 350);
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+}
+
+/* Global focus-visible ring for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
