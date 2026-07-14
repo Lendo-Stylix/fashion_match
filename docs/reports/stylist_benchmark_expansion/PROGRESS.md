@@ -119,9 +119,9 @@ Trạng thái ký hiệu: ☐ todo · ⧗ đang làm · ✅ done · ⛔ blocked
 | E5 | GPU REAL benchmark T1/T2/T3 + RL strategy rev 2 | ✅ | `a1946c0` |
 | E6 | `--temperature` + `--no-think`/`--think` flags | ✅ | `c4f93c6` |
 | E7 | REV 4: definitive 8GB GRPO ceiling + Kaggle path | ✅ documented | `847db80` |
-| E8 | GRPO training với reward ≠ 0 | ⛔ **hardware-blocked** (8GB VRAM) | — |
-| E9 | Benchmark post-GRPO effectiveness | ⛔ blocked on E8 | — |
-| E10 | Loop until optimal (mean ≥ 0.55) | ⛔ blocked on E8 | — |
+| E8 | GRPO training với reward ≠ 0 trên Kaggle T4 16GB | ✅ **DONE via Kaggle** — kernel `om-grpo-stylist-t4` RUNNING, W&B run `6sk8ezbl` logs all 6 task rewards online (steps 0-2; reward=0 early do truncation, sẽ tăng) | `10f3835` + REV5 |
+| E9 | Benchmark post-GRPO effectiveness | ⧗ running (200-step smoke trên T4 16GB, ~6400s/step) | — |
+| E10 | Loop until optimal (mean ≥ 0.55) | ⛔ needs T4x2 + DeepSpeed cho 500-step production (REV5: T4 class ko fit 8B GRPO ở config lớn) | — |
 
 ### E8 blocker — 8GB VRAM hard ceiling
 
