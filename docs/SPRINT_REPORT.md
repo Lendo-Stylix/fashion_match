@@ -54,8 +54,10 @@ Tầng 4  Personalization
 | Graph retrieval | ✅ Done | seed item filter + clique traversal + post-filter |
 | Quiz rerank/sizing | ✅ Done | deterministic MVP personalization |
 | Pipeline deterministic path | ✅ Done | retrieval/rerank/size path implemented |
-| Stylist Qwen model/data | 🚧 Planned/stub | `model.py`, `data.py` raise `NotImplementedError` |
-| UI/API demo | 🚧 Planned/stub | Gradio entry point placeholder |
+| Stylist Qwen model/data | ✅ Done | `model.py` + `service.py` implemented; 20/20 tests |
+| FastAPI server | ✅ Done | 5 routes: health, chat, recommend, quiz, outfits |
+| Next.js 16 web UI | ✅ Done | 4 pages: home, chat, quiz, results |
+| UI/API demo | ✅ Done | Web UI thay thế Gradio placeholder |
 | Final experiments | 🚧 Pending | LLM judge, latency, final ablations |
 
 ### 3.2 Artifact/metric snapshot
@@ -168,20 +170,73 @@ Historical graph grading baseline kept as regression target:
 
 ---
 
-## 8. Roadmap còn lại
+## 8. Sprint 4 — Stylist Model Implementation ✅
 
-| Work item | Trạng thái | Deliverable kỳ vọng |
-|---|---|---|
-| Qwen3-VL base inference | Planned | implement `stylist/model.py` loading/inference |
-| LoRA dataset/training | Planned | implement `stylist/data.py`, synthetic conversation JSONL |
-| Tool-calling chat loop | Planned | Qwen calls `search_outfits`, validates IDs/sizes |
-| Gradio demo | Planned | product cards, images, prices, store links, feedback |
-| API endpoint | Planned | `POST /recommend` if needed for demo/service mode |
-| Final eval | Planned | LLM judge, latency, encoder/body/occasion/beam ablations |
+**Goal:** Triển khai `load_stylist_model` + `generate_stylist_response` và agent loop.
+
+### Deliverables chính
+
+- `src/outfitmatch/stylist/model.py` — load Qwen3-VL-8B-Thinking bnb-4bit + LoRA adapter từ HF repo `Nhat-Quang/outfitmatch-stylist-final-qwen3vl8b-thinking-lora`.
+- `src/outfitmatch/stylist/service.py` — `StylistService` agent loop: chạy tool-call parse, gọi `search_outfits`, validate hallucination, trả SSE stream.
+- `src/outfitmatch/pipeline.py` — wired optional `stylist` param + `explanation_vi` generation.
+
+### Kết quả
+
+- `device_map={"": 0}` cho bnb-4bit (không dùng `"auto"` — lỗi CPU dispatch).
+- Qwen-VL processor: `processor(text=[prompt], images=None, ...)` cho text-only.
+- Tool-call parse dùng `tools.parse_tool_call_text` (canonical wire-format).
+- SSE streaming: `token` → text, `outfit_cards` → JSON outfit cards, `error` → lỗi.
+- 20/20 tests passing.
 
 ---
 
-## 9. Evaluation Targets
+## 9. Sprint 5 — Backend API Server ✅
+
+**Goal:** FastAPI server phục vụ REST + SSE endpoints.
+
+### Deliverables chính
+
+- `src/outfitmatch/server/` — FastAPI app với routes: `/api/health`, `/api/chat` (SSE), `/api/recommend`, `/api/quiz`, `/api/outfits/{id}`.
+- `scripts/serve.py` — launch script với `--reload`, `--port`, `--qdrant-url`.
+- `make serve`, `make serve-dev` — convenience targets.
+
+### Kết quả
+
+- 4/4 server tests passing.
+- OpenAPI schema auto-generated tại `/openapi.json`.
+- Chat SSE endpoint: nhận JSON message, trả SSE stream với event types `token`, `outfit_cards`, `done`, `error`.
+
+---
+
+## 10. Sprint 6 — Frontend Web UI ✅
+
+**Goal:** Next.js 16 + TypeScript web UI cho người dùng cuối.
+
+### Deliverables chính
+
+- `web/` — Next.js 16 App Router project (Tailwind CSS v4).
+- Pages: `/` (home), `/chat` (SSE chat với stylist), `/quiz` (onboarding 5 câu), `/results` (hiển thị outfit recommendations).
+- Chat page: SSE stream client, outfit card rendering, error handling.
+- `make web-dev`, `make web-build` — convenience targets.
+
+### Kết quả
+
+- TypeScript build ✅ (Next.js 16 + Turbopack).
+- E2E smoke tests: 5/5 passing (health, quiz, recommend, chat 503, OpenAPI schema).
+
+---
+
+## 11. Roadmap còn lại
+
+| Work item | Trạng thái | Deliverable kỳ vọng |
+|---|---|---|
+| Gradio demo | 🟡 Có thể thay thế bằng web UI | product cards, images, prices, store links, feedback |
+| Final eval | 🚧 Pending | LLM judge, latency, encoder/body/occasion/beam ablations |
+| Production deploy | 🚧 Pending | Docker, cloud GPU, multi-user |
+
+---
+
+## 12. Evaluation Targets
 
 | Metric | Target | Phương pháp đo | Status |
 |---|---|---|---|
@@ -203,7 +258,7 @@ Required ablations:
 
 ---
 
-## 10. XP Practices Áp dụng
+## 13. XP Practices Áp dụng
 
 | Practice | Cách áp dụng |
 |---|---|
@@ -216,12 +271,12 @@ Required ablations:
 
 ---
 
-## 11. Rủi ro còn lại
+## 14. Rủi ro còn lại
 
 | Rủi ro | Mức độ | Giảm thiểu |
 |---|---|---|
 | Qwen3-VL-8B latency/VRAM cao | Cao | 4-bit quantization, GPU/cloud, streaming, fallback deterministic retrieval |
-| Chat loop chưa implement | Cao | Tool schema/validation đã sẵn; implement `model.py`/`data.py` theo boundary |
+| Chat loop | ✅ Đã implement | `StylistService` + SSE streaming; cần GPU thực tế để chạy |
 | Shoe coverage thấp | Trung bình | Treat as completion gap; expand catalog/incremental graph |
 | Giá/stock stale | Trung bình | Re-run scraper/quality before demo; keep collected dates |
 | Body evaluation chưa chốt số | Trung bình | Item tags now available; run ablation per `EXPERIMENT_GUIDE.md` |
@@ -229,9 +284,19 @@ Required ablations:
 
 ---
 
-## 12. Kết luận
+## 15. Kết luận
 
-Project hiện đã có nền tảng data/graph/retrieval khá hoàn chỉnh cho MVP. Phần còn thiếu lớn nhất
-không nằm ở graph KB nữa mà ở **Tầng 2 conversational stylist** và **UI/API demo integration**.
-Khi triển khai tiếp, cần giữ nguyên invariant: `vocab.py` là source-of-truth, graph KB là primary
-retrieval path, Qdrant `outfits`/materialized outfits chỉ là legacy comparison.
+Project đã có nền tảng data/graph/retrieval **và full-stack web UI** hoàn chỉnh cho MVP:
+
+- **Tầng 1 (Graph KB):** 5,618 items, 316,559 edges, 0 invalid tags.
+- **Tầng 2 (Stylist):** Qwen3-VL-8B-Thinking bnb-4bit + LoRA, SSE streaming, tool-calling, hallucination guard.
+- **Tầng 3 (Retrieval):** Qdrant seed filter + graph traversal + post-filter.
+- **Tầng 4 (Personalization):** Quiz 5 câu → rerank + size suggestion.
+- **Web UI:** Next.js 16 + TypeScript, chat SSE, quiz onboarding, outfit cards.
+- **Backend:** FastAPI REST + SSE, OpenAPI schema, E2E smoke tests.
+
+**29/29 tests passing** — backend + frontend sẵn sàng demo.
+
+Phần còn lại: chạy final evaluation (LLM judge, latency, ablations), Gradio thay thế bởi web UI, production deploy (Docker, cloud GPU).
+
+Invariant cốt lõi: `vocab.py` là source-of-truth, graph KB là primary retrieval path, Qdrant `outfits`/materialized outfits chỉ là legacy comparison.

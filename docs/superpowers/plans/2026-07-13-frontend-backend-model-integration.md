@@ -380,6 +380,35 @@ Thứ tự có dependency. Mỗi task = 1 commit (`feat:` / `fix:` tiếng Việ
 
 ---
 
+## 11. Implementation Status (Hoàn tất 2026-07-14)
+
+Tất cả 5 phase đã triển khai và kiểm thử. **29/29 tests passing.**
+
+| Phase | Nội dung | Commit | Tests |
+|---|---|---|---|
+| A1 | `load_stylist_model` + `generate_stylist_response` | `657d214` | 9/9 |
+| A2 | `StylistService` agent loop (SSE, tool-call, hallucination guard) | `a581fb1` | 6/6 |
+| A3 | `pipeline.py` wired with optional `stylist` + `explanation_vi` | `a581fb1` | 5/5 |
+| B | FastAPI server (health, chat SSE, recommend, quiz, outfits) | `25d746c` | 4/4 |
+| C | Next.js 16 frontend (home, chat, quiz, results) | `3b78f8c` | build ✅ |
+| D | Improved chat SSE parsing + outfit card rendering | `f9868fd` | build ✅ |
+| E | E2E smoke tests + sse-starlette dep + make serve/web-dev | `a0c2a7f` | 5/5 |
+
+Cách chạy:
+
+```bash
+# Terminal 1: Backend
+make serve
+
+# Terminal 2: Frontend
+make web-dev
+```
+
+Truy cập: Frontend http://localhost:3000, Backend API http://localhost:8000.
+
+> **Lưu ý GPU:** Backend cần GPU để load model. Nếu không có GPU, server vẫn chạy
+> nhưng stylist sẽ unavailable (chat trả 503, recommend dùng deterministic path).
+
 ## 10. Out of scope (defer)
 
 - Rust backend / mistral.rs serving (xem §1.4 — chỉ khi production cloud multi-user).

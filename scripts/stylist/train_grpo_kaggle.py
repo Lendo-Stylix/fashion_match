@@ -73,7 +73,8 @@ def build_dataset(
             {
                 "role": "system",
                 "content": (
-                    "Bạn là stylist AI tiếng Việt. Trả lời ngắn, đúng tri thức thời trang. "
+                    "Bạn là stylist AI tiếng Việt. Trả lời CỰC NGẮN (dưới 100 token), "
+                    "chỉ liệt kê từ khóa / enum / lời gọi công cụ, không giải thích dài. "
                     "Khi cần tìm outfit, gọi công cụ search_outfits."
                 ),
             },
