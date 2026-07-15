@@ -1,21 +1,55 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Playfair_Display, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from "@/components/theme-provider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin", "vietnamese"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin", "vietnamese"],
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "OutfitMatch — AI Stylist cá nhân hóa",
+  title: "OutfitMatch — AI Stylist cá nhân hóa phong cách",
   description:
-    "OutfitMatch: gợi ý trang phục theo dáng người và dịp đi, tích hợp AI Stylist Qwen3-VL.",
+    "OutfitMatch: gợi ý trang phục thông minh theo dáng người và dịp đi, tích hợp AI Stylist Qwen3-VL. Thời trang Việt Nam, cá nhân hóa cho từng người.",
+  keywords: [
+    "OutfitMatch",
+    "AI Stylist",
+    "thời trang",
+    "gợi ý trang phục",
+    "phong cách cá nhân",
+    "Qwen3-VL",
+    "Vietnam fashion",
+  ],
+  authors: [{ name: "OutfitMatch Team" }],
+  openGraph: {
+    title: "OutfitMatch — AI Stylist cá nhân hóa",
+    description:
+      "Gợi ý trang phục thông minh theo dáng người và dịp đi, tích hợp AI Stylist Qwen3-VL.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "OutfitMatch — AI Stylist cá nhân hóa",
+    description:
+      "Gợi ý trang phục thông minh theo dáng người và dịp đi.",
+  },
 };
 
 export default function RootLayout({
@@ -24,11 +58,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="vi"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="vi" suppressHydrationWarning>
+      <body
+        className={`${inter.variable} ${playfair.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground`}
+      >
+        <ThemeProvider>
+          {children}
+          <Toaster />
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
