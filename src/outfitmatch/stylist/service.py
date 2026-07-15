@@ -188,7 +188,18 @@ class StylistService:
             "interview": ["phỏng vấn", "pv"],
             "school": ["đi học", "đến trường", "tốt nghiệp", "graduation", "tốt nghiệp đại học"],
             "date": ["hẹn hò", "hen ho", "date", "cưa"],
-            "cafe_hangout": ["cafe", "cà phê", "đi chơi", "dạo phố", "tụ tập"],
+            "cafe_hangout": [
+                "cafe",
+                "cà phê",
+                "đi chơi",
+                "dạo phố",
+                "tụ tập",
+                "phối đồ",
+                "set đồ",
+                "mix đồ",
+                "phối đồ nam",
+                "phối đồ nữ",
+            ],
             "party": ["tiệc", "party", "liên hoan", "sinh nhật", "birthday", "sn", "kỷ niệm"],
             "wedding": ["cưới", "đám cưới", "wedding", "thành hôn"],
             "home_casual": ["ở nhà", "thường ngày", "hằng ngày"],
@@ -202,11 +213,26 @@ class StylistService:
         if occasion is None:
             return None
 
+        style_aliases = {
+            "elegant": ["old money", "oldmoney", "old_money", "thanh lịch", "sang trọng"],
+            "minimalist": ["tối giản", "toi gian", "minimal"],
+            "streetwear": ["streetwear", "đường phố", "duong pho"],
+            "vintage": ["vintage", "cổ điển", "co dien"],
+            "casual": ["casual", "thường ngày", "thuong ngay"],
+            "korean": ["hàn", "korean", "han quoc"],
+            "feminine": ["nữ tính", "nu tinh"],
+            "sporty": ["thể thao", "the thao", "sporty"],
+        }
         style: str | None = None
         for st, label in STYLE_LABELS_VI.items():
             if label.lower() in text:
                 style = st
                 break
+        if style is None:
+            for st, aliases in style_aliases.items():
+                if any(a in text for a in aliases):
+                    style = st
+                    break
 
         price_max: int | None = None
         m = re.search(r"(\d+(?:[.,]\d+)?)\s*(triệu|tr|nghìn|ngàn|k)?", text)
@@ -300,6 +326,15 @@ class StylistService:
                 temperature=0.0,
                 enable_thinking=False,
             )
+            # The model sometimes re-emits the <tool_call> / </think> artifacts
+            # in its final answer; strip them so the chat shows clean prose
+            # (cards are emitted separately via outfit_cards, untouched).
+            final_response = re.sub(
+                r"<tool_call>.*?</tool_call>|</think>|<think>",
+                "",
+                final_response,
+                flags=re.DOTALL,
+            ).strip()
             yield {"type": "token", "data": final_response}
 
             # Validation
