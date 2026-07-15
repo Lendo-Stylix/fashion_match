@@ -120,10 +120,12 @@ def validate_tool_call_payload(payload: dict[str, Any]) -> tuple[bool, list[str]
                 errors.append("price_max must be an integer")
             elif value < 0:
                 errors.append("price_max must be >= 0")
-        elif key == "exclude_colors" and (
-            not isinstance(value, list) or any(not isinstance(item, str) for item in value)
-        ):
-            errors.append("exclude_colors must be an array of strings")
+        elif key == "exclude_colors":
+            if isinstance(value, str):
+                # Tolerate a bare string (wrap into a single-element list).
+                arguments[key] = [value]
+            elif not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+                errors.append("exclude_colors must be an array of strings")
 
     return len(errors) == 0, errors
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -24,9 +25,15 @@ async def chat(req: ChatRequest) -> Any:
     async def event_generator():
         try:
             for event in stylist.chat_stream(user_message=req.message):
+                data = event.get("data", "")
+                # sse_starlette str()s complex objects as a Python repr
+                # (single-quoted, invalid JSON). Serialize list/dict payloads
+                # explicitly so the Next.js client receives valid JSON.
+                if isinstance(data, (list, dict)):
+                    data = json.dumps(data, ensure_ascii=False)
                 yield {
                     "event": event["type"],
-                    "data": event["data"],
+                    "data": data,
                 }
         except Exception as e:
             yield {"event": "error", "data": str(e)}

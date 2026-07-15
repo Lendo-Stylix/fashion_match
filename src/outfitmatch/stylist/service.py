@@ -17,6 +17,7 @@ The agent loop (sprint v3.1):
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
@@ -173,6 +174,61 @@ class StylistService:
 
         return len(errors) == 0, errors
 
+    def _infer_request(self, user_message: str, response: str) -> dict[str, Any] | None:
+        """Heuristic fallback: if the model skipped a <tool_call> but the user
+        clearly named an occasion, infer a search_outfits payload from keywords.
+
+        Returns the canonical payload dict or None when no occasion is detected.
+        """
+        from outfitmatch.vocab import STYLE_LABELS_VI
+
+        text = (user_message + " " + response).lower()
+        occasion_map = {
+            "office": ["đi làm", "văn phòng", "công sở", "công ty"],
+            "interview": ["phỏng vấn", "pv"],
+            "school": ["đi học", "đến trường", "tốt nghiệp", "graduation", "tốt nghiệp đại học"],
+            "date": ["hẹn hò", "hen ho", "date", "cưa"],
+            "cafe_hangout": ["cafe", "cà phê", "đi chơi", "dạo phố", "tụ tập"],
+            "party": ["tiệc", "party", "liên hoan", "sinh nhật", "birthday", "sn", "kỷ niệm"],
+            "wedding": ["cưới", "đám cưới", "wedding", "thành hôn"],
+            "home_casual": ["ở nhà", "thường ngày", "hằng ngày"],
+            "travel": ["du lịch", "du lich", "đi du", "nghỉ mát", "biển"],
+        }
+        occasion: str | None = None
+        for occ, kws in occasion_map.items():
+            if any(k in text for k in kws):
+                occasion = occ
+                break
+        if occasion is None:
+            return None
+
+        style: str | None = None
+        for st, label in STYLE_LABELS_VI.items():
+            if label.lower() in text:
+                style = st
+                break
+
+        price_max: int | None = None
+        m = re.search(r"(\d+(?:[.,]\d+)?)\s*(triệu|tr|nghìn|ngàn|k)?", text)
+        if m:
+            num = float(m.group(1).replace(",", "."))
+            unit = m.group(2)
+            if unit == "triệu":
+                price_max = int(num * 1_000_000)
+            elif unit in ("nghìn", "ngàn", "k"):
+                price_max = int(num * 1_000)
+            else:
+                price_max = int(num)
+                if price_max < 1000:
+                    price_max = int(num * 1_000_000)
+
+        arguments: dict[str, Any] = {"occasion": occasion}
+        if style is not None:
+            arguments["style"] = style
+        if price_max is not None:
+            arguments["price_max"] = price_max
+        return {"name": "search_outfits", "arguments": arguments}
+
     def chat_stream(
         self,
         user_message: str,
@@ -197,21 +253,35 @@ class StylistService:
         thinking_text = "Phân tích yêu cầu..."
         yield {"type": "thinking", "data": thinking_text}
 
-        # Pass 1: parse intent / tool call
-        response = self._generate(messages, max_new_tokens=max_new_tokens)
-        yield {"type": "token", "data": response}
+        # Pass 1: parse intent / tool call (greedy + short; just to extract intent)
+        response = self._generate(
+            messages, max_new_tokens=256, temperature=0.0, enable_thinking=False
+        )
 
         payload = self._extract_tool_call(response)
+        if payload is None:
+            # Model skipped the tool call but the user named an occasion ->
+            # infer the search_outfits payload so KB retrieval still fires.
+            inferred = self._infer_request(user_message, response)
+            if inferred is not None:
+                payload = inferred
+
         if payload is not None:
             ok, errors = self._validate_tool_call(payload)
             if not ok:
-                yield {
-                    "type": "error",
-                    "data": f"tool_call không hợp lệ: {errors[0]}"
-                    if errors
-                    else "tool_call không hợp lệ",
-                }
-                return
+                # Explicit tool_call malformed (bad enum / wrong type).
+                # Try the keyword fallback (canonical enum values) before giving up.
+                inferred = self._infer_request(user_message, response)
+                if inferred is not None and self._validate_tool_call(inferred)[0]:
+                    payload = inferred
+                else:
+                    yield {
+                        "type": "error",
+                        "data": f"tool_call không hợp lệ: {errors[0]}"
+                        if errors
+                        else "tool_call không hợp lệ",
+                    }
+                    return
 
             try:
                 records = self._execute_tool_call(payload)
@@ -224,7 +294,12 @@ class StylistService:
             messages.append({"role": "assistant", "content": response})
             messages.append({"role": "tool", "content": tool_result})
 
-            final_response = self._generate(messages, max_new_tokens=max_new_tokens)
+            final_response = self._generate(
+                messages,
+                max_new_tokens=max_new_tokens,
+                temperature=0.0,
+                enable_thinking=False,
+            )
             yield {"type": "token", "data": final_response}
 
             # Validation
@@ -236,13 +311,15 @@ class StylistService:
             cards = self._format_outfit_cards(records)
             yield {"type": "outfit_cards", "data": cards}
         else:
-            # No tool call: validate that we did not hallucinate IDs
+            # No tool call and no detectable occasion: validate that we did not
+            # hallucinate IDs
             valid, _ = validate_response(response, set())
             if not valid:
                 yield {"type": "error", "data": "Phát hiện outfit_id không tồn tại trong phản hồi."}
                 return
+            yield {"type": "token", "data": response}
 
-        yield {"type": "done"}
+        yield {"type": "done", "data": ""}
 
     def recommend_from_structured(self, request: RecommendRequest) -> RecommendResult:
         """Run the deterministic recommendation pipeline (non-chat endpoint)."""

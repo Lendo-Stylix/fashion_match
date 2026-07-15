@@ -48,7 +48,30 @@ DEFAULT_ADAPTER_DIR = (
 DEFAULT_SYSTEM_PROMPT = (
     "Ban la AI stylist tieng Viet cua OutfitMatch. Nhiem vu cua ban la HIEU "
     "yeu cau cua nguoi dung va GOI tool search_outfits de lay outfit tu "
-    "Knowledge Base. Phai goi tool truoc khi dua ra loi khuyen."
+    "Knowledge Base. Phai goi tool truoc khi dua ra loi khuyen.\n\n"
+    "Quy tac:\n"
+    "1. Phan tich yeu cau -> anh xa sang cac tham so:\n"
+    "   - occasion (bat buoc): office | interview | school | date | cafe_hangout "
+    "| party | wedding | home_casual | travel\n"
+    "   - style: minimalist | korean | streetwear | elegant | casual | vintage "
+    "| sporty | feminine\n"
+    "   - body_shape: pear | apple | hourglass | rectangle | inverted_triangle\n"
+    "   - skin_tone: warm | neutral | cool\n"
+    "   - price_max: so nguyen VND (vd 1000000)\n"
+    "   - exclude_colors: mang ten mau tieng Viet\n"
+    '2. Phat dung dinh dang: <tool_call>{"name":"search_outfits",'
+    '"arguments":{...}}</tool_call>\n'
+    "3. KHONG bia outfit_id, khong bia gia; chi tool_call.\n\n"
+    "Vi du 1:\n"
+    "User: Minh di lam van phong, style minimalist, ngan sach 800k\n"
+    'Assistant: <tool_call>{"name":"search_outfits","arguments":'
+    '{"occasion":"office","style":"minimalist","price_max":800000}'
+    "}</tool_call>\n\n"
+    "Vi du 2:\n"
+    "User: Dang qua le, di tiec cuoi nam, sang mot chut\n"
+    'Assistant: <tool_call>{"name":"search_outfits","arguments":'
+    '{"occasion":"party","body_shape":"pear","style":"elegant"}'
+    "}</tool_call>"
 )
 
 
@@ -142,6 +165,7 @@ def generate_stylist_response(
     max_new_tokens: int = 512,
     temperature: float = 0.7,
     top_p: float = 0.9,
+    enable_thinking: bool | None = None,
 ) -> str:
     """Generate the stylist response for one user prompt.
 
@@ -166,7 +190,12 @@ def generate_stylist_response(
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
     ]
-    prompt = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    prompt = processor.apply_chat_template(
+        messages,
+        tokenize=False,
+        add_generation_prompt=True,
+        enable_thinking=enable_thinking,
+    )
 
     # Text-only: use text=[prompt], images=None to avoid image-source errors
     inputs = processor(text=[prompt], images=None, return_tensors="pt")

@@ -76,17 +76,20 @@ export default function ChatPage() {
         buffer += decoder.decode(value, { stream: true });
 
         // Parse SSE: each event is "event:type\ndata:payload\n\n"
-        const parts = buffer.split("\n\n");
+        const parts = buffer.split(/\r?\n\r?\n/);
         buffer = parts.pop() || ""; // keep incomplete chunk
 
         for (const part of parts) {
           const lines = part.split("\n");
           let eventType = "";
-          let data = "";
+          const dataLines: string[] = [];
           for (const line of lines) {
             if (line.startsWith("event:")) eventType = line.slice(6).trim();
-            else if (line.startsWith("data:")) data = line.slice(5).trim();
+            else if (line.startsWith("data:")) dataLines.push(line.slice(5).replace(/^\s/, ""));
           }
+          // sse_starlette frames multi-line payloads (e.g. the outfit_cards
+          // JSON array) as several "data:" lines; rejoin them before parsing.
+          const data = dataLines.join("\n");
 
           if (eventType === "token") {
             botText += data;
