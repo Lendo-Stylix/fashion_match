@@ -1,0 +1,311 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{vietnam}
+\usepackage[T5]{fontenc}
+\usepackage{times}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{caption}
+\geometry{left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}
+\definecolor{codekey}{rgb}{0.15,0.30,0.65}
+\lstset{backgroundcolor=\color{codebg},basicstyle=\ttfamily\small,
+ keywordstyle=\color{codekey}\bfseries,commentstyle=\color{gray}\itshape,
+ stringstyle=\color{red!50!black},breaklines=true,frame=single,
+ showstringspaces=false,tabsize=2,language=Python}
+\title{\textbf{Bao cao Project-Based Learning}\
+{\large Fine-tuning Mo hinh Stylist Da phuong thuc cho He thong Goi y Trang phuc}}
+\author{Nguyen Nhat Quang\
+Sinh vien nam 3 -- Nganh Tri tue Nhan tao\
+Mon hoc: Deep Learning\ Giang vien huong dan: \ldots}
+\date{Thang 07 nam 2026}
+\begin{document}
+\maketitle
+\begin{abstract}
+Bao cao nay trinh bay qua trinh xay dung va tinh chinh mo hinh \emph{Stylist} -- thanh phan
+giao tiep bang ngon ngu tu nhien trong he thong goi y trang phuc OutfitMatch. Trong tam cua
+do an la ap dung cac ky thuat hoc sau hien dai: hoc chuyen giao qua mo hinh ngu ngu lon
+(LLM) tien huan luyen, tinh chinh tham so thap (LoRA/QLoRA), luong tu hoa 4-bit, va hoc tang
+cuong voi phan thuong co the kiem chung (GRPO). Chung toi so sanh bon ung cu vien dua tren
+Qwen3-VL-8B, Qwen3.5-9B va Gemma-4-12B, huan luyen tren 11.252 mau hoi thoai tieng Viet,
+va chon Qwen3-VL-8B-Thinking + LoRA (4-bit) lam mo hinh san xuat voi Tool-F1 dat
+\textbf{0.8980}, ti le tuan thu dinh dang \textbf{1.0} va eval loss \textbf{0.5943}.
+\end{abstract}
+\tableofcontents
+\newpage
+\section{Gioi thieu}
+\label{sec:intro}
+\subsection{Boi canh va dong luc}
+OutfitMatch la he thong goi y trang phuc nhan thuc dang nguoi va dip mac
+(\emph{Body \& Occasion-Aware Fashion Recommender}), phat trien trong khuon khoi mon hoc
+Deep Learning. He thong hoat dong theo kien truc 4 tang (hinh~\ref{fig:arch}):
+(1) Knowledge Base (KB), (2) Stylist, (3) Retrieval, va (4) Personalization (Quiz).
+Trong do, tang Stylist dong vai tro \emph{giao dien hoi thoai}: tiep nhan yeu cau tieng
+Viet (van ban va/hoac anh) tu nguoi dung, dien giai y dinh (\emph{intent parsing}), quyet
+dinh goi cong cu (\emph{tool-calling}) de truy van kho outfit, va cuoi cung giai thich ket
+qua bang tieng Viet ma khong bia thong tin.
+\begin{figure}[H]
+  \centering
+  \fbox{\parbox{0.9\textwidth}{
+    \centering
+    User (text/anh/quiz) \
+    $\downarrow$ \
+    \textbf{Tang 2 -- Stylist (LLM + LoRA)}: parse intent $\rightarrow$ hoi lai hoac
+    goi \texttt{search\_outfits(occasion, style, body\_shape, \dots)} \
+    $\downarrow$ \
+    Tang 3 -- Retrieval: seed-filter $\rightarrow$ graph traversal $\rightarrow$ post-filter outfit \
+    $\downarrow$ \
+    Tang 2 -- Stylist: giai thich outfit bang tieng Viet
+  }}
+  \caption{Vi tri tang Stylist trong kien truc OutfitMatch v3.1-lite.}
+  \label{fig:arch}
+\end{figure}
+\subsection{Van de nghien cuu}
+Viec dung mot LLM chung (off-the-shelf) lam stylist gap ba thach thuc dac thu:
+\begin{itemize}
+  \item \textbf{Anh xa nguon ngu tu nhien sang tu vung kiem soat (\emph{controlled vocabulary}):}
+  nguoi dung viet ``di lam'', ``di tiec cuoi'', ``tranh mau sang'' nhung he thong retrieval
+  chi chap nhan cac gia tri enum tieng Anh snake\_case (vi du \texttt{office}, \texttt{wedding}, \texttt{elegant}).
+  \item \textbf{Chong ao giac (\emph{anti-hallucination}):} mo hinh khong duoc tu bia
+  \texttt{outfit\_id} hay gia tien khong ton tai trong KB.
+  \item \textbf{Da phuong thuc (\emph{multimodal}):} ho tro nguoi dung gui anh selfie/anh outfit de phan tich dang nguoi.
+\end{itemize}
+Bao cao nay tap trung vao viec giai quyet cac van de tren bang phuong phap \emph{fine-tuning}
+mot LLM da phuong thuc nen tang, thay vi xay dung mo hinh tu dau (von khong kha thi ve du lieu va compute).
+\section{Co so ly thuyet}
+\label{sec:theory}
+\subsection{Mo hinh ngu ngu lon va hoc chuyen giao}
+Mo hinh Stylist duoc xay dung tren kien truc Transformer decoder-only tien huan luyen tren
+quy mo lon. Thay vi huan luyen tu dau, chung toi tan dung \emph{transfer learning}: trong so
+tien huan luyen mang nang luc ngu ngu da ngon ngu va suy luan chung, sau do duoc tinh chinh
+tren tap du lieu hoi thoai thoi trang tieng Viet.
+Voi bien the da phuong thuc Qwen3-VL, mo hinh bo sung mot bo ma hoa thi giac (ViT --
+\emph{Vision Transformer}) noi vao backbone LLM qua co che chieu cheo (cross-attention
+projection). Dau vao co the la van ban, anh, hoac ca hai trong cung mot prompt.
+\subsection{LoRA va QLoRA -- Tinh chinh tham so thap}
+Huan luyen toan bo ($>8$ ty tham so) doi hoi VRAM vuot qua gioi han phan cung (GPU 8--16GB).
+Chung toi dung \textbf{QLoRA} (Quantized LoRA) \cite{dettmers2023qlora}, ket hop:
+\begin{itemize}
+  \item \textbf{Luong tu hoa 4-bit NF4 + double-quant} giam bo nho trong so nen tang tu
+  $\sim 16$GB (bf16) xuong $\sim 4$--$5$GB.
+  \item \textbf{LoRA} \cite{hu2021lora}: chi huan luyen cac ma tran he so thap $\Delta W = BA$
+  ($\text{rank } r=16$, $\alpha=32$) ghep vao cac projection layers, dong bang trong so goc.
+\end{itemize}
+So tham so huan luyen chi chiem mot phan nho cua toan bo mo hinh, giup qua trinh huan luyen
+chay tren GPU T4 (Kaggle) va RTX 5060 Laptop 8GB (may dev).
+\subsection{Hoc tang cuong voi phan thuong co the kiem chung (GRPO)}
+Sau SFT (Supervised Fine-Tuning), chung toi thu nghiem \textbf{GRPO} (Group Relative Policy
+Optimization) \cite{shao2024deepseekmath} -- thuat toan RL on-policy khong dung Reward Model.
+GRPO sinh $G$ hoan chinh cho moi prompt, chuan hoa phan thuong theo trung binh va do lech
+chuan cua nhom, va toi uu bang PPO-style clipped objective kem KL penalty ($\beta=0.04$):
+\begin{equation}
+  \hat{A}_i = \frac{r_i - \mathrm{mean}(r_1,\dots,r_G)}{\mathrm{std}(r_1,\dots,r_G)},
+\end{equation}
+\begin{equation}
+  \mathcal{L}_{\text{GRPO}} = -\mathbb{E}\!\left[\min\!\left(
+  \frac{\pi_\theta(y_i\mid x)}{\pi_{\text{old}}(y_i\mid x)}\hat{A}_i,
+  \mathrm{clip}\!\left(\frac{\pi_\theta}{\pi_{\text{old}}},1-\epsilon,1+\epsilon\right)\hat{A}_i
+  \right) - \beta\, \mathrm{KL}(\pi_\theta \| \pi_{\text{ref}})\right].
+\end{equation}
+Phan thuong $r_i$ o day la cac ham quy tac xac dinh (\emph{deterministic scorers}) tren tri
+thuc thoi trang, khong can mo hinh phan xet -- dam bao \emph{verifiable reward}.
+\section{Phuong phap}
+\label{sec:method}
+\subsection{Lua chon mo hinh nen tang}
+Chung toi khao sat ba ung cu vien (bang~\ref{tab:models}). Tieu chi then chot: ho tro tieng
+Viet, co cong cu goi ham (\emph{native tool-calling}), va VRAM 4-bit thap.
+\begin{table}[H]
+  \centering
+  \caption{Ba ung cu vien mo hinh nen tang cho tang Stylist.}
+  \label{tab:models}
+  \begin{tabular}{lccc}
+    \toprule
+    \textbf{Thuoc tinh} & Qwen3.5-9B & Qwen3-VL-8B & Gemma-4-12B \
+    \midrule
+    Kien truc & Decoder-only & ViT + LLM (VL) & Decoder-only \
+    Tham so & 9B & 8B (LLM 7.5B + ViT 0.5B) & 12B \
+    Modal dau vao & Chi van ban & Van ban + Anh & Chi van ban \
+    Tool-calling & Co & Co & Khong (prompt hack) \
+    VRAM (4-bit) & $\sim$5--6GB & $\sim$4--5GB & $\sim$7--8GB \
+    Tieng Viet & Tot & Kha & Yeu \
+    \bottomrule
+  \end{tabular}
+\end{table}
+Quyet dinh thiet ke: chon \textbf{Qwen3-VL-8B} lam mo hinh chinh vi kha nang da phuong thuc
+(chap nhan anh nguoi dung -- tinh nang cot loi v3.1) va tool-calling native; Qwen3.5-9B lam
+phuong an fallback text-only; Gemma-4-12B chi de so sanh ablation.
+\subsection{Cong cu truy van (Tool-calling schema)}
+Mo hinh khong truy xuat truc tiep ma goi cong cu \texttt{search\_outfits} voi cac tham so co
+kieu enum lay tu \texttt{vocab.py} -- nguon duy nhat cua controlled vocabulary:
+\begin{lstlisting}[caption={Dinh nghia cong cu search\_outfits (trich xuat tu tools.py).}]
+SEARCH_OUTFITS_TOOL = {
+  "name": "search_outfits",
+  "parameters": {
+    "occasion":   enum(list(OCCASION)),     # bat buoc
+    "style":      enum(list(STYLE)),
+    "body_shape": enum(list(BODY_SHAPE)),
+    "skin_tone":  enum(list(SKIN_TONE)),
+    "price_max":  integer,                  # VND
+    "exclude_colors": array[string],
+  },
+  "required": ["occasion"],
+}
+\end{lstlisting}
+Dinh dang wire-format chuan hoa:
+\texttt{<tool\_call>\{"name":"search\_outfits","arguments":\{...\}\}</tool\_call>}. Mot lop
+\emph{validation} kiem tra moi \texttt{outfit\_id} sinh ra co ton tai trong KB va moi tham so
+tool co hop le theo schema -- co che chong ao giac cung (\emph{hard guardrail}).
+\subsection{Tap du lieu huan luyen}
+Tap du lieu cuoi (\emph{final merged dataset}) gom 11.252 mau huan luyen / 348 mau eval,
+trong do 1.360 mau huan luyen va 40 mau eval la cac cap tool-calling. Du lieu ket hop ba
+nhom hanh vi: \texttt{tool\_calling} / \texttt{tool\_calling\_grounded} (hoc goi dung
+field/enum); \texttt{recommend\_explain} (giai thich outfit); \texttt{ask\_missing\_info}
+(hoi lai khi thieu thong tin); \texttt{polite\_decline}, \texttt{anti\_hallucination} (tu
+choi khi thieu du kien); \texttt{body\_fit}, \texttt{multi\_turn}, \texttt{stylist\_knowledge}
+(tu van dang, hoi thoai da luot, kien thuc phoi do). Du lieu sinh tong hop (\emph{synthetic})
+bang Gemini Flash cong metadata catalog Viet Nam, chuan hoa sang dinh dang ChatML.
+\subsection{Cau hinh huan luyen (SFT -- QLoRA)}
+Pipeline dung \textbf{Unsloth} tren Kaggle T4$\times$2. Cau hinh chinh (bang~\ref{tab:hyper}):
+\begin{table}[H]
+  \centering
+  \caption{Hyperparameters huan luyen QLoRA (theo stylist\_finetune\_kaggle.yaml).}
+  \label{tab:hyper}
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{Tham so} & \textbf{Gia tri} \
+    \midrule
+    Framework & Unsloth + QLoRA (SFT) \
+    Quantization & 4-bit NF4, double-quant \
+    LoRA rank $r$ / $\alpha$ & 16 / 32 \
+    LoRA dropout / bias & 0.05 / none \
+    Target modules & q,k,v,o\_proj; gate,up,down\_proj \
+    Max seq length & 2048 \
+    Batch (per device) & 1 (effective = 1$\times$GPU$\times$8 grad-accum) \
+    Learning rate & $2\times10^{-4}$ (cosine, warmup 3\%) \
+    Epochs & 1 (704 steps) \
+    Optimizer & AdamW 8-bit (paged) \
+    \bottomrule
+  \end{tabular}
+\end{table}
+Luu y ky thuat: \texttt{device\_map=\{"":0\}} (khong dung \texttt{"auto"} gay loi
+CPU-dispatch), va \texttt{torch\_dtype="auto"} (tranh loi dtype cua lm\_head voi checkpoint
+bnb-4bit dong bang).
+\section{Thuc nghiem va Ket qua}
+\label{sec:exp}
+\subsection{Thiet lap danh gia}
+Chung toi dung 70 \emph{held-out prompts} phu cac loai tac vu. Cac metric: \texttt{mean\_tool\_call\_f1}
+(F1 tren field/value tool-call -- quan trong nhat vi anh huong truc tiep den retrieval E2E);
+\texttt{mean\_text\_similarity}; \texttt{format\_compliance\_rate}; \texttt{error\_count}.
+\subsection{Ket qua so sanh bon adapter (SFT)}
+Bon adapter duoc huan luyen tren cung dataset, cung benchmark (bang~\ref{tab:bench}).
+\begin{table}[H]
+  \centering
+  \caption{Ket qua benchmark 4 adapter QLoRA (nguon: stylist\_final\_qlora\_benchmark).}
+  \label{tab:bench}
+  \begin{tabular}{lcccc}
+    \toprule
+    \textbf{Model} & Eval loss & Tool F1 & Text sim & Format \
+    \midrule
+    T3 Qwen3-VL-8B Thinking & \textbf{0.5943} & \textbf{0.8980} & \textbf{0.5519} & \textbf{1.0000} \
+    T2 Qwen3.5-9B BNB4 & 0.6880 & 0.8776 & 0.4877 & 1.0000 \
+    T1 Qwen3-VL-8B Instruct & 0.6027 & 0.8571 & 0.5437 & 1.0000 \
+    T4 Gemma-4-12B IT & 0.6255 & 0.6531 & 0.5354 & 0.9714 \
+    \bottomrule
+  \end{tabular}
+\end{table}
+\paragraph{Phan tich.} T3 thang tong the vi on dinh nhat: eval loss thap nhat, Tool F1 cao
+nhat, text similarity cao nhat va compliance 1.0. Dang chu y, \textbf{eval loss khong quyet
+dinh ranking} -- Gemma co loss 0.6255 nhung Tool F1 chi 0.6531 vi khong ``hoc'' trigger goi
+tool (dat 0.0000 o nhom \texttt{tool\_calling} non-grounded). Voi bai toan co \emph{contract
+cung}, chat luong phai do bang hanh vi tool-calling chu khong chi likelihood.
+\subsection{Hoc tang cuong (GRPO) -- thu nghiem va gioi han}
+Chung toi thiet ke 6 ham phan thuong xac dinh (bang~\ref{tab:reward}) cau noi tu
+\texttt{fashion\_eval.py} sang \texttt{GRPOTrainer} cua TRL.
+\begin{table}[H]
+  \centering
+  \caption{6 reward functions cho GRPO (nguon: grpo\_rewards.py).}
+  \label{tab:reward}
+  \begin{tabular}{llp{6cm}}
+    \toprule
+    Ma & Scorer & Do luong \
+    \midrule
+    R1 & occasion\_formality & Precision/recall/F1 tren enum formality \
+    R2 & body\_shape\_advice & Recall positive $-$ 0.5$\times$negative keywords \
+    R3 & season\_advice & Recall positive $-$ 0.5$\times$negative keywords \
+    R4 & coherence & Binary accuracy (phu hop/khong) \
+    R5 & ask\_back & 1.0 neu hoi lai \& khong ao giac \
+    R6 & tool\_call\_derivation & Tool-call F1 $\times$ enum\_valid \
+    \bottomrule
+  \end{tabular}
+\end{table}
+Chay thuc te tren RTX 5060 Laptop 8GB cho thay \emph{gioi han phan cung cung}: o
+\texttt{max\_completion\_length=96} (du RAM) cau tra loi bi cat ngan $\rightarrow$ reward = 0;
+o $\ge 160$ thi OOM. Tuong tu tren Kaggle T4 16GB, cau hinh fit duy nhat la
+\texttt{batch=1, G=2, max\_completion\_length=128}, va reward van = 0 do truncation. Fix
+thong qua \emph{tightening prompt} (cau $<$ 100 token, chi keyword/enum) dua reward tu 0 len
+0.059 tren mo hinh mock. Bai hoc then chot: \textbf{GRPO cho 8B QLoRA khong kha thi tren 8GB
+VRAM} -- can T4$\times$2 hoac DeepSpeed. Day la ranh gioi thuc te giua ly thuyet RL va rang
+buoc phan cung.
+\subsection{Ket qua baseline GRPO tren GPU that}
+Benchmark rule-based tren 28 items $\times$ 6 scorers (bang~\ref{tab:gpu}):
+\begin{table}[H]
+  \centering
+  \caption{Mean score cac scorer tren GPU RTX 5060 8GB (rev 3, da fix vocabulary bug).}
+  \label{tab:gpu}
+  \begin{tabular}{lccc}
+    \toprule
+    Task & T1 (VL Instruct) & T2 (9B text) & T3 (VL Thinking) \
+    \midrule
+    occasion\_formality & 0.607 & 0.585 & \textbf{0.740} \
+    body\_shape\_advice & 0.000 & 0.050 & 0.040 \
+    season\_advice & 0.258 & 0.333 & \textbf{0.383} \
+    coherence & 0.500 & \textbf{1.000} & 0.500 \
+    ask\_back & 0.667 & 0.667 & 0.667 \
+    tool\_call\_derivation & \textbf{0.812} & 0.788 & 0.763 \
+    \textbf{Overall mean} & 0.462 & \textbf{0.543} & 0.524 \
+    \bottomrule
+  \end{tabular}
+\end{table}
+T3 dan dau o kien thuc dip/mua va co tool-calling SFT manh nhat, la muc tieu RL du mean thap
+hon T2 mot chut vi la mo hinh da phuong thuc duy nhat (co vision tower).
+\section{Thao luan}
+\label{sec:discuss}
+\subsection{Bai hoc ve do luong chat luong mo hinh}
+Voi he thong co \emph{tool contract cung}, eval loss la metric gay hieu lam: mot mo hinh co
+loss thap van co the sai enum, bo quen \texttt{<tool\_call>}, hay tra loi prose thay vi JSON.
+Benchmark hanh vi (Tool F1, format compliance) phai la tieu chi chon mo hinh chinh.
+\subsection{Trade-off da phuong thuc vs. nguon ngu}
+Qwen3-VL-8B (Thinking) thang du Qwen3.5-9B text-only vi tinh nang anh nguoi dung la yeu cau
+cot loi, va vision tower khong the them sau vao mo hinh text-only. Day la vi du uu tien
+\emph{fit voi bai toan san pham} hon toi uu benchmark hep.
+\subsection{Han che}
+Benchmark 70 mau chua du sau cho regression; GRPO chua chay thanh cong tren compute hien co
+do gioi han do dai sinh; du lieu tool-calling hard-case con mong.
+\section{Ket luan}
+\label{sec:conclude}
+Do an hien thuc hoa thanh cong tang Stylist cua OutfitMatch bang fine-tuning LLM da phuong
+thuc -- minh hoa chu trinh: transfer learning $\rightarrow$ QLoRA $\rightarrow$ tool-calling
+schema $\rightarrow$ verifiable-reward RL $\rightarrow$ benchmark hanh vi. Ket qua: (1) fine-tune
+thanh cong 4 adapter QLoRA tren Kaggle, publish len Hugging Face; (2) chon \textbf{Qwen3-VL-8B-Thinking
++ LoRA (4-bit)}: Tool F1 = 0.8980, Format = 1.0, Eval loss = 0.5943; (3) thiet ke 6 deterministic
+reward functions cho GRPO va phat hien gioi han phan cung thuc te cua RL 8B tren GPU 8GB.
+Huong phat trien: tang du lieu hard-case, mo rong benchmark len 200--500 mau, them constrained
+decoding / parser repair, va chay GRPO tren T4$\times$2.
+\section*{Loi cam on}
+Do an su dung tai nguyen Kaggle T4 va RTX 5060 8GB. Cam on nhom OutfitMatch (3 thanh vien) va giang vien.
+\begin{thebibliography}{99}
+\bibitem{dettmers2023qlora} T. Dettmers, A. Pagnoni, A. Holtzman, L. Zettlemoyer. \emph{QLoRA: Efficient Finetuning of Quantized LLMs}. arXiv:2305.14314, 2023.
+\bibitem{hu2021lora} E. J. Hu, Y. Shen, P. Wallis, et al. \emph{LoRA: Low-Rank Adaptation of Large Language Models}. arXiv:2106.09685, 2021.
+\bibitem{shao2024deepseekmath} Z. Shao, P. Wang, Q. Zhu, et al. \emph{DeepSeekMath}. arXiv:2402.03300, 2024.
+\bibitem{liu2025drgrpo} Z. Liu, et al. \emph{Dr. GRPO}. arXiv:2503.20783, 2025.
+\bibitem{vasileva2018polyvore} M. Vasileva, et al. \emph{Learning Type-Aware Embeddings for Fashion Compatibility}. ECCV 2018.
+\bibitem{qwen3vl} Qwen Team. \emph{Qwen3-VL Technical Report}. https://github.com/QwenLM/Qwen3-VL, 2025.
+\end{thebibliography}
+\end{document}
