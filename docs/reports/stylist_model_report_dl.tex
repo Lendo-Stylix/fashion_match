@@ -20,10 +20,10 @@
  keywordstyle=\color{codekey}\bfseries,commentstyle=\color{gray}\itshape,
  stringstyle=\color{red!50!black},breaklines=true,frame=single,
  showstringspaces=false,tabsize=2,language=Python}
-\title{\textbf{Bao cao Project-Based Learning}\
+\title{\textbf{Bao cao Project-Based Learning}\\
 {\large Fine-tuning Mo hinh Stylist Da phuong thuc cho He thong Goi y Trang phuc}}
-\author{Nguyen Nhat Quang\
-Sinh vien nam 3 -- Nganh Tri tue Nhan tao\
+\author{Nguyen Nhat Quang\\
+Sinh vien nam 3 -- Nganh Tri tue Nhan tao\\
 Mon hoc: Deep Learning\ Giang vien huong dan: \ldots}
 \date{Thang 07 nam 2026}
 \begin{document}
@@ -55,13 +55,13 @@ qua bang tieng Viet ma khong bia thong tin.
   \centering
   \fbox{\parbox{0.9\textwidth}{
     \centering
-    User (text/anh/quiz) \
-    $\downarrow$ \
+    User (text/anh/quiz) \\
+    $\downarrow$ \\
     \textbf{Tang 2 -- Stylist (LLM + LoRA)}: parse intent $\rightarrow$ hoi lai hoac
-    goi \texttt{search\_outfits(occasion, style, body\_shape, \dots)} \
-    $\downarrow$ \
-    Tang 3 -- Retrieval: seed-filter $\rightarrow$ graph traversal $\rightarrow$ post-filter outfit \
-    $\downarrow$ \
+    goi \texttt{search\_outfits(occasion, style, body\_shape, \dots)} \\
+    $\downarrow$ \\
+    Tang 3 -- Retrieval: seed-filter $\rightarrow$ graph traversal $\rightarrow$ post-filter outfit \\
+    $\downarrow$ \\
     Tang 2 -- Stylist: giai thich outfit bang tieng Viet
   }}
   \caption{Vi tri tang Stylist trong kien truc OutfitMatch v3.1-lite.}
@@ -127,14 +127,14 @@ Viet, co cong cu goi ham (\emph{native tool-calling}), va VRAM 4-bit thap.
   \label{tab:models}
   \begin{tabular}{lccc}
     \toprule
-    \textbf{Thuoc tinh} & Qwen3.5-9B & Qwen3-VL-8B & Gemma-4-12B \
+    \textbf{Thuoc tinh} & Qwen3.5-9B & Qwen3-VL-8B & Gemma-4-12B \\
     \midrule
-    Kien truc & Decoder-only & ViT + LLM (VL) & Decoder-only \
-    Tham so & 9B & 8B (LLM 7.5B + ViT 0.5B) & 12B \
-    Modal dau vao & Chi van ban & Van ban + Anh & Chi van ban \
-    Tool-calling & Co & Co & Khong (prompt hack) \
-    VRAM (4-bit) & $\sim$5--6GB & $\sim$4--5GB & $\sim$7--8GB \
-    Tieng Viet & Tot & Kha & Yeu \
+    Kien truc & Decoder-only & ViT + LLM (VL) & Decoder-only \\
+    Tham so & 9B & 8B (LLM 7.5B + ViT 0.5B) & 12B \\
+    Modal dau vao & Chi van ban & Van ban + Anh & Chi van ban \\
+    Tool-calling & Co & Co & Khong (prompt hack) \\
+    VRAM (4-bit) & $\sim$5--6GB & $\sim$4--5GB & $\sim$7--8GB \\
+    Tieng Viet & Tot & Kha & Yeu \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -179,18 +179,18 @@ Pipeline dung \textbf{Unsloth} tren Kaggle T4$\times$2. Cau hinh chinh (bang~\re
   \label{tab:hyper}
   \begin{tabular}{ll}
     \toprule
-    \textbf{Tham so} & \textbf{Gia tri} \
+    \textbf{Tham so} & \textbf{Gia tri} \\
     \midrule
-    Framework & Unsloth + QLoRA (SFT) \
-    Quantization & 4-bit NF4, double-quant \
-    LoRA rank $r$ / $\alpha$ & 16 / 32 \
-    LoRA dropout / bias & 0.05 / none \
-    Target modules & q,k,v,o\_proj; gate,up,down\_proj \
-    Max seq length & 2048 \
-    Batch (per device) & 1 (effective = 1$\times$GPU$\times$8 grad-accum) \
-    Learning rate & $2\times10^{-4}$ (cosine, warmup 3\%) \
-    Epochs & 1 (704 steps) \
-    Optimizer & AdamW 8-bit (paged) \
+    Framework & Unsloth + QLoRA (SFT) \\
+    Quantization & 4-bit NF4, double-quant \\
+    LoRA rank $r$ / $\alpha$ & 16 / 32 \\
+    LoRA dropout / bias & 0.05 / none \\
+    Target modules & q,k,v,o\_proj; gate,up,down\_proj \\
+    Max seq length & 2048 \\
+    Batch (per device) & 1 (effective = 1$\times$GPU$\times$8 grad-accum) \\
+    Learning rate & $2\times10^{-4}$ (cosine, warmup 3\%) \\
+    Epochs & 1 (704 steps) \\
+    Optimizer & AdamW 8-bit (paged) \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -211,12 +211,12 @@ Bon adapter duoc huan luyen tren cung dataset, cung benchmark (bang~\ref{tab:ben
   \label{tab:bench}
   \begin{tabular}{lcccc}
     \toprule
-    \textbf{Model} & Eval loss & Tool F1 & Text sim & Format \
+    \textbf{Model} & Eval loss & Tool F1 & Text sim & Format \\
     \midrule
-    T3 Qwen3-VL-8B Thinking & \textbf{0.5943} & \textbf{0.8980} & \textbf{0.5519} & \textbf{1.0000} \
-    T2 Qwen3.5-9B BNB4 & 0.6880 & 0.8776 & 0.4877 & 1.0000 \
-    T1 Qwen3-VL-8B Instruct & 0.6027 & 0.8571 & 0.5437 & 1.0000 \
-    T4 Gemma-4-12B IT & 0.6255 & 0.6531 & 0.5354 & 0.9714 \
+    T3 Qwen3-VL-8B Thinking & \textbf{0.5943} & \textbf{0.8980} & \textbf{0.5519} & \textbf{1.0000} \\
+    T2 Qwen3.5-9B BNB4 & 0.6880 & 0.8776 & 0.4877 & 1.0000 \\
+    T1 Qwen3-VL-8B Instruct & 0.6027 & 0.8571 & 0.5437 & 1.0000 \\
+    T4 Gemma-4-12B IT & 0.6255 & 0.6531 & 0.5354 & 0.9714 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -234,14 +234,14 @@ Chung toi thiet ke 6 ham phan thuong xac dinh (bang~\ref{tab:reward}) cau noi tu
   \label{tab:reward}
   \begin{tabular}{llp{6cm}}
     \toprule
-    Ma & Scorer & Do luong \
+    Ma & Scorer & Do luong \\
     \midrule
-    R1 & occasion\_formality & Precision/recall/F1 tren enum formality \
-    R2 & body\_shape\_advice & Recall positive $-$ 0.5$\times$negative keywords \
-    R3 & season\_advice & Recall positive $-$ 0.5$\times$negative keywords \
-    R4 & coherence & Binary accuracy (phu hop/khong) \
-    R5 & ask\_back & 1.0 neu hoi lai \& khong ao giac \
-    R6 & tool\_call\_derivation & Tool-call F1 $\times$ enum\_valid \
+    R1 & occasion\_formality & Precision/recall/F1 tren enum formality \\
+    R2 & body\_shape\_advice & Recall positive $-$ 0.5$\times$negative keywords \\
+    R3 & season\_advice & Recall positive $-$ 0.5$\times$negative keywords \\
+    R4 & coherence & Binary accuracy (phu hop/khong) \\
+    R5 & ask\_back & 1.0 neu hoi lai \& khong ao giac \\
+    R6 & tool\_call\_derivation & Tool-call F1 $\times$ enum\_valid \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -261,15 +261,15 @@ Benchmark rule-based tren 28 items $\times$ 6 scorers (bang~\ref{tab:gpu}):
   \label{tab:gpu}
   \begin{tabular}{lccc}
     \toprule
-    Task & T1 (VL Instruct) & T2 (9B text) & T3 (VL Thinking) \
+    Task & T1 (VL Instruct) & T2 (9B text) & T3 (VL Thinking) \\
     \midrule
-    occasion\_formality & 0.607 & 0.585 & \textbf{0.740} \
-    body\_shape\_advice & 0.000 & 0.050 & 0.040 \
-    season\_advice & 0.258 & 0.333 & \textbf{0.383} \
-    coherence & 0.500 & \textbf{1.000} & 0.500 \
-    ask\_back & 0.667 & 0.667 & 0.667 \
-    tool\_call\_derivation & \textbf{0.812} & 0.788 & 0.763 \
-    \textbf{Overall mean} & 0.462 & \textbf{0.543} & 0.524 \
+    occasion\_formality & 0.607 & 0.585 & \textbf{0.740} \\
+    body\_shape\_advice & 0.000 & 0.050 & 0.040 \\
+    season\_advice & 0.258 & 0.333 & \textbf{0.383} \\
+    coherence & 0.500 & \textbf{1.000} & 0.500 \\
+    ask\_back & 0.667 & 0.667 & 0.667 \\
+    tool\_call\_derivation & \textbf{0.812} & 0.788 & 0.763 \\
+    \textbf{Overall mean} & 0.462 & \textbf{0.543} & 0.524 \\
     \bottomrule
   \end{tabular}
 \end{table}
