@@ -1,4 +1,21 @@
-\documentclass[12pt,a4paper]{article}
+#!/usr/bin/env python3
+"""Builder: writes the LaTeX report .tex file with full Vietnamese diacritics,
+XeTeX-compatible preamble (fontspec + Times New Roman), titlepage, and all 8 figure images.
+
+USAGE:
+  uv run scripts/build_report_tex.py          # generates .tex
+  cd docs/reports && tectonic ...tex          # compiles PDF
+
+This script replaces the fragile heredoc approach for .tex files with backslashes.
+The CONTENT string is a raw triple-quoted Python string (r\"\"\") so all LaTeX
+backslashes are preserved literally.
+"""
+import io, os
+
+OUT = os.path.join(os.path.dirname(__file__), "..", "docs", "reports", "stylist_model_report_dl.tex")
+OUT = os.path.normpath(OUT)
+
+CONTENT = r"""\documentclass[12pt,a4paper]{article}
 % ===== XeTeX engine (Tectonic) -- native UTF-8, no [utf8]{vietnam}/[T5]{fontenc} =====
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
@@ -438,3 +455,17 @@ decoding / parser repair, và chạy GRPO trên T4$\times$2.
 \bibitem{qwen3vl} Qwen Team. \emph{Qwen3-VL Technical Report}. \url{https://github.com/QwenLM/Qwen3-VL}, 2025.
 \end{thebibliography}
 \end{document}
+"""
+
+def main():
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    with io.open(OUT, "w", encoding="utf-8", newline="\n") as f:
+        f.write(CONTENT)
+    print(f"OK: wrote {OUT}")
+    print(f"   lines: {CONTENT.count(chr(10))+1}")
+    print(f"   includegraphics: {CONTENT.count('includegraphics')}")
+    diac = sum(CONTENT.count(c) for c in "áàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđ")
+    print(f"   Vietnamese diacritic chars: {diac}")
+
+if __name__ == "__main__":
+    main()
